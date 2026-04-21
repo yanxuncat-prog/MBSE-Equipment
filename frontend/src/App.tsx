@@ -9,6 +9,7 @@ import { ConfigPage } from './pages/ConfigPage';
 import { LoginPage } from './pages/LoginPage';
 import { GuidePage } from './pages/GuidePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { EquipmentDefPage } from './pages/EquipmentDefPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/" element={<Navigate to="/guide" replace />} />
             <Route path="/guide" element={<GuidePage />} />
+            <Route path="/equipment-def" element={<EquipmentDefPage />} />
             <Route path="/workstation" element={<WorkstationPage />} />
             <Route path="/spatial" element={<SpatialViewPage />} />
             <Route path="/config" element={<ConfigPage />} />

@@ -22,6 +22,8 @@ export function GlobalNav() {
   const [search, setSearch] = useState('');
   const location = useLocation();
   const isWorkstation = location.pathname === '/workstation';
+  const isEquipmentDef = location.pathname === '/equipment-def';
+  const needsConfig = !isEquipmentDef && location.pathname !== '/guide';
 
   useEffect(() => {
     listPrograms().then(setPrograms).catch(() => {});
@@ -58,7 +60,10 @@ export function GlobalNav() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 8 }}>
-      <Space size={6}>
+      {isEquipmentDef && (
+        <span style={{ color: '#999', fontSize: 13 }}>设备定义 — 管理设备固有属性（不依赖构型）</span>
+      )}
+      {needsConfig && <Space size={6}>
         <span style={{ color: '#999', fontSize: 12 }}>型号:</span>
         <Select
           value={activeProgramId || undefined}
@@ -86,7 +91,7 @@ export function GlobalNav() {
           size="small"
           options={configs.map((c) => ({ value: c.id, label: `${c.version} (${c.status})` }))}
         />
-      </Space>
+      </Space>}
 
       {isWorkstation && (
         <>
