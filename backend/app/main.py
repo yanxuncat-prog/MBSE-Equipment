@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.equipment import router as equipment_router
+from app.api.programs import router as programs_router
+from app.api.configurations import router as configurations_router
 
 app = FastAPI(title="AeroEquip", version="0.1.0")
 
@@ -16,6 +18,8 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(equipment_router, prefix="/api")
+app.include_router(programs_router, prefix="/api")
+app.include_router(configurations_router, prefix="/api")
 
 
 @app.get("/api/health")
