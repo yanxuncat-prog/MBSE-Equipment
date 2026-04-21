@@ -1,45 +1,40 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useLoader } from '@react-three/fiber';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';
 
 /**
- * Loads the real CE-25A fuselage from an STL file exported from CATIA STEP.
+ * Loads the CE-25A complete aircraft from STL (converted from STEP).
  *
- * STL coordinate system (from STEP):
- *   X: 150 ~ 18900  (fuselage length, STA direction)
- *   Y: -1178 ~ 1255 (left-right, BL direction)
- *   Z: -991 ~ 991   (up-down, WL direction)
- *
- * We scale from mm to scene units (1 scene unit = 1 mm here, matching equipment STA coords).
- * The model center is approximately at X=9500, Y=0, Z=0.
+ * STEP coordinate system:
+ *   X: 150 ~ 19750 mm  (fuselage length)
+ *   Y: -2147 ~ 4123 mm (span, asymmetric due to modeling origin)
+ *   Z: -4083 ~ 11501 mm (height including vertical tail)
  */
 export function FuselageSTL() {
-  const geometry = useLoader(STLLoader, '/fuselage.stl');
-  const meshRef = useRef<THREE.Mesh>(null);
+  const geometry = useLoader(STLLoader, '/ce25a.stl');
 
   return (
     <group>
-      {/* Semi-transparent solid surface */}
-      <mesh ref={meshRef} geometry={geometry}>
+      {/* Semi-transparent solid */}
+      <mesh geometry={geometry}>
         <meshPhysicalMaterial
-          color="#8ab4d8"
+          color="#90b8d8"
           transparent
-          opacity={0.1}
+          opacity={0.12}
           side={THREE.DoubleSide}
-          roughness={0.4}
-          metalness={0.15}
+          roughness={0.3}
+          metalness={0.1}
           depthWrite={false}
         />
       </mesh>
-
-      {/* Wireframe overlay for structure visibility */}
+      {/* Wireframe */}
       <mesh geometry={geometry}>
         <meshBasicMaterial
-          color="#5588aa"
+          color="#6090b0"
           wireframe
           transparent
-          opacity={0.06}
+          opacity={0.05}
         />
       </mesh>
     </group>

@@ -8,7 +8,21 @@ import type { Equipment, Zone } from '../../types';
 
 const { Text } = Typography;
 
-const SCALE = 0.1; // 1 scene unit = 10mm
+/**
+ * CE-25A full aircraft from STEP:
+ *   X: 150 ~ 19750 mm  (length ~19.6m)
+ *   Y: -2147 ~ 4123 mm (span ~6.3m, origin offset)
+ *   Z: -4083 ~ 11501 mm (height ~15.6m including vertical tail)
+ *
+ * Scale: 1 scene unit = 100mm (0.001 scale factor from mm)
+ * This puts the aircraft at ~196 units long in scene space.
+ */
+const S = 0.01; // mm → scene units (1 unit = 100mm = 10cm)
+
+// Model center approximations
+const CX = 10000 * S; // ~100 (mid-fuselage)
+const CY = 1000 * S;  // ~10 (Y offset due to asymmetric origin)
+const CZ = 3000 * S;  // ~30 (approximate fuselage center Z)
 
 const ATA_COLORS: Record<string, string> = {
   '21': '#5ac8fa', '23': '#34c759', '24': '#ff9500', '25': '#ff375f',
@@ -18,24 +32,24 @@ const ATA_COLORS: Record<string, string> = {
   '86': '#ff3b30', '87': '#ff9500', '90': '#007aff', '92': '#34c759',
 };
 
-// ------- Equipment Marker (inline to avoid circular/import issues) -------
+// ------- Equipment Marker -------
 
-function EquipMarker({ equipment, position, selected, onClick, markerSize }: {
+function EquipMarker({ equipment, position, selected, onClick, size }: {
   equipment: Equipment;
   position: [number, number, number];
   selected: boolean;
   onClick: (e: Equipment) => void;
-  markerSize: number;
+  size: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
-  const ataPrefix = equipment.ata_chapter?.slice(0, 2) || '99';
-  const color = ATA_COLORS[ataPrefix] || '#8e8e93';
-  const r = selected ? markerSize * 1.5 : hovered ? markerSize * 1.2 : markerSize;
+  const ata = equipment.ata_chapter?.slice(0, 2) || '99';
+  const color = ATA_COLORS[ata] || '#8e8e93';
+  const r = selected ? size * 1.5 : hovered ? size * 1.2 : size;
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.scale.setScalar(selected ? 1 + Math.sin(state.clock.elapsedTime * 3) * 0.3 : 1);
+      meshRef.current.scale.setScalar(selected ? 1 + Math.sin(state.clock.elapsedTime * 3) * 0.25 : 1);
     }
   });
 
@@ -48,16 +62,12 @@ function EquipMarker({ equipment, position, selected, onClick, markerSize }: {
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[r, 12, 12]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={selected || hovered ? color : '#000'}
-          emissiveIntensity={selected ? 0.5 : hovered ? 0.3 : 0}
-        />
+        <meshStandardMaterial color={color} emissive={selected || hovered ? color : '#000'} emissiveIntensity={selected ? 0.6 : hovered ? 0.3 : 0} />
       </mesh>
       {(hovered || selected) && (
         <Html position={[0, 0, r * 3]} center style={{ pointerEvents: 'none' }}>
           <div style={{
-            background: 'rgba(0,0,0,0.88)', color: '#fff', padding: '5px 8px',
+            background: 'rgba(0,0,0,0.9)', color: '#fff', padding: '5px 8px',
             borderRadius: 5, fontSize: 10, whiteSpace: 'nowrap',
             border: `1px solid ${color}`,
           }}>
@@ -84,78 +94,110 @@ export function AircraftScene3D({ equipment, zones, selectedId, onSelect }: Prop
   const [showEquipment, setShowEquipment] = useState(true);
 
   const positioned = equipment.filter(e => e.config_data?.sta != null);
-  const centerX = 9500 * SCALE;
 
-  // Map abstract equipment coords → real fuselage coords (scaled)
-  const staScale = (18900 - 150) / 1100;
-  const markerSize = SCALE * 60;
+  // Map abstract equipment coords (STA 0-1100) → real STEP coords (X 150-19750)
+  const staToX = (sta: number) => (150 + sta * ((19750 - 150) / 1100)) * S;
+  const blToY = (bl: number) => (bl * 15) * S; // scale BL to approximate real Y range
+  const wlToZ = (wl: number) => ((wl - 150) * 15) * S; // WL 150≈center, scale to Z
+
+  const markerSize = 1.5; // scene units
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Controls */}
       <div style={{
         position: 'absolute', top: 8, left: 8, zIndex: 10,
-        background: 'rgba(255,255,255,0.92)', padding: '6px 10px',
-        borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+        background: 'rgba(255,255,255,0.93)', padding: '6px 10px',
+        borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
       }}>
         <Space size={12}>
-          <Checkbox checked={showEquipment} onChange={e => setShowEquipment(e.target.checked)}>设备</Checkbox>
+          <Checkbox checked={showEquipment} onChange={e => setShowEquipment(e.target.checked)}>设备标记</Checkbox>
           <Text type="secondary" style={{ fontSize: 10 }}>
             {positioned.length} 台 | 左键旋转 · 滚轮缩放 · 右键平移
           </Text>
         </Space>
       </div>
 
-      {/* Info badge */}
+      {/* Model info */}
       <div style={{
         position: 'absolute', top: 8, right: 8, zIndex: 10,
-        background: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4,
-        fontSize: 9, color: '#888',
+        background: 'rgba(0,0,0,0.75)', padding: '4px 8px', borderRadius: 4,
+        fontSize: 9, color: '#999',
       }}>
-        CE-25A Fuselage · 18.75m
+        CE-25A 完整模型 · 19.6m × 6.3m
       </div>
 
-      <Canvas style={{ background: '#080c14' }}>
+      {/* ATA legend */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: 8, zIndex: 10,
+        background: 'rgba(255,255,255,0.93)', padding: '5px 8px',
+        borderRadius: 5, fontSize: 9, display: 'flex', gap: 6, flexWrap: 'wrap', maxWidth: 450,
+      }}>
+        {[
+          ['23', '通信', '#34c759'], ['24', '电源', '#ff9500'], ['26', '防火', '#af52de'],
+          ['27', '飞控', '#007aff'], ['31', '指示', '#30b0c7'], ['34', '导航', '#ff6b6b'],
+          ['86', '电推进', '#ff3b30'], ['其他', '', '#8e8e93'],
+        ].map(([a, n, c]) => (
+          <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: c, display: 'inline-block' }} />
+            <span style={{ color: '#555' }}>{a}{n ? ` ${n}` : ''}</span>
+          </span>
+        ))}
+      </div>
+
+      <Canvas style={{ background: '#060a12' }}>
         <Suspense fallback={null}>
-          <PerspectiveCamera makeDefault position={[centerX - 300, -500, 350]} fov={45} near={1} far={10000} />
-          <OrbitControls target={[centerX, 0, 0]} minDistance={50} maxDistance={4000} enableDamping dampingFactor={0.08} />
+          <PerspectiveCamera
+            makeDefault
+            position={[CX, CY - 250, CZ + 150]}
+            fov={50}
+            near={0.1}
+            far={10000}
+          />
+          <OrbitControls
+            target={[CX, CY, CZ]}
+            minDistance={20}
+            maxDistance={3000}
+            enableDamping
+            dampingFactor={0.08}
+          />
 
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[centerX, -400, 500]} intensity={0.8} />
-          <directionalLight position={[centerX, 400, 200]} intensity={0.3} />
+          {/* Lighting */}
+          <ambientLight intensity={0.45} />
+          <directionalLight position={[CX, CY - 300, CZ + 300]} intensity={0.8} />
+          <directionalLight position={[CX, CY + 300, CZ + 100]} intensity={0.3} />
+          <hemisphereLight args={['#b0d0ff', '#1a1a2e', 0.3]} />
 
+          {/* Ground plane */}
           <Grid
-            args={[2500, 500]}
-            position={[centerX, 0, -110]}
-            cellSize={50}
+            args={[400, 200]}
+            position={[CX, CY, -45]}
+            cellSize={10}
             cellThickness={0.3}
-            cellColor="#151e2a"
-            sectionSize={200}
-            sectionThickness={0.6}
-            sectionColor="#1e2e3e"
-            fadeDistance={5000}
+            cellColor="#121a28"
+            sectionSize={50}
+            sectionThickness={0.5}
+            sectionColor="#1a2840"
+            fadeDistance={3000}
             infiniteGrid={false}
           />
 
-          {/* Real fuselage model */}
-          <group scale={[SCALE, SCALE, SCALE]}>
+          {/* CE-25A full aircraft model */}
+          <group scale={[S, S, S]}>
             <FuselageSTL />
           </group>
 
           {/* Equipment markers */}
           {showEquipment && positioned.map(equip => {
             const cd = equip.config_data!;
-            const x = (150 + (cd.sta || 500) * staScale) * SCALE;
-            const y = (cd.bl || 0) * 40 * SCALE;
-            const z = ((cd.wl || 170) - 170) * 10 * SCALE;
             return (
               <EquipMarker
                 key={equip.id}
                 equipment={equip}
-                position={[x, y, z]}
+                position={[staToX(cd.sta!), blToY(cd.bl || 0), wlToZ(cd.wl || 150)]}
                 selected={equip.id === selectedId}
                 onClick={onSelect}
-                markerSize={markerSize}
+                size={markerSize}
               />
             );
           })}
