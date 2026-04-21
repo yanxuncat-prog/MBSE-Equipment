@@ -10,6 +10,7 @@ from app.api.imports import router as imports_router
 from app.api.documents import router as documents_router
 from app.api.zones import router as zones_router
 from app.api.buses import router as buses_router
+from app.api.dashboard import router as dashboard_router
 from app.ws.constraint_ws import router as ws_router
 
 app = FastAPI(title="AeroEquip", version="0.1.0")
@@ -31,6 +32,7 @@ app.include_router(imports_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
 app.include_router(zones_router, prefix="/api")
 app.include_router(buses_router, prefix="/api")
+app.include_router(dashboard_router, prefix="/api")
 app.include_router(ws_router)
 
 

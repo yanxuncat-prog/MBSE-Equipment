@@ -7,6 +7,8 @@ import { WorkstationPage } from './pages/WorkstationPage';
 import { SpatialViewPage } from './pages/SpatialViewPage';
 import { ConfigPage } from './pages/ConfigPage';
 import { LoginPage } from './pages/LoginPage';
+import { GuidePage } from './pages/GuidePage';
+import { DashboardPage } from './pages/DashboardPage';
 
 export default function App() {
   return (
@@ -15,10 +17,12 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Navigate to="/workstation" replace />} />
+            <Route path="/" element={<Navigate to="/guide" replace />} />
+            <Route path="/guide" element={<GuidePage />} />
             <Route path="/workstation" element={<WorkstationPage />} />
             <Route path="/spatial" element={<SpatialViewPage />} />
             <Route path="/config" element={<ConfigPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

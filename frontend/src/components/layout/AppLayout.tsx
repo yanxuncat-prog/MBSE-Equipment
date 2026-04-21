@@ -5,15 +5,19 @@ import {
   ToolOutlined,
   EnvironmentOutlined,
   BranchesOutlined,
+  QuestionCircleOutlined,
+  DashboardOutlined,
 } from '@ant-design/icons';
 import { GlobalNav } from './GlobalNav';
 
 const { Sider, Header, Content } = Layout;
 
 const menuItems = [
+  { key: '/guide', icon: <QuestionCircleOutlined />, label: '使用指南' },
   { key: '/workstation', icon: <ToolOutlined />, label: '工程师工作台' },
   { key: '/spatial', icon: <EnvironmentOutlined />, label: '空间视图' },
   { key: '/config', icon: <BranchesOutlined />, label: '构型管理' },
+  { key: '/dashboard', icon: <DashboardOutlined />, label: '管理看板' },
 ];
 
 export function AppLayout() {
