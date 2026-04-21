@@ -25,7 +25,6 @@ const DEFAULT_MENU: MenuItem[] = [
   { key: '/guide', icon: <QuestionCircleOutlined />, label: '使用指南' },
   { key: '/equipment-def', icon: <DatabaseOutlined />, label: '设备定义' },
   { key: '/workstation', icon: <EyeOutlined />, label: '构型查看' },
-  { key: '/spatial', icon: <EnvironmentOutlined />, label: '空间视图' },
   { key: '/config', icon: <BranchesOutlined />, label: '构型管理' },
   { key: '/dashboard', icon: <DashboardOutlined />, label: '管理看板' },
 ];
