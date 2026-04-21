@@ -237,11 +237,9 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 skipped += 1
                 continue
 
-            part_number = str(row[2] or "").strip()
-            if not part_number:
-                part_number = str(row[3] or "").strip()
-            if not part_number:
-                part_number = f"UNNAMED-{uuid.uuid4().hex[:8]}"
+            raw_pn = str(row[2] or "").strip()
+            raw_lin = str(row[3] or "").strip()
+            part_number = raw_pn or raw_lin or f"UNNAMED-{uuid.uuid4().hex[:8]}"
 
             # Extract new fields from 主清单
             dims = safe_str(row[cols["dims"]], 100)
@@ -269,9 +267,12 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 "use_batch0_device": use_batch0,
             }
 
-            # If already imported, try to supplement missing weight data
+            # If already imported, try to supplement missing data
             if part_number in equip_by_number:
                 existing = equip_by_number[part_number]
+                # Supplement LIN号 if missing
+                if raw_lin and not existing.lin_number:
+                    existing.lin_number = raw_lin
                 weight = row[cols["weight"]]
                 if weight is not None and isinstance(weight, (int, float)):
                     # Check if existing has no weight -- supplement it
@@ -313,6 +314,7 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
             equip = Equipment(
                 part_number=part_number,
                 name=name,
+                lin_number=raw_lin or None,
                 ata_chapter=ata,
                 equipment_type="LRU" if is_electric == "是" else "structural",
                 status="approved",
