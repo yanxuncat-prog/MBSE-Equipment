@@ -47,6 +47,14 @@ async def list_equipment(
                 ce_alias.rack_position,
                 ce_alias.bus_id,
                 ce_alias.notes,
+                ce_alias.install_method,
+                ce_alias.bonding_method,
+                ce_alias.bonding_type,
+                ce_alias.bonding_resistance,
+                ce_alias.bonding_position,
+                ce_alias.in_pace_drawing,
+                ce_alias.layout_adjustment,
+                ce_alias.use_batch0_device,
             )
             .where(ce_alias.config_id == uuid.UUID(config_id))
         )
@@ -86,7 +94,7 @@ async def list_equipment(
 
     items: list[EquipmentResponse] = []
     if config_id:
-        # Result rows contain (Equipment, zone_id, sta, wl, bl, rack_position, bus_id, notes)
+        # Result rows contain (Equipment, zone_id, sta, wl, bl, rack_position, bus_id, notes, install_method, ...)
         seen = set()
         for row in result.unique().all():
             equip = row[0]
@@ -101,6 +109,14 @@ async def list_equipment(
             ce_rack_position = row[5]
             ce_bus_id = row[6]
             ce_notes = row[7]
+            ce_install_method = row[8]
+            ce_bonding_method = row[9]
+            ce_bonding_type = row[10]
+            ce_bonding_resistance = row[11]
+            ce_bonding_position = row[12]
+            ce_in_pace_drawing = row[13]
+            ce_layout_adjustment = row[14]
+            ce_use_batch0_device = row[15]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -125,6 +141,14 @@ async def list_equipment(
                 bus_id=ce_bus_id,
                 bus_name=bus_name,
                 notes=ce_notes,
+                install_method=ce_install_method,
+                bonding_method=ce_bonding_method,
+                bonding_type=ce_bonding_type,
+                bonding_resistance=ce_bonding_resistance,
+                bonding_position=ce_bonding_position,
+                in_pace_drawing=ce_in_pace_drawing,
+                layout_adjustment=ce_layout_adjustment,
+                use_batch0_device=ce_use_batch0_device,
             )
 
             resp = EquipmentResponse.model_validate(equip)

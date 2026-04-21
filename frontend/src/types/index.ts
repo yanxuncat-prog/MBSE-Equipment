@@ -10,6 +10,14 @@ export interface ConfigEquipmentData {
   bus_id: string | null;
   bus_name: string | null;
   notes: string | null;
+  install_method: string | null;
+  bonding_method: string | null;
+  bonding_type: string | null;
+  bonding_resistance: string | null;
+  bonding_position: string | null;
+  in_pace_drawing: boolean | null;
+  layout_adjustment: string | null;
+  use_batch0_device: boolean | null;
 }
 
 export interface WeightBalance {
@@ -35,6 +43,62 @@ export interface Equipment {
   weight_balance: WeightBalance | null;
   electrical_load: ElectricalLoad | null;
   config_data: ConfigEquipmentData | null;
+
+  // Identity
+  name_en: string | null;
+  abbreviation_en: string | null;
+  internal_number: string | null;
+  lin_number: string | null;
+  supplier_part_number: string | null;
+
+  // Safety & Classification
+  dal: string | null;
+  equipment_level: string | null;
+  is_optional: boolean | null;
+  is_electrical: boolean | null;
+  is_primary_electrical: boolean | null;
+  has_eicd: boolean | null;
+  has_special_wiring: boolean | null;
+
+  // Physical characteristics
+  dimensions_mm: string | null;
+  is_metal_shell: boolean | null;
+  metal_shell_non_conductive: string | null;
+  internal_grounding: string | null;
+  physical_characteristics: string | null;
+  connector_count: number | null;
+
+  // Electrical
+  voltage_range: string | null;
+  power_redundancy: string | null;
+  power_voltage: string | null;
+  power_watts: string | null;
+
+  // Grounding
+  shell_grounding_method: string | null;
+  shell_grounding_fault_path: string | null;
+  grounding_special_requirements: string | null;
+
+  // Assignment
+  responsible_person: string | null;
+  aircraft_batch: string | null;
+  config_category: string | null;
+
+  // DO-160 Temperature qualification
+  do160_temp_design_level: string | null;
+  do160_temp_qual_level: string | null;
+  do160_temp_qual_range: string | null;
+  do160_temp_compliance: string | null;
+  normal_operating_temp: string | null;
+  short_term_temp: string | null;
+  ground_storage_temp: string | null;
+  operating_altitude: string | null;
+  qual_report_number: string | null;
+  first_flight_onboard: boolean | null;
+  phase2_onboard: boolean | null;
+
+  // Notes
+  notes: string | null;
 }
 
 export interface EquipmentListResponse {

@@ -14,6 +14,14 @@ class ConfigEquipmentData(BaseModel):
     bus_id: UUID | None = None
     bus_name: str | None = None
     notes: str | None = None
+    install_method: str | None = None
+    bonding_method: str | None = None
+    bonding_type: str | None = None
+    bonding_resistance: str | None = None
+    bonding_position: str | None = None
+    in_pace_drawing: bool | None = None
+    layout_adjustment: str | None = None
+    use_batch0_device: bool | None = None
 
 
 class WeightBalanceData(BaseModel):
@@ -76,6 +84,62 @@ class EquipmentResponse(_ORMBase):
     weight_balance: WeightBalanceResponse | None = None
     electrical_load: ElectricalLoadResponse | None = None
     config_data: ConfigEquipmentData | None = None  # populated when queried with config_id
+
+    # Identity
+    name_en: str | None = None
+    abbreviation_en: str | None = None
+    internal_number: str | None = None
+    lin_number: str | None = None
+    supplier_part_number: str | None = None
+
+    # Safety & Classification
+    dal: str | None = None
+    equipment_level: str | None = None
+    is_optional: bool | None = None
+    is_electrical: bool | None = None
+    is_primary_electrical: bool | None = None
+    has_eicd: bool | None = None
+    has_special_wiring: bool | None = None
+
+    # Physical characteristics
+    dimensions_mm: str | None = None
+    is_metal_shell: bool | None = None
+    metal_shell_non_conductive: str | None = None
+    internal_grounding: str | None = None
+    physical_characteristics: str | None = None
+    connector_count: int | None = None
+
+    # Electrical
+    voltage_range: str | None = None
+    power_redundancy: str | None = None
+    power_voltage: str | None = None
+    power_watts: str | None = None
+
+    # Grounding
+    shell_grounding_method: str | None = None
+    shell_grounding_fault_path: str | None = None
+    grounding_special_requirements: str | None = None
+
+    # Assignment
+    responsible_person: str | None = None
+    aircraft_batch: str | None = None
+    config_category: str | None = None
+
+    # DO-160 Temperature qualification
+    do160_temp_design_level: str | None = None
+    do160_temp_qual_level: str | None = None
+    do160_temp_qual_range: str | None = None
+    do160_temp_compliance: str | None = None
+    normal_operating_temp: str | None = None
+    short_term_temp: str | None = None
+    ground_storage_temp: str | None = None
+    operating_altitude: str | None = None
+    qual_report_number: str | None = None
+    first_flight_onboard: bool | None = None
+    phase2_onboard: bool | None = None
+
+    # Notes
+    notes: str | None = None
 
 
 class EquipmentListResponse(BaseModel):
