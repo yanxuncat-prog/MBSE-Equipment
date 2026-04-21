@@ -101,8 +101,8 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
   const columns: ColumnsType<Equipment> = [
     { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 120, fixed: 'left',
       render: (v: string | null) => v || '-' },
-    { title: '件号', dataIndex: 'part_number', key: 'part_number', width: 150, fixed: 'left' },
     { title: '名称', dataIndex: 'name', key: 'name', width: 180, ellipsis: true, fixed: 'left' },
+    { title: '件号', dataIndex: 'part_number', key: 'part_number', width: 150 },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 55 },
     { title: '类型', dataIndex: 'equipment_type', key: 'type', width: 70 },
     { title: '英文名称', dataIndex: 'name_en', key: 'name_en', width: 180, ellipsis: true,
@@ -203,10 +203,24 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
 
   return (
     <div>
+      {/* Column snap CSS: horizontal scroll snaps to left edge of each column */}
+      <style>{`
+        .equip-table .ant-table-body {
+          scroll-snap-type: x proximity;
+        }
+        .equip-table .ant-table-body table {
+          border-collapse: separate;
+        }
+        .equip-table .ant-table-thead > tr > th:not(.ant-table-cell-fix-left):not(.ant-table-cell-fix-right),
+        .equip-table .ant-table-tbody > tr > td:not(.ant-table-cell-fix-left):not(.ant-table-cell-fix-right) {
+          scroll-snap-align: start;
+        }
+      `}</style>
       <div style={{ marginBottom: 8, color: '#999', fontSize: 12 }}>
         共 {total} 台设备{data.length < total ? `，已加载 ${data.length} 台` : ''}
       </div>
       <Table
+        className="equip-table"
         columns={columns}
         dataSource={data}
         rowKey="id"
