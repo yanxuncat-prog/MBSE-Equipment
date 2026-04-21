@@ -79,10 +79,7 @@ async def reset_and_init(db: AsyncSession):
     """Drop all data and recreate."""
     print("Resetting database...")
     async with engine.begin() as conn:
-        # Force drop with CASCADE to handle stale FK constraints from old schema
-        from sqlalchemy import text
-        await conn.execute(text("DROP SCHEMA public CASCADE"))
-        await conn.execute(text("CREATE SCHEMA public"))
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     print("Tables recreated.")
 
