@@ -6,7 +6,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # WeasyPrint system deps (pango/glib) installed separately to isolate network failures
+    && apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info \
+    && rm -rf /var/lib/apt/lists/* \
+    || true
 
 # Install uv for fast dependency management
 RUN pip install --no-cache-dir uv

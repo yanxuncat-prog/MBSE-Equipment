@@ -4,8 +4,12 @@ from datetime import datetime, timezone
 from collections import defaultdict
 
 from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
 from openpyxl import Workbook
+
+# WeasyPrint requires system libraries (pango/glib) — lazy import to avoid crash if missing
+def _get_weasyprint_html():
+    from weasyprint import HTML
+    return HTML
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -71,7 +75,7 @@ async def generate_equipment_list_pdf(db: AsyncSession, config_id: str) -> bytes
         total_count=len(equip_list),
         total_mass_kg=f"{total_mass:.1f}",
     )
-    return HTML(string=html_str).write_pdf()
+    return _get_weasyprint_html()(string=html_str).write_pdf()
 
 
 async def generate_equipment_list_xlsx(db: AsyncSession, config_id: str) -> bytes:
@@ -134,7 +138,7 @@ async def generate_weight_report_pdf(db: AsyncSession, config_id: str) -> bytes:
         status_text={"pass": "✓ 包线内", "warning": "⚠ 接近限值", "blocked": "✗ 超限"}.get(status, status),
         equipment=equipment_rows,
     )
-    return HTML(string=html_str).write_pdf()
+    return _get_weasyprint_html()(string=html_str).write_pdf()
 
 
 async def generate_eload_report_pdf(db: AsyncSession, config_id: str, phase: str = "normal") -> bytes:
@@ -180,4 +184,4 @@ async def generate_eload_report_pdf(db: AsyncSession, config_id: str, phase: str
         generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         buses=buses,
     )
-    return HTML(string=html_str).write_pdf()
+    return _get_weasyprint_html()(string=html_str).write_pdf()

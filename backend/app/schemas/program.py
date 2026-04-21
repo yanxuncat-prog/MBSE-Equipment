@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from uuid import UUID
+from pydantic import BaseModel, ConfigDict
 
 
 class ProgramCreate(BaseModel):
@@ -8,13 +9,12 @@ class ProgramCreate(BaseModel):
 
 
 class ProgramResponse(BaseModel):
-    id: str
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
     name: str
     aircraft_type: str
     description: str | None = None
-
-    class Config:
-        from_attributes = True
 
 
 class SeriesCreate(BaseModel):
@@ -24,10 +24,9 @@ class SeriesCreate(BaseModel):
 
 
 class SeriesResponse(BaseModel):
-    id: str
-    program_id: str
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    program_id: UUID
     variant_name: str
     description: str | None = None
-
-    class Config:
-        from_attributes = True

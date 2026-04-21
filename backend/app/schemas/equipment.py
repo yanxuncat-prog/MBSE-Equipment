@@ -1,6 +1,6 @@
 from __future__ import annotations
-import uuid
-from pydantic import BaseModel
+from uuid import UUID
+from pydantic import BaseModel, ConfigDict
 
 
 class InstallationData(BaseModel):
@@ -50,49 +50,44 @@ class EquipmentUpdate(BaseModel):
     electrical_load: ElectricalLoadData | None = None
 
 
-class InstallationResponse(BaseModel):
-    zone_id: str | None = None
+class _ORMBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InstallationResponse(_ORMBase):
+    zone_id: UUID | None = None
     sta: float | None = None
     wl: float | None = None
     bl: float | None = None
     rack_position: str | None = None
-    class Config:
-        from_attributes = True
 
 
-class WeightBalanceResponse(BaseModel):
+class WeightBalanceResponse(_ORMBase):
     mass_kg: float
     arm_sta: float
     arm_bl: float
     arm_wl: float
-    class Config:
-        from_attributes = True
 
 
-class ElectricalLoadResponse(BaseModel):
-    bus_id: str
+class ElectricalLoadResponse(_ORMBase):
+    bus_id: UUID
     power_kva_normal: float
     power_kva_emergency: float | None = None
     power_kva_max: float | None = None
-    class Config:
-        from_attributes = True
 
 
-class EquipmentResponse(BaseModel):
-    id: str
+class EquipmentResponse(_ORMBase):
+    id: UUID
     part_number: str
     name: str
     ata_chapter: str
     equipment_type: str
-    supplier_id: str | None = None
+    supplier_id: UUID | None = None
     status: str
     description: str | None = None
     installation: InstallationResponse | None = None
     weight_balance: WeightBalanceResponse | None = None
     electrical_load: ElectricalLoadResponse | None = None
-
-    class Config:
-        from_attributes = True
 
 
 class EquipmentListResponse(BaseModel):
