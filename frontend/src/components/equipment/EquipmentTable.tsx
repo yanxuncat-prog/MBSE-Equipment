@@ -99,6 +99,8 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
   };
 
   const columns: ColumnsType<Equipment> = [
+    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 120, fixed: 'left',
+      render: (v: string | null) => v || '-' },
     { title: '件号', dataIndex: 'part_number', key: 'part_number', width: 150, fixed: 'left' },
     { title: '名称', dataIndex: 'name', key: 'name', width: 180, ellipsis: true, fixed: 'left' },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 55 },
