@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: "SimSun", "Noto Sans CJK SC", sans-serif; font-size: 10pt; margin: 20mm; }
+  h1 { text-align: center; font-size: 16pt; }
+  h2 { font-size: 12pt; border-bottom: 1px solid #333; padding-bottom: 2mm; }
+  table { width: 100%; border-collapse: collapse; margin-top: 3mm; font-size: 9pt; }
+  th, td { border: 1px solid #999; padding: 2mm 3mm; text-align: left; }
+  th { background: #e8e8e8; }
+  .meta { font-size: 9pt; color: #666; text-align: center; margin-bottom: 5mm; }
+  .result-box { border: 2px solid #333; padding: 5mm; margin: 5mm 0; background: #f5f5f5; }
+  .pass { color: #2d8a2d; } .warning { color: #cc8800; } .blocked { color: #cc0000; }
+</style>
+</head>
+<body>
+  <h1>重量平衡报告</h1>
+  <div class="meta">构型: {{ config_version }} | 生成时间: {{ generated_at }}</div>
+
+  <div class="result-box">
+    <p><strong>设备总重量:</strong> {{ total_mass_kg }} kg</p>
+    <p><strong>CG 位置:</strong> STA {{ cg_sta }} ({{ cg_pct_mac }}% MAC)</p>
+    <p><strong>MTOW 余量:</strong> {{ mtow_margin_kg }} kg (使用率 {{ mtow_ratio_pct }}%)</p>
+    <p><strong>CG 包线:</strong> <span class="{{ status_class }}">{{ status_text }}</span></p>
+  </div>
+
+  <h2>设备重量明细</h2>
+  <table>
+    <thead>
+      <tr><th>件号</th><th>名称</th><th>ATA</th><th>重量(kg)</th><th>STA</th><th>力矩(kg·mm)</th></tr>
+    </thead>
+    <tbody>
+    {% for e in equipment %}
+      <tr>
+        <td>{{ e.part_number }}</td>
+        <td>{{ e.name }}</td>
+        <td>{{ e.ata_chapter }}</td>
+        <td>{{ e.mass_kg }}</td>
+        <td>{{ e.arm_sta }}</td>
+        <td>{{ e.moment }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

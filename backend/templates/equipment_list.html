@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: "SimSun", "Noto Sans CJK SC", sans-serif; font-size: 10pt; margin: 20mm; }
+  h1 { text-align: center; font-size: 16pt; margin-bottom: 5mm; }
+  h2 { font-size: 12pt; margin-top: 8mm; border-bottom: 1px solid #333; padding-bottom: 2mm; }
+  table { width: 100%; border-collapse: collapse; margin-top: 3mm; font-size: 9pt; }
+  th, td { border: 1px solid #999; padding: 2mm 3mm; text-align: left; }
+  th { background: #e8e8e8; font-weight: bold; }
+  .meta { font-size: 9pt; color: #666; text-align: center; margin-bottom: 5mm; }
+  .summary { margin-top: 5mm; font-size: 10pt; }
+</style>
+</head>
+<body>
+  <h1>装机设备清单</h1>
+  <div class="meta">构型: {{ config_version }} | 生成时间: {{ generated_at }}</div>
+
+  {% for ata, items in grouped_by_ata.items() %}
+  <h2>ATA {{ ata }}</h2>
+  <table>
+    <thead>
+      <tr><th>件号</th><th>名称</th><th>类型</th><th>重量(kg)</th><th>区域</th><th>STA</th><th>母线</th><th>功耗(kVA)</th><th>状态</th></tr>
+    </thead>
+    <tbody>
+    {% for e in items %}
+      <tr>
+        <td>{{ e.part_number }}</td>
+        <td>{{ e.name }}</td>
+        <td>{{ e.equipment_type }}</td>
+        <td>{{ e.mass_kg or '-' }}</td>
+        <td>{{ e.zone_code or '-' }}</td>
+        <td>{{ e.sta or '-' }}</td>
+        <td>{{ e.bus_name or '-' }}</td>
+        <td>{{ e.power_kva or '-' }}</td>
+        <td>{{ e.status }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+
+  <div class="summary">
+    <p>设备总数: {{ total_count }} | 总重量: {{ total_mass_kg }} kg</p>
+  </div>
+</body>
+</html>
