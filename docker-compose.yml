@@ -31,7 +31,7 @@ services:
     build:
       context: ./backend
     ports:
-      - "8000:8000"
+      - "3001:8000"
     volumes:
       - ./backend:/app
     environment:
@@ -51,7 +51,7 @@ services:
       context: ./frontend
       target: dev
     ports:
-      - "5173:5173"
+      - "3000:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
