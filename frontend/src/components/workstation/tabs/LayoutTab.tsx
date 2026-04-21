@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { Button, Card, Tooltip, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useCallback, lazy, Suspense } from 'react';
+import { Card, Tooltip, Typography, Spin, Segmented } from 'antd';
+// Note: useNavigate removed — 3D view is now embedded directly
 import type { ColumnsType } from 'antd/es/table';
 import { StatsCard } from '../shared/StatsCard';
 import { StatsRow } from '../shared/StatsRow';
@@ -8,6 +8,11 @@ import { ProfessionalTable } from '../shared/ProfessionalTable';
 import { ProfessionalPanel } from '../shared/ProfessionalPanel';
 import { HorizontalBar } from '../charts/HorizontalBar';
 import type { Equipment, ValidationReport } from '../../../types';
+
+// Lazy load 3D scene
+const AircraftScene3D = lazy(() =>
+  import('../../spatial3d/AircraftScene3D').then(m => ({ default: m.AircraftScene3D }))
+);
 
 const { Text } = Typography;
 
@@ -38,8 +43,14 @@ const COCKPIT_PATH = 'M30,38 L15,36 Q5,34 3,38 L10,42 Q15,44 30,44';
 /* LayoutTab Component                                                 */
 /* ------------------------------------------------------------------ */
 export function LayoutTab({ equipment, onSelect }: Props) {
-  const navigate = useNavigate();
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<string>('3d');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleEquipSelect = useCallback((e: Equipment) => {
+    setSelectedId(e.id);
+    onSelect(e);
+  }, [onSelect]);
 
   /* ---- Zone grouping ---- */
   const zoneCounts = useMemo(() => {
@@ -164,8 +175,44 @@ export function LayoutTab({ equipment, onSelect }: Props) {
           <StatsCard title="需布局调整" value={adjustments.length} color="#FF3B30" />
         </StatsRow>
 
-        {/* Zone Density Visualization */}
-        <Card size="small" title="区域设备密度分布" style={{ marginBottom: 16 }} bodyStyle={{ padding: 12 }}>
+        {/* 3D / 2D View Toggle */}
+        <Card
+          size="small"
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>空间布局视图</span>
+              <Segmented
+                size="small"
+                value={viewMode}
+                onChange={(v) => setViewMode(v as string)}
+                options={[
+                  { label: '3D 模型', value: '3d' },
+                  { label: '2D 密度图', value: '2d' },
+                ]}
+              />
+            </div>
+          }
+          style={{ marginBottom: 16 }}
+          bodyStyle={{ padding: viewMode === '3d' ? 0 : 12 }}
+        >
+          {viewMode === '3d' ? (
+            <div style={{ height: 400, background: '#060a12', borderRadius: '0 0 8px 8px' }}>
+              <Suspense fallback={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <Spin size="large" tip="加载 3D 引擎..." />
+                </div>
+              }>
+                <AircraftScene3D
+                  equipment={equipment}
+                  zones={[]}
+                  selectedId={selectedId}
+                  onSelect={handleEquipSelect}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            /* Zone Density 2D Visualization - original SVG */
+            <div>
           <svg width={700} height={170} viewBox="0 0 700 170" style={{ display: 'block', width: '100%' }}>
             {/* Zone Density Bar */}
             <text x={10} y={14} fill="#999" fontSize={10} fontWeight={600}>区域密度条</text>
@@ -272,6 +319,8 @@ export function LayoutTab({ equipment, onSelect }: Props) {
               })}
             </g>
           </svg>
+            </div>
+          )}
         </Card>
 
         {/* Professional Table */}
@@ -294,17 +343,6 @@ export function LayoutTab({ equipment, onSelect }: Props) {
         </Card>
         <Card size="small" title="安装方式分布">
           <HorizontalBar items={installMethodItems} />
-        </Card>
-        <Card size="small" bodyStyle={{ padding: '12px 16px' }}>
-          <Button
-            type="primary"
-            block
-            size="large"
-            onClick={() => navigate('/spatial')}
-            style={{ background: '#1E40AF', borderColor: '#1E40AF', fontWeight: 600 }}
-          >
-            打开 3D 空间视图 →
-          </Button>
         </Card>
         <Card size="small" title={`布局调整需求 (${adjustments.length})`}>
           <div style={{ maxHeight: 240, overflowY: 'auto' }}>
