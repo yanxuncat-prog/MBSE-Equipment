@@ -3,8 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, Configuration, BusDefinition
-from app.models.configuration import config_equipment
+from app.models import Equipment, Configuration, BusDefinition, ConfigEquipment
+from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.engines import WeightBalanceEngine, ElectricalLoadEngine, ConstraintStatus
 from app.schemas.constraint import ValidationReport, EngineResult
 
@@ -16,21 +16,55 @@ DEFAULT_CG_AFT_LIMIT = 40.0
 DEFAULT_MTOW_KG = 100_000.0
 
 
-async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[Equipment]:
+async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[dict]:
+    """Load equipment with config-specific data (sta for CG, bus_id for electrical)."""
     result = await db.execute(
-        select(Equipment)
-        .join(config_equipment, config_equipment.c.equipment_id == Equipment.id)
-        .where(config_equipment.c.config_id == uuid.UUID(config_id))
+        select(ConfigEquipmentModel)
         .options(
-            selectinload(Equipment.installation),
-            selectinload(Equipment.weight_balance),
-            selectinload(Equipment.electrical_load),
+            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
+            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
+        .where(ConfigEquipmentModel.config_id == uuid.UUID(config_id))
     )
-    return list(result.scalars().unique().all())
+    ce_list = list(result.scalars().unique().all())
+
+    equip_dicts = []
+    for ce in ce_list:
+        equip = ce.equipment
+        d = {"id": str(equip.id), "part_number": equip.part_number, "name": equip.name}
+
+        if equip.weight_balance:
+            # Use config_equipment.sta as the moment arm; fall back to 0 if None
+            arm_sta = ce.sta if ce.sta is not None else 0.0
+            d["weight_balance"] = {
+                "mass_kg": equip.weight_balance.mass_kg,
+                "arm_sta": arm_sta,
+                "arm_bl": ce.bl if ce.bl is not None else 0.0,
+                "arm_wl": ce.wl if ce.wl is not None else 0.0,
+            }
+        else:
+            d["weight_balance"] = None
+
+        if equip.electrical_load:
+            # Use config_equipment.bus_id instead of electrical_load.bus_id
+            bus_id = str(ce.bus_id) if ce.bus_id else ""
+            d["electrical_load"] = {
+                "bus_id": bus_id,
+                "bus_name": "",
+                "power_kva_normal": equip.electrical_load.power_kva_normal,
+                "power_kva_emergency": equip.electrical_load.power_kva_emergency,
+                "power_kva_max": equip.electrical_load.power_kva_max,
+            }
+        else:
+            d["electrical_load"] = None
+
+        equip_dicts.append(d)
+
+    return equip_dicts
 
 
-async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[Equipment]:
+async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]:
+    """Load equipment by IDs (for hypothetical adds — no config context, so arm defaults to 0)."""
     if not ids:
         return []
     uuids = [uuid.UUID(i) for i in ids]
@@ -38,36 +72,37 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[Equip
         select(Equipment)
         .where(Equipment.id.in_(uuids))
         .options(
-            selectinload(Equipment.installation),
             selectinload(Equipment.weight_balance),
             selectinload(Equipment.electrical_load),
         )
     )
-    return list(result.scalars().unique().all())
+    equipment_list = list(result.scalars().unique().all())
 
+    equip_dicts = []
+    for equip in equipment_list:
+        d = {"id": str(equip.id), "part_number": equip.part_number, "name": equip.name}
+        if equip.weight_balance:
+            d["weight_balance"] = {
+                "mass_kg": equip.weight_balance.mass_kg,
+                "arm_sta": 0.0,
+                "arm_bl": 0.0,
+                "arm_wl": 0.0,
+            }
+        else:
+            d["weight_balance"] = None
+        if equip.electrical_load:
+            d["electrical_load"] = {
+                "bus_id": "",
+                "bus_name": "",
+                "power_kva_normal": equip.electrical_load.power_kva_normal,
+                "power_kva_emergency": equip.electrical_load.power_kva_emergency,
+                "power_kva_max": equip.electrical_load.power_kva_max,
+            }
+        else:
+            d["electrical_load"] = None
+        equip_dicts.append(d)
 
-def _equipment_to_dict(equip: Equipment) -> dict:
-    d = {"id": str(equip.id), "part_number": equip.part_number, "name": equip.name}
-    if equip.weight_balance:
-        d["weight_balance"] = {
-            "mass_kg": equip.weight_balance.mass_kg,
-            "arm_sta": equip.weight_balance.arm_sta,
-            "arm_bl": equip.weight_balance.arm_bl,
-            "arm_wl": equip.weight_balance.arm_wl,
-        }
-    else:
-        d["weight_balance"] = None
-    if equip.electrical_load:
-        d["electrical_load"] = {
-            "bus_id": str(equip.electrical_load.bus_id),
-            "bus_name": "",
-            "power_kva_normal": equip.electrical_load.power_kva_normal,
-            "power_kva_emergency": equip.electrical_load.power_kva_emergency,
-            "power_kva_max": equip.electrical_load.power_kva_max,
-        }
-    else:
-        d["electrical_load"] = None
-    return d
+    return equip_dicts
 
 
 async def _load_bus_definitions(db: AsyncSession, series_id: uuid.UUID) -> list[dict]:
@@ -95,21 +130,18 @@ async def validate_config(
             EngineResult(engine_name="system", status="blocked", summary="构型不存在", details={})
         ])
 
-    # Load equipment
-    equipment_list = await _load_equipment_for_config(db, config_id)
+    # Load equipment with config-level data
+    equip_dicts = await _load_equipment_for_config(db, config_id)
 
     # Apply hypothetical changes
     if hypothetical_adds:
         extra = await _load_equipment_by_ids(db, hypothetical_adds)
-        existing_ids = {e.id for e in equipment_list}
-        equipment_list.extend(e for e in extra if e.id not in existing_ids)
+        existing_ids = {e["id"] for e in equip_dicts}
+        equip_dicts.extend(e for e in extra if e["id"] not in existing_ids)
 
     if hypothetical_removes:
-        remove_set = {uuid.UUID(rid) for rid in hypothetical_removes}
-        equipment_list = [e for e in equipment_list if e.id not in remove_set]
-
-    # Convert to dicts
-    equip_dicts = [_equipment_to_dict(e) for e in equipment_list]
+        remove_set = {rid for rid in hypothetical_removes}
+        equip_dicts = [e for e in equip_dicts if e["id"] not in remove_set]
 
     # Load bus definitions for this series
     bus_defs = await _load_bus_definitions(db, config.series_id)

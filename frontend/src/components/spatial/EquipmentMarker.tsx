@@ -16,19 +16,19 @@ interface Props {
 
 export function EquipmentMarker({ equipment, view, selected, onClick }: Props) {
   const [hovered, setHovered] = useState(false);
-  const inst = equipment.installation;
-  if (!inst) return null;
+  const cd = equipment.config_data;
+  if (!cd) return null;
 
   let cx: number, cy: number;
   if (view === 'side') {
-    cx = inst.sta || 0;
-    cy = 300 - (inst.wl || 150);
+    cx = cd.sta || 0;
+    cy = 300 - (cd.wl || 150);
   } else if (view === 'top') {
-    cx = inst.sta || 0;
-    cy = 150 - (inst.bl || 0);
+    cx = cd.sta || 0;
+    cy = 150 - (cd.bl || 0);
   } else {
-    cx = 150 + (inst.bl || 0);
-    cy = 300 - (inst.wl || 150);
+    cx = 150 + (cd.bl || 0);
+    cy = 300 - (cd.wl || 150);
   }
 
   const ataPrefix = equipment.ata_chapter.split('-')[0];

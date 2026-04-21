@@ -1,22 +1,22 @@
 export type ConstraintStatus = 'pass' | 'warning' | 'blocked';
 
-export interface Installation {
+export interface ConfigEquipmentData {
   zone_id: string | null;
+  zone_name: string | null;
   sta: number | null;
   wl: number | null;
   bl: number | null;
   rack_position: string | null;
+  bus_id: string | null;
+  bus_name: string | null;
+  notes: string | null;
 }
 
 export interface WeightBalance {
   mass_kg: number;
-  arm_sta: number;
-  arm_bl: number;
-  arm_wl: number;
 }
 
 export interface ElectricalLoad {
-  bus_id: string;
   power_kva_normal: number;
   power_kva_emergency: number | null;
   power_kva_max: number | null;
@@ -29,11 +29,12 @@ export interface Equipment {
   ata_chapter: string;
   equipment_type: string;
   supplier_id: string | null;
+  supplier_name: string | null;
   status: string;
   description: string | null;
-  installation: Installation | null;
   weight_balance: WeightBalance | null;
   electrical_load: ElectricalLoad | null;
+  config_data: ConfigEquipmentData | null;
 }
 
 export interface EquipmentListResponse {

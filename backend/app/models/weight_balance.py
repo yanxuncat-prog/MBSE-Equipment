@@ -13,8 +13,5 @@ class WeightBalance(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     equipment_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("equipment.id"), unique=True)
     mass_kg: Mapped[float] = mapped_column(Float)
-    arm_sta: Mapped[float] = mapped_column(Float, comment="Moment arm along STA axis (mm)")
-    arm_bl: Mapped[float] = mapped_column(Float, default=0.0, comment="Moment arm along BL axis (mm)")
-    arm_wl: Mapped[float] = mapped_column(Float, default=0.0, comment="Moment arm along WL axis (mm)")
 
     equipment: Mapped["Equipment"] = relationship(back_populates="weight_balance")

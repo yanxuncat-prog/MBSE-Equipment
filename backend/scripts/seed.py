@@ -103,9 +103,8 @@ async def seed():
         await db.flush()
 
         for equip in all_equip:
-            await db.execute(
-                config_equipment.insert().values(config_id=config.id, equipment_id=equip.id)
-            )
+            ce = ConfigEquipment(config_id=config.id, equipment_id=equip.id)
+            db.add(ce)
 
         # Create a draft V1.1 for working
         config_draft = Configuration(
@@ -119,9 +118,8 @@ async def seed():
         await db.flush()
 
         for equip in all_equip:
-            await db.execute(
-                config_equipment.insert().values(config_id=config_draft.id, equipment_id=equip.id)
-            )
+            ce = ConfigEquipment(config_id=config_draft.id, equipment_id=equip.id)
+            db.add(ce)
 
         await db.commit()
         print(f"Seed complete: {len(all_equip)} equipment in V1.0 baseline + V1.1-draft")

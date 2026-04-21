@@ -2,7 +2,7 @@ import uuid
 from openpyxl import load_workbook
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Equipment, Installation, WeightBalance, ElectricalLoad
+from app.models import Equipment, WeightBalance, ElectricalLoad
 
 
 COLUMN_MAP = {
@@ -35,7 +35,12 @@ async def import_from_excel(
     zone_map: dict[str, str] | None = None,   # zone_code -> zone_id
     bus_map: dict[str, str] | None = None,     # bus_name -> bus_id
 ) -> dict:
-    """Import equipment from Excel file. Returns summary with success_count, error_rows."""
+    """Import equipment from Excel file. Returns summary with success_count, error_rows.
+
+    NOTE: This creates Equipment + WeightBalance + ElectricalLoad records only.
+    Config-level attributes (zone, STA/WL/BL, bus assignment) should be set via
+    ConfigEquipment when adding equipment to a configuration.
+    """
     wb = load_workbook(file_path, read_only=True)
     ws = wb.active
 
@@ -86,58 +91,20 @@ async def import_from_excel(
             db.add(equip)
             await db.flush()
 
-            # Installation
-            sta = val("sta")
-            wl = val("wl")
-            bl = val("bl")
-            zone_raw = str(val("zone_id") or "").strip()
-            zone_uuid = None
-            if zone_raw and zone_map and zone_raw in zone_map:
-                zone_uuid = uuid.UUID(zone_map[zone_raw])
-            elif zone_raw:
-                try:
-                    zone_uuid = uuid.UUID(zone_raw)
-                except ValueError:
-                    pass
-
-            if sta is not None or zone_uuid is not None:
-                inst = Installation(
-                    equipment_id=equip.id,
-                    zone_id=zone_uuid,
-                    sta=float(sta) if sta is not None else None,
-                    wl=float(wl) if wl is not None else None,
-                    bl=float(bl) if bl is not None else None,
-                )
-                db.add(inst)
-
-            # Weight Balance
+            # Weight Balance (no arm fields -- those come from ConfigEquipment.sta)
             mass = val("mass_kg")
             if mass is not None:
                 wb_obj = WeightBalance(
                     equipment_id=equip.id,
                     mass_kg=float(mass),
-                    arm_sta=float(sta) if sta is not None else 0.0,
-                    arm_bl=float(bl) if bl is not None else 0.0,
-                    arm_wl=float(wl) if wl is not None else 0.0,
                 )
                 db.add(wb_obj)
 
-            # Electrical Load
+            # Electrical Load (no bus_id -- that comes from ConfigEquipment.bus_id)
             power = val("power_kva_normal")
-            bus_raw = str(val("bus_id") or "").strip()
-            bus_uuid = None
-            if bus_raw and bus_map and bus_raw in bus_map:
-                bus_uuid = uuid.UUID(bus_map[bus_raw])
-            elif bus_raw:
-                try:
-                    bus_uuid = uuid.UUID(bus_raw)
-                except ValueError:
-                    pass
-
-            if power is not None and bus_uuid is not None:
+            if power is not None:
                 el = ElectricalLoad(
                     equipment_id=equip.id,
-                    bus_id=bus_uuid,
                     power_kva_normal=float(power),
                 )
                 db.add(el)

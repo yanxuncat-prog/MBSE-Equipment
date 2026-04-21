@@ -18,18 +18,21 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
         <Descriptions.Item label="名称">{equipment.name}</Descriptions.Item>
         <Descriptions.Item label="ATA章节">{equipment.ata_chapter}</Descriptions.Item>
         <Descriptions.Item label="类型">{equipment.equipment_type}</Descriptions.Item>
+        <Descriptions.Item label="供应商">{equipment.supplier_name || '-'}</Descriptions.Item>
         <Descriptions.Item label="状态"><Tag>{equipment.status}</Tag></Descriptions.Item>
         <Descriptions.Item label="描述">{equipment.description || '-'}</Descriptions.Item>
       </Descriptions>
 
-      {equipment.installation && (
+      {equipment.config_data && (
         <>
-          <Divider orientation="left">安装位置</Divider>
+          <Divider orientation="left">安装位置 (构型级)</Divider>
           <Descriptions column={2} size="small" bordered>
-            <Descriptions.Item label="STA">{equipment.installation.sta ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="WL">{equipment.installation.wl ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="BL">{equipment.installation.bl ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="机架位置">{equipment.installation.rack_position ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="区域">{equipment.config_data.zone_name ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="机架位置">{equipment.config_data.rack_position ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="STA">{equipment.config_data.sta ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="WL">{equipment.config_data.wl ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="BL">{equipment.config_data.bl ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="母线">{equipment.config_data.bus_name ?? '-'}</Descriptions.Item>
           </Descriptions>
         </>
       )}
@@ -39,7 +42,6 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
           <Divider orientation="left">重量数据</Divider>
           <Descriptions column={2} size="small" bordered>
             <Descriptions.Item label="重量">{equipment.weight_balance.mass_kg} kg</Descriptions.Item>
-            <Descriptions.Item label="力臂STA">{equipment.weight_balance.arm_sta} mm</Descriptions.Item>
           </Descriptions>
         </>
       )}

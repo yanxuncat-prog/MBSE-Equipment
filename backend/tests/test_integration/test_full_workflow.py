@@ -48,8 +48,7 @@ async def test_full_equipment_management_workflow(client: AsyncClient, auth_head
         "name": "飞行管理计算机",
         "ata_chapter": "34-21",
         "equipment_type": "LRU",
-        "weight_balance": {"mass_kg": 15.2, "arm_sta": 280.0},
-        "installation": {"sta": 280.0, "wl": 180.0, "bl": 0.0},
+        "weight_balance": {"mass_kg": 15.2},
     }, headers=auth_headers)
     assert resp.status_code == 201
     equip1_id = resp.json()["id"]
@@ -61,7 +60,7 @@ async def test_full_equipment_management_workflow(client: AsyncClient, auth_head
         "name": "惯性基准系统",
         "ata_chapter": "34-22",
         "equipment_type": "LRU",
-        "weight_balance": {"mass_kg": 12.8, "arm_sta": 300.0},
+        "weight_balance": {"mass_kg": 12.8},
     }, headers=auth_headers)
     assert resp.status_code == 201
     equip2_id = resp.json()["id"]
@@ -131,12 +130,12 @@ async def test_full_equipment_management_workflow(client: AsyncClient, auth_head
     assert resp.status_code == 200
     equip_detail = resp.json()
     assert equip_detail["part_number"].startswith("FMC-")
-    assert equip_detail["installation"]["sta"] == 280.0
+    assert equip_detail["weight_balance"]["mass_kg"] == 15.2
 
     # 16. Update equipment
     resp = await client.put(f"/api/equipment/{equip1_id}", json={
         "name": "飞行管理计算机 (升级版)",
-        "weight_balance": {"mass_kg": 14.5, "arm_sta": 280.0},
+        "weight_balance": {"mass_kg": 14.5},
     }, headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json()["name"] == "飞行管理计算机 (升级版)"

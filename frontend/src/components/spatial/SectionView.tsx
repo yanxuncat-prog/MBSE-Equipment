@@ -12,7 +12,7 @@ interface Props {
 export function SectionView({ equipment, staCurrent, selectedId, onSelect }: Props) {
   // Filter equipment near the current STA (within +/-30)
   const nearby = equipment.filter(e => {
-    const sta = e.installation?.sta;
+    const sta = e.config_data?.sta;
     return sta != null && Math.abs(sta - staCurrent) <= 30;
   });
 

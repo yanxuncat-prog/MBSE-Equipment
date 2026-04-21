@@ -3,10 +3,11 @@ from collections import Counter
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Equipment, Installation, WeightBalance, Zone, Configuration
-from app.models.configuration import config_equipment
+from app.models import Equipment, WeightBalance, Zone, Configuration, ConfigEquipment
+from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.models.user import User
 from app.api.deps import get_current_user
 
@@ -21,33 +22,28 @@ async def get_dashboard_stats(
 ):
     cid = uuid.UUID(config_id)
 
-    # Equipment in this config with sub-tables
-    from sqlalchemy.orm import selectinload
+    # Load config equipment entries with zone info
     result = await db.execute(
-        select(Equipment)
-        .join(config_equipment, config_equipment.c.equipment_id == Equipment.id)
-        .where(config_equipment.c.config_id == cid)
+        select(ConfigEquipmentModel)
         .options(
-            selectinload(Equipment.installation),
-            selectinload(Equipment.weight_balance),
+            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
+            selectinload(ConfigEquipmentModel.zone),
         )
+        .where(ConfigEquipmentModel.config_id == cid)
     )
-    equipment_list = list(result.scalars().unique().all())
+    ce_list = list(result.scalars().unique().all())
 
     # ATA distribution
     ata_counter = Counter()
-    for e in equipment_list:
-        ata_counter[e.ata_chapter] += 1
+    for ce in ce_list:
+        ata_counter[ce.equipment.ata_chapter] += 1
     ata_distribution = [{"ata": k, "count": v} for k, v in ata_counter.most_common(10)]
 
-    # Zone distribution
+    # Zone distribution (zone is now on ConfigEquipment, not on Installation)
     zone_counter = Counter()
-    zone_result = await db.execute(select(Zone))
-    zone_map = {z.id: z.name for z in zone_result.scalars().all()}
-    for e in equipment_list:
-        if e.installation and e.installation.zone_id:
-            zone_name = zone_map.get(e.installation.zone_id, "未知")
-            zone_counter[zone_name] += 1
+    for ce in ce_list:
+        if ce.zone:
+            zone_counter[ce.zone.name] += 1
         else:
             zone_counter["未知"] += 1
     zone_distribution = [{"zone": k, "count": v} for k, v in zone_counter.most_common()]
@@ -56,7 +52,8 @@ async def get_dashboard_stats(
     weight_by_ata = Counter()
     total_weight = 0.0
     weight_count = 0
-    for e in equipment_list:
+    for ce in ce_list:
+        e = ce.equipment
         if e.weight_balance:
             weight_by_ata[e.ata_chapter] += e.weight_balance.mass_kg
             total_weight += e.weight_balance.mass_kg
@@ -71,7 +68,7 @@ async def get_dashboard_stats(
     config_count = config_count_result.scalar() or 0
 
     return {
-        "equipment_count": len(equipment_list),
+        "equipment_count": len(ce_list),
         "weight_total_kg": round(total_weight, 1),
         "weight_equipped_count": weight_count,
         "config_count": config_count,

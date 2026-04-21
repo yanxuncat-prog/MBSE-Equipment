@@ -26,6 +26,5 @@ class Equipment(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     supplier: Mapped["Supplier | None"] = relationship(back_populates="equipment_list")
-    installation: Mapped["Installation | None"] = relationship(back_populates="equipment", uselist=False, cascade="all, delete-orphan")
     weight_balance: Mapped["WeightBalance | None"] = relationship(back_populates="equipment", uselist=False, cascade="all, delete-orphan")
     electrical_load: Mapped["ElectricalLoad | None"] = relationship(back_populates="equipment", uselist=False, cascade="all, delete-orphan")

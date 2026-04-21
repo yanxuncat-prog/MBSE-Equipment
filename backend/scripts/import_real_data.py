@@ -4,6 +4,7 @@ import re
 import sys
 import os
 import uuid
+import random
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -13,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import engine, async_session_factory, Base
 from app.models import (
-    User, Program, Series, Configuration, Equipment, Installation,
+    User, Program, Series, Configuration, Equipment, ConfigEquipment,
     WeightBalance, ElectricalLoad, Zone, BusDefinition, Supplier,
-    AuditLog, config_equipment,
+    AuditLog,
 )
 from passlib.context import CryptContext
 
@@ -30,7 +31,7 @@ _candidates = [
 DATA_DIR = next((p for p in _candidates if os.path.isdir(p)), _candidates[0])
 print(f"Data directory: {DATA_DIR}")
 
-# Zone mapping: 安装区域文本 → zone_code + zone_name
+# Zone mapping: 安装区域文本 -> zone_code + zone_name
 ZONE_MAPPING = {
     "机头": ("100", "机头段"),
     "驾驶舱": ("110", "驾驶舱"),
@@ -45,7 +46,7 @@ ZONE_MAPPING = {
     "设备架": ("110", "驾驶舱"),
 }
 
-# ATA chapter cleanup: "EATA23 通信系统" → "23"
+# ATA chapter cleanup: "EATA23 通信系统" -> "23"
 def clean_ata(raw: str) -> str:
     if not raw:
         return "99"
@@ -105,7 +106,7 @@ async def create_base_data(db: AsyncSession) -> dict:
     await db.flush()
 
     # Zones (based on real area data)
-    zone_map = {}  # zone_code → Zone object
+    zone_map = {}  # zone_code -> Zone object
     zones_def = [
         ("100", "机头段", 0, 120, 100, 250),
         ("110", "驾驶舱", 120, 350, 150, 280),
@@ -150,8 +151,13 @@ async def create_base_data(db: AsyncSession) -> dict:
     }
 
 
+# Per-equipment installation context: zone, position, bus assignment
+# Stored temporarily during import, then written to ConfigEquipment when creating configs
+_equip_install_data: dict[uuid.UUID, dict] = {}  # equipment.id -> {zone_id, sta, wl, bl, rack_position, bus_id}
+
+
 async def import_main_list(db: AsyncSession, base: dict) -> dict:
-    """Import from 机载系统设备清单_2026.0415.xlsx — 1&2号构型 sheet."""
+    """Import from 机载系统设备清单_2026.0415.xlsx -- 1&2号构型 sheet."""
     filepath = os.path.join(DATA_DIR, "机载系统设备清单_2026.0415.xlsx")
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
@@ -159,7 +165,7 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
 
     wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
     zone_map = base["zone_map"]
-    equip_by_number = {}  # part_number → Equipment
+    equip_by_number = {}  # part_number -> Equipment
 
     # Column index mapping per sheet (X号构型 has extra col at index 7)
     # 1&2号: weight=11, area=5, is_electric=13
@@ -194,14 +200,12 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 existing = equip_by_number[part_number]
                 weight = row[cols["weight"]]
                 if weight is not None and isinstance(weight, (int, float)):
-                    # Check if existing has no weight — supplement it
+                    # Check if existing has no weight -- supplement it
                     from sqlalchemy import select as sel
                     wb_check = await db.execute(sel(WeightBalance).where(WeightBalance.equipment_id == existing.id))
                     if wb_check.scalar_one_or_none() is None:
                         try:
-                            zone_obj = zone_map.get(get_zone_code(str(row[5] or "").strip())[0], zone_map.get("999"))
-                            approx_sta = (zone_obj.sta_from + zone_obj.sta_to) / 2 if zone_obj else 500
-                            wb_new = WeightBalance(equipment_id=existing.id, mass_kg=float(weight), arm_sta=approx_sta)
+                            wb_new = WeightBalance(equipment_id=existing.id, mass_kg=float(weight))
                             db.add(wb_new)
                             await db.flush()
                         except Exception:
@@ -231,25 +235,20 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 skipped += 1
                 continue
 
-            # Installation
+            # Compute installation position data (will be stored on ConfigEquipment later)
             zone_obj = zone_map.get(zone_code, zone_map.get("999"))
-            # Approximate STA based on zone
             approx_sta = (zone_obj.sta_from + zone_obj.sta_to) / 2 if zone_obj else 500
             approx_wl = (zone_obj.wl_from + zone_obj.wl_to) / 2 if zone_obj else 180
-            # Add some spread within zone
-            import random
             sta_offset = random.uniform(-50, 50)
             wl_offset = random.uniform(-20, 20)
 
-            inst = Installation(
-                equipment_id=equip.id,
-                zone_id=zone_obj.id if zone_obj else None,
-                sta=approx_sta + sta_offset,
-                wl=approx_wl + wl_offset,
-                bl=random.uniform(-30, 30),
-                rack_position=rack_pos if rack_pos else None,
-            )
-            db.add(inst)
+            _equip_install_data[equip.id] = {
+                "zone_id": zone_obj.id if zone_obj else None,
+                "sta": approx_sta + sta_offset,
+                "wl": approx_wl + wl_offset,
+                "bl": random.uniform(-30, 30),
+                "rack_position": rack_pos if rack_pos else None,
+            }
 
             # Weight (skip #N/A, strings, etc.)
             if weight is not None and isinstance(weight, (int, float)):
@@ -259,7 +258,6 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                         wb_obj = WeightBalance(
                             equipment_id=equip.id,
                             mass_kg=mass,
-                            arm_sta=approx_sta + sta_offset,
                         )
                         db.add(wb_obj)
                 except (ValueError, TypeError):
@@ -288,7 +286,7 @@ async def import_supplier_info(db: AsyncSession, equip_map: dict, base: dict):
     print(f"\nImporting supplier info from 0号机: {len(rows)} rows")
 
     # Collect unique suppliers
-    supplier_cache = {}  # name → Supplier object
+    supplier_cache = {}  # name -> Supplier object
     updated = 0
 
     for row in rows:
@@ -319,17 +317,19 @@ async def import_supplier_info(db: AsyncSession, equip_map: dict, base: dict):
 
 
 async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
-    """Create configurations and assign equipment."""
+    """Create configurations and assign equipment via ConfigEquipment with position/bus data."""
     series = base["series"]
     admin = base["admin"]
+    bus_map = base["bus_map"]
 
     # Load all equipment
     result = await db.execute(select(Equipment))
     all_equip = result.scalars().all()
     print(f"\nTotal equipment in DB: {len(all_equip)}")
 
-    # Read which equipment belongs to which config from the source files
-    # For now, create 3 configs with all equipment, then remove some from X号
+    # Assign bus IDs round-robin for electric equipment
+    bus_list = list(bus_map.values())
+
     configs_to_create = [
         ("V1.0-基线", "baseline", "1/2号机基线构型"),
         ("V1.1-0号机", "draft", "0号机构型（首飞）"),
@@ -347,10 +347,27 @@ async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
         db.add(config)
         await db.flush()
 
-        for equip in all_equip:
-            await db.execute(
-                config_equipment.insert().values(config_id=config.id, equipment_id=equip.id)
+        for idx, equip in enumerate(all_equip):
+            install = _equip_install_data.get(equip.id, {})
+
+            # Assign a bus for electric LRU equipment (round-robin)
+            bus_id = None
+            if equip.equipment_type == "LRU" and bus_list:
+                bus_id = bus_list[idx % len(bus_list)].id
+
+            ce = ConfigEquipment(
+                config_id=config.id,
+                equipment_id=equip.id,
+                zone_id=install.get("zone_id"),
+                sta=install.get("sta"),
+                wl=install.get("wl"),
+                bl=install.get("bl"),
+                rack_position=install.get("rack_position"),
+                bus_id=bus_id,
             )
+            db.add(ce)
+
+        await db.flush()
         print(f"  Config '{version}' ({status}): {len(all_equip)} equipment")
 
     await db.commit()
@@ -358,7 +375,7 @@ async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
 
 async def main():
     print("=" * 60)
-    print("AeroEquip — Real CE-25A Data Import")
+    print("AeroEquip -- Real CE-25A Data Import")
     print("=" * 60)
 
     await reset_and_init(None)
@@ -373,7 +390,7 @@ async def main():
     async with async_session_factory() as db:
         equip_count = (await db.execute(select(Equipment))).scalars().all()
         wb_count = (await db.execute(select(WeightBalance))).scalars().all()
-        inst_count = (await db.execute(select(Installation))).scalars().all()
+        ce_count = (await db.execute(select(ConfigEquipment))).scalars().all()
         sup_count = (await db.execute(select(Supplier))).scalars().all()
         config_count = (await db.execute(select(Configuration))).scalars().all()
         zone_count = (await db.execute(select(Zone))).scalars().all()
@@ -381,7 +398,7 @@ async def main():
     print("\n" + "=" * 60)
     print("Import Complete!")
     print(f"  设备: {len(equip_count)}")
-    print(f"  安装位置: {len(inst_count)}")
+    print(f"  构型设备关联: {len(ce_count)}")
     print(f"  重量数据: {len(wb_count)}")
     print(f"  供应商: {len(sup_count)}")
     print(f"  区域: {len(zone_count)}")

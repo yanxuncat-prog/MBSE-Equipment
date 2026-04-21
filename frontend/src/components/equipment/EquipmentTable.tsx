@@ -99,20 +99,49 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
   };
 
   const columns: ColumnsType<Equipment> = [
-    { title: '件号', dataIndex: 'part_number', key: 'part_number', width: 160 },
+    { title: '件号', dataIndex: 'part_number', key: 'part_number', width: 150 },
     { title: '名称', dataIndex: 'name', key: 'name', width: 200, ellipsis: true },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 60 },
-    { title: '类型', dataIndex: 'equipment_type', key: 'type', width: 80 },
+    { title: '类型', dataIndex: 'equipment_type', key: 'type', width: 70 },
     {
-      title: '重量(kg)', key: 'mass', width: 90, align: 'right',
+      title: '区域', key: 'zone', width: 140, ellipsis: true,
+      render: (_, r) => {
+        const zone = r.config_data?.zone_name || '';
+        const rack = r.config_data?.rack_position || '';
+        if (zone && rack) return `${zone}-${rack}`;
+        return zone || rack || '-';
+      },
+    },
+    {
+      title: 'STA', key: 'sta', width: 60, align: 'right',
+      render: (_, r) => r.config_data?.sta?.toFixed(0) || '-',
+    },
+    {
+      title: 'WL', key: 'wl', width: 60, align: 'right',
+      render: (_, r) => r.config_data?.wl?.toFixed(0) || '-',
+    },
+    {
+      title: 'BL', key: 'bl', width: 60, align: 'right',
+      render: (_, r) => r.config_data?.bl?.toFixed(0) || '-',
+    },
+    {
+      title: '重量(kg)', key: 'mass', width: 80, align: 'right',
       render: (_, r) => r.weight_balance?.mass_kg?.toFixed(1) || '-',
     },
     {
-      title: '区域', key: 'zone', width: 120, ellipsis: true,
-      render: (_, r) => r.installation?.rack_position || '-',
+      title: '母线', key: 'bus', width: 100, ellipsis: true,
+      render: (_, r) => r.config_data?.bus_name || '-',
     },
     {
-      title: '状态', dataIndex: 'status', key: 'status', width: 80,
+      title: '功耗(kVA)', key: 'power', width: 80, align: 'right',
+      render: (_, r) => r.electrical_load?.power_kva_normal?.toFixed(1) || '-',
+    },
+    {
+      title: '供应商', key: 'supplier', width: 120, ellipsis: true,
+      render: (_, r) => r.supplier_name || '-',
+    },
+    {
+      title: '状态', dataIndex: 'status', key: 'status', width: 70,
       render: (s: string) => {
         const cfg = STATUS_TAGS[s] || { color: 'default', text: s };
         return <Tag color={cfg.color}>{cfg.text}</Tag>;
@@ -140,7 +169,7 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
         loading={loading}
         size="small"
         pagination={false}
-        scroll={{ x: 800 }}
+        scroll={{ x: 1300 }}
         onRow={(record) => ({
           onClick: () => onSelect(record),
           style: { cursor: 'pointer' },

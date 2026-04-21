@@ -3,8 +3,9 @@ from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, Installation, WeightBalance, ElectricalLoad, AuditLog
-from app.schemas.equipment import EquipmentCreate, EquipmentUpdate
+from app.models import Equipment, WeightBalance, ElectricalLoad, AuditLog, ConfigEquipment
+from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
+from app.schemas.equipment import EquipmentCreate, EquipmentUpdate, ConfigEquipmentData, EquipmentResponse
 
 
 async def list_equipment(
@@ -15,37 +16,62 @@ async def list_equipment(
     search: str | None = None,
     offset: int = 0,
     limit: int = 50,
-) -> tuple[list[Equipment], int]:
+) -> tuple[list[EquipmentResponse], int]:
     query = (
         select(Equipment)
         .options(
-            selectinload(Equipment.installation),
             selectinload(Equipment.weight_balance),
             selectinload(Equipment.electrical_load),
+            selectinload(Equipment.supplier),
         )
     )
     count_query = select(func.count(Equipment.id))
 
+    # When querying within a config, join ConfigEquipment to get config-level data
+    ce_alias = None
     if config_id:
-        from app.models.configuration import config_equipment
-        query = query.join(config_equipment, config_equipment.c.equipment_id == Equipment.id).where(
-            config_equipment.c.config_id == uuid.UUID(config_id)
+        ce_alias = ConfigEquipmentModel
+        query = (
+            query
+            .join(ce_alias, ce_alias.equipment_id == Equipment.id)
+            .options(
+                selectinload(Equipment.weight_balance),
+                selectinload(Equipment.electrical_load),
+                selectinload(Equipment.supplier),
+            )
+            .add_columns(
+                ce_alias.zone_id,
+                ce_alias.sta,
+                ce_alias.wl,
+                ce_alias.bl,
+                ce_alias.rack_position,
+                ce_alias.bus_id,
+                ce_alias.notes,
+            )
+            .where(ce_alias.config_id == uuid.UUID(config_id))
         )
-        count_query = count_query.join(config_equipment, config_equipment.c.equipment_id == Equipment.id).where(
-            config_equipment.c.config_id == uuid.UUID(config_id)
-        )
+        count_query = count_query.join(
+            ce_alias, ce_alias.equipment_id == Equipment.id
+        ).where(ce_alias.config_id == uuid.UUID(config_id))
 
     if ata_chapter:
         query = query.where(Equipment.ata_chapter.startswith(ata_chapter))
         count_query = count_query.where(Equipment.ata_chapter.startswith(ata_chapter))
 
     if zone_id:
-        query = query.join(Installation, Installation.equipment_id == Equipment.id, isouter=True).where(
-            Installation.zone_id == uuid.UUID(zone_id)
-        )
-        count_query = count_query.join(Installation, Installation.equipment_id == Equipment.id, isouter=True).where(
-            Installation.zone_id == uuid.UUID(zone_id)
-        )
+        if ce_alias is not None:
+            query = query.where(ce_alias.zone_id == uuid.UUID(zone_id))
+            count_query = count_query.join(
+                ConfigEquipmentModel, ConfigEquipmentModel.equipment_id == Equipment.id, isouter=True
+            ).where(ConfigEquipmentModel.zone_id == uuid.UUID(zone_id))
+        else:
+            # Without a config context, filter by zone across all config_equipment rows
+            query = query.join(
+                ConfigEquipmentModel, ConfigEquipmentModel.equipment_id == Equipment.id, isouter=True
+            ).where(ConfigEquipmentModel.zone_id == uuid.UUID(zone_id))
+            count_query = count_query.join(
+                ConfigEquipmentModel, ConfigEquipmentModel.equipment_id == Equipment.id, isouter=True
+            ).where(ConfigEquipmentModel.zone_id == uuid.UUID(zone_id))
 
     if search:
         pattern = f"%{search}%"
@@ -57,7 +83,60 @@ async def list_equipment(
 
     query = query.offset(offset).limit(limit).order_by(Equipment.ata_chapter, Equipment.part_number)
     result = await db.execute(query)
-    items = list(result.scalars().unique().all())
+
+    items: list[EquipmentResponse] = []
+    if config_id:
+        # Result rows contain (Equipment, zone_id, sta, wl, bl, rack_position, bus_id, notes)
+        seen = set()
+        for row in result.unique().all():
+            equip = row[0]
+            if equip.id in seen:
+                continue
+            seen.add(equip.id)
+
+            ce_zone_id = row[1]
+            ce_sta = row[2]
+            ce_wl = row[3]
+            ce_bl = row[4]
+            ce_rack_position = row[5]
+            ce_bus_id = row[6]
+            ce_notes = row[7]
+
+            # Resolve zone name and bus name via lazy load or direct query
+            zone_name = None
+            if ce_zone_id:
+                from app.models import Zone
+                zone_obj = await db.get(Zone, ce_zone_id)
+                zone_name = zone_obj.name if zone_obj else None
+
+            bus_name = None
+            if ce_bus_id:
+                from app.models import BusDefinition
+                bus_obj = await db.get(BusDefinition, ce_bus_id)
+                bus_name = bus_obj.bus_name if bus_obj else None
+
+            config_data = ConfigEquipmentData(
+                zone_id=ce_zone_id,
+                zone_name=zone_name,
+                sta=ce_sta,
+                wl=ce_wl,
+                bl=ce_bl,
+                rack_position=ce_rack_position,
+                bus_id=ce_bus_id,
+                bus_name=bus_name,
+                notes=ce_notes,
+            )
+
+            resp = EquipmentResponse.model_validate(equip)
+            resp.config_data = config_data
+            resp.supplier_name = equip.supplier.name if equip.supplier else None
+            items.append(resp)
+    else:
+        rows = list(result.scalars().unique().all())
+        for equip in rows:
+            resp = EquipmentResponse.model_validate(equip)
+            resp.supplier_name = equip.supplier.name if equip.supplier else None
+            items.append(resp)
 
     return items, total
 
@@ -66,9 +145,9 @@ async def get_equipment(db: AsyncSession, equipment_id: str) -> Equipment | None
     result = await db.execute(
         select(Equipment)
         .options(
-            selectinload(Equipment.installation),
             selectinload(Equipment.weight_balance),
             selectinload(Equipment.electrical_load),
+            selectinload(Equipment.supplier),
         )
         .where(Equipment.id == uuid.UUID(equipment_id))
     )
@@ -88,31 +167,16 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
     db.add(equip)
     await db.flush()
 
-    if data.installation:
-        inst = Installation(
-            equipment_id=equip.id,
-            zone_id=uuid.UUID(data.installation.zone_id) if data.installation.zone_id else None,
-            sta=data.installation.sta,
-            wl=data.installation.wl,
-            bl=data.installation.bl,
-            rack_position=data.installation.rack_position,
-        )
-        db.add(inst)
-
     if data.weight_balance:
         wb = WeightBalance(
             equipment_id=equip.id,
             mass_kg=data.weight_balance.mass_kg,
-            arm_sta=data.weight_balance.arm_sta,
-            arm_bl=data.weight_balance.arm_bl,
-            arm_wl=data.weight_balance.arm_wl,
         )
         db.add(wb)
 
     if data.electrical_load:
         el = ElectricalLoad(
             equipment_id=equip.id,
-            bus_id=uuid.UUID(data.electrical_load.bus_id),
             power_kva_normal=data.electrical_load.power_kva_normal,
             power_kva_emergency=data.electrical_load.power_kva_emergency,
             power_kva_max=data.electrical_load.power_kva_max,
@@ -128,7 +192,7 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
     )
     db.add(audit)
     await db.commit()
-    await db.refresh(equip, ["installation", "weight_balance", "electrical_load"])
+    await db.refresh(equip, ["weight_balance", "electrical_load"])
     return equip
 
 
@@ -138,27 +202,12 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
         return None
 
     old_values = {}
-    update_fields = data.model_dump(exclude_unset=True, exclude={"installation", "weight_balance", "electrical_load"})
+    update_fields = data.model_dump(exclude_unset=True, exclude={"weight_balance", "electrical_load"})
     for field, value in update_fields.items():
         old_values[field] = getattr(equip, field)
         if field == "supplier_id" and value:
             value = uuid.UUID(value)
         setattr(equip, field, value)
-
-    if data.installation is not None:
-        if equip.installation:
-            for k, v in data.installation.model_dump().items():
-                if k == "zone_id" and v:
-                    v = uuid.UUID(v)
-                setattr(equip.installation, k, v)
-        else:
-            inst = Installation(
-                equipment_id=equip.id,
-                zone_id=uuid.UUID(data.installation.zone_id) if data.installation.zone_id else None,
-                sta=data.installation.sta, wl=data.installation.wl, bl=data.installation.bl,
-                rack_position=data.installation.rack_position,
-            )
-            db.add(inst)
 
     if data.weight_balance is not None:
         if equip.weight_balance:
@@ -171,13 +220,9 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
     if data.electrical_load is not None:
         if equip.electrical_load:
             for k, v in data.electrical_load.model_dump().items():
-                if k == "bus_id" and v:
-                    v = uuid.UUID(v)
                 setattr(equip.electrical_load, k, v)
         else:
-            el_data = data.electrical_load.model_dump()
-            el_data["bus_id"] = uuid.UUID(el_data["bus_id"])
-            el = ElectricalLoad(equipment_id=equip.id, **el_data)
+            el = ElectricalLoad(equipment_id=equip.id, **data.electrical_load.model_dump())
             db.add(el)
 
     audit = AuditLog(
@@ -187,7 +232,7 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
     )
     db.add(audit)
     await db.commit()
-    await db.refresh(equip, ["installation", "weight_balance", "electrical_load"])
+    await db.refresh(equip, ["weight_balance", "electrical_load"])
     return equip
 
 

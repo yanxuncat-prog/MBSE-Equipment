@@ -19,7 +19,7 @@ export function SpatialViewPage() {
     if (!activeConfigId) return;
     try {
       const result = await listEquipment({ config_id: activeConfigId, limit: 200 });
-      setEquipment(result.items.filter(e => e.installation));
+      setEquipment(result.items.filter(e => e.config_data));
     } catch {
       message.error('加载设备失败');
     }
