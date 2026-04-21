@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
-import { Tabs, Slider, Space, Typography } from 'antd';
+import React, { useState, lazy, Suspense } from 'react';
+import { Tabs, Slider, Space, Typography, Spin } from 'antd';
 import type { Equipment, Zone } from '../../types';
 import { AircraftSideView } from './AircraftSideView';
 import { AircraftTopView } from './AircraftTopView';
 import { SectionView } from './SectionView';
 
 const { Text } = Typography;
+
+// Lazy load 3D scene (Three.js is heavy)
+const AircraftScene3D = lazy(() =>
+  import('../spatial3d/AircraftScene3D').then(m => ({ default: m.AircraftScene3D }))
+);
 
 interface Props {
   equipment: Equipment[];
@@ -20,7 +25,23 @@ export function SpatialView({ equipment, zones, selectedId, onSelect }: Props) {
   return (
     <div style={{ height: '100%' }}>
       <Tabs
+        defaultActiveKey="3d"
         items={[
+          {
+            key: '3d',
+            label: '3D 视图',
+            children: (
+              <div style={{ height: 'calc(100vh - 240px)', minHeight: 500 }}>
+                <Suspense fallback={
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Spin size="large" tip="加载 3D 引擎..." />
+                  </div>
+                }>
+                  <AircraftScene3D equipment={equipment} zones={zones} selectedId={selectedId} onSelect={onSelect} />
+                </Suspense>
+              </div>
+            ),
+          },
           {
             key: 'side',
             label: '侧视图',
