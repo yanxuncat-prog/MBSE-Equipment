@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { message } from 'antd';
 import { EquipmentTable } from '../components/equipment/EquipmentTable';
 import { EquipmentForm } from '../components/equipment/EquipmentForm';
@@ -7,6 +7,7 @@ import { ConstraintPanel } from '../components/constraints/ConstraintPanel';
 import { useConstraintWS } from '../hooks/useConstraintWS';
 import { useConfigStore } from '../store/configStore';
 import { createEquipment, updateEquipment } from '../api/equipment';
+import { workstationActions } from '../components/layout/GlobalNav';
 import type { Equipment } from '../types';
 
 export function WorkstationPage() {
@@ -18,8 +19,18 @@ export function WorkstationPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedEquip, setSelectedEquip] = useState<Equipment | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [search, setSearch] = useState('');
 
-  const handleAdd = () => { setEditEquip(null); setFormOpen(true); };
+  // Register callbacks for GlobalNav header buttons
+  useEffect(() => {
+    workstationActions.onAdd = () => { setEditEquip(null); setFormOpen(true); };
+    workstationActions.onSearch = (value: string) => setSearch(value);
+    return () => {
+      workstationActions.onAdd = null;
+      workstationActions.onSearch = null;
+    };
+  }, []);
+
   const handleEdit = (e: Equipment) => { setEditEquip(e); setFormOpen(true); };
   const handleSelect = (e: Equipment) => { setSelectedEquip(e); setDetailOpen(true); };
 
@@ -43,7 +54,12 @@ export function WorkstationPage() {
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
       <div style={{ flex: 1, overflow: 'auto', paddingRight: 16 }} key={refreshKey}>
-        <EquipmentTable configId={activeConfigId} onAdd={handleAdd} onEdit={handleEdit} onSelect={handleSelect} />
+        <EquipmentTable
+          configId={activeConfigId}
+          search={search}
+          onEdit={handleEdit}
+          onSelect={handleSelect}
+        />
       </div>
       <ConstraintPanel report={report} />
       <EquipmentForm open={formOpen} equipment={editEquip} onSave={handleSave} onCancel={() => setFormOpen(false)} />

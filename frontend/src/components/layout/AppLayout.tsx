@@ -26,7 +26,7 @@ export function AppLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider width={200} theme="dark">
+      <Sider width={200} theme="dark" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100 }}>
         <div style={{ height: 48, margin: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>AeroEquip</span>
         </div>
@@ -38,11 +38,21 @@ export function AppLayout() {
           onClick={({ key }) => navigate(key)}
         />
       </Sider>
-      <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center' }}>
+      <Layout style={{ marginLeft: 200 }}>
+        <Header style={{
+          background: '#fff',
+          padding: '0 24px',
+          borderBottom: '1px solid #f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 90,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        }}>
           <GlobalNav />
         </Header>
-        <Content style={{ margin: 16, padding: 24, background: '#fff', borderRadius: 8, minHeight: 360 }}>
+        <Content style={{ margin: 16, padding: 24, background: '#fff', borderRadius: 8, minHeight: 'calc(100vh - 96px)' }}>
           <Outlet />
         </Content>
       </Layout>
