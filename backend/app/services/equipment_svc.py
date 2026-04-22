@@ -55,6 +55,11 @@ async def list_equipment(
                 ce_alias.in_pace_drawing,
                 ce_alias.layout_adjustment,
                 ce_alias.use_batch0_device,
+                ce_alias.procurement_status,
+                ce_alias.procurement_location,
+                ce_alias.planned_delivery_date,
+                ce_alias.estimated_delivery_date,
+                ce_alias.procurement_notes,
             )
             .where(ce_alias.config_id == uuid.UUID(config_id))
         )
@@ -117,6 +122,11 @@ async def list_equipment(
             ce_in_pace_drawing = row[13]
             ce_layout_adjustment = row[14]
             ce_use_batch0_device = row[15]
+            ce_procurement_status = row[16]
+            ce_procurement_location = row[17]
+            ce_planned_delivery_date = row[18]
+            ce_estimated_delivery_date = row[19]
+            ce_procurement_notes = row[20]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -149,6 +159,11 @@ async def list_equipment(
                 in_pace_drawing=ce_in_pace_drawing,
                 layout_adjustment=ce_layout_adjustment,
                 use_batch0_device=ce_use_batch0_device,
+                procurement_status=ce_procurement_status,
+                procurement_location=ce_procurement_location,
+                planned_delivery_date=str(ce_planned_delivery_date) if ce_planned_delivery_date else None,
+                estimated_delivery_date=str(ce_estimated_delivery_date) if ce_estimated_delivery_date else None,
+                procurement_notes=ce_procurement_notes,
             )
 
             resp = EquipmentResponse.model_validate(equip)

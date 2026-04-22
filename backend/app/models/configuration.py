@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import String, Text, Float, ForeignKey, DateTime, Enum as SAEnum, func
+from sqlalchemy import String, Text, Float, Date, ForeignKey, DateTime, Enum as SAEnum, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -37,6 +37,13 @@ class ConfigEquipment(Base):
     in_pace_drawing: Mapped[bool | None] = mapped_column(comment="是否已在PACE图纸中体现")
     layout_adjustment: Mapped[str | None] = mapped_column(String(500), comment="总体布置调整需求")
     use_batch0_device: Mapped[bool | None] = mapped_column(comment="是否使用0号机设备")
+
+    # Procurement tracking
+    procurement_status: Mapped[str | None] = mapped_column(String(20), comment="采购状态: inquiry/contracted/producing/inspecting/shipping/delivered")
+    procurement_location: Mapped[str | None] = mapped_column(String(50), comment="设备当前位置城市")
+    planned_delivery_date: Mapped[date | None] = mapped_column(Date, comment="计划交付日期")
+    estimated_delivery_date: Mapped[date | None] = mapped_column(Date, comment="预计/实际交付日期")
+    procurement_notes: Mapped[str | None] = mapped_column(Text, comment="采购备注")
 
     # Relationships
     equipment: Mapped["Equipment"] = relationship()

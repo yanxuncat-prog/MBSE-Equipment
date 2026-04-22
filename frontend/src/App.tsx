@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage';
 import { GuidePage } from './pages/GuidePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EquipmentDefPage } from './pages/EquipmentDefPage';
+import { ProcurementPage } from './pages/ProcurementPage';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/workstation" element={<WorkstationPage />} />
             <Route path="/config" element={<ConfigPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/procurement" element={<ProcurementPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

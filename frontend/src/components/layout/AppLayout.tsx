@@ -10,6 +10,7 @@ import {
   HolderOutlined,
   DatabaseOutlined,
   EyeOutlined,
+  ShoppingOutlined,
 } from '@ant-design/icons';
 import { GlobalNav } from './GlobalNav';
 
@@ -27,6 +28,7 @@ const DEFAULT_MENU: MenuItem[] = [
   { key: '/workstation', icon: <EyeOutlined />, label: '构型查看' },
   { key: '/config', icon: <BranchesOutlined />, label: '构型管理' },
   { key: '/dashboard', icon: <DashboardOutlined />, label: '管理看板' },
+  { key: '/procurement', icon: <ShoppingOutlined />, label: '采购进度' },
 ];
 
 const STORAGE_KEY = 'aeroequip_menu_order';

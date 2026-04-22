@@ -18,6 +18,11 @@ export interface ConfigEquipmentData {
   in_pace_drawing: boolean | null;
   layout_adjustment: string | null;
   use_batch0_device: boolean | null;
+  procurement_status: string | null;
+  procurement_location: string | null;
+  planned_delivery_date: string | null;
+  estimated_delivery_date: string | null;
+  procurement_notes: string | null;
 }
 
 export interface WeightBalance {

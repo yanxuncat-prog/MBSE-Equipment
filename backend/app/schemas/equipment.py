@@ -22,6 +22,11 @@ class ConfigEquipmentData(BaseModel):
     in_pace_drawing: bool | None = None
     layout_adjustment: str | None = None
     use_batch0_device: bool | None = None
+    procurement_status: str | None = None
+    procurement_location: str | None = None
+    planned_delivery_date: str | None = None
+    estimated_delivery_date: str | None = None
+    procurement_notes: str | None = None
 
 
 class WeightBalanceData(BaseModel):
