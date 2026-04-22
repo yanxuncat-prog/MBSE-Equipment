@@ -1,26 +1,49 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Tag, Space, Typography, Spin, Timeline } from 'antd';
+import { useEffect, useState, useCallback } from 'react';
 import {
-  CheckCircleOutlined, WarningOutlined, StopOutlined,
-  ToolOutlined, DashboardOutlined, BranchesOutlined,
-} from '@ant-design/icons';
+  CircleCheck, AlertTriangle, CircleX, Loader2,
+} from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { useConfigStore } from '../store/configStore';
 import { validateConfig } from '../api/constraints';
 import { listConfigs } from '../api/configurations';
 import client from '../api/client';
-import type { ValidationReport, EngineResult, Configuration } from '../types';
+import type { ValidationReport, Configuration } from '../types';
 import { CGEnvelopeChart } from '../components/charts/CGEnvelopeChart';
 import { BusStatusDots } from '../components/charts/BusStatusDots';
 import { ATADistributionBar } from '../components/charts/ATADistributionBar';
 import { ZoneDonutChart } from '../components/charts/ZoneDonutChart';
 
-const { Title, Text } = Typography;
-
 const STATUS_CFG = {
-  pass: { color: '#34C759', bg: '#f0fff4', border: '#b7eb8f', icon: <CheckCircleOutlined />, text: '全机约束状态：正常' },
-  warning: { color: '#FF9500', bg: '#fffbe6', border: '#ffe58f', icon: <WarningOutlined />, text: '全机约束状态：注意' },
-  blocked: { color: '#FF3B30', bg: '#fff2f0', border: '#ffa39e', icon: <StopOutlined />, text: '全机约束状态：超限' },
+  pass: {
+    color: 'text-green-500',
+    bg: 'bg-green-50 dark:bg-green-950/30',
+    border: 'border-green-200 dark:border-green-800',
+    icon: <CircleCheck className="size-6" />,
+    text: '全机约束状态：正常',
+  },
+  warning: {
+    color: 'text-orange-500',
+    bg: 'bg-orange-50 dark:bg-orange-950/30',
+    border: 'border-orange-200 dark:border-orange-800',
+    icon: <AlertTriangle className="size-6" />,
+    text: '全机约束状态：注意',
+  },
+  blocked: {
+    color: 'text-red-500',
+    bg: 'bg-red-50 dark:bg-red-950/30',
+    border: 'border-red-200 dark:border-red-800',
+    icon: <CircleX className="size-6" />,
+    text: '全机约束状态：超限',
+  },
 };
+
+const BAR_COLORS = [
+  'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500',
+  'bg-sky-400', 'bg-blue-500', 'bg-purple-500', 'bg-teal-500',
+  'bg-amber-600', 'bg-gray-500',
+];
 
 export function DashboardPage() {
   const { activeConfigId, activeSeriesId } = useConfigStore();
@@ -51,11 +74,19 @@ export function DashboardPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   if (!activeConfigId) {
-    return <div style={{ textAlign: 'center', padding: 80 }}><Text type="secondary">请先在顶部选择构型</Text></div>;
+    return (
+      <div className="py-20 text-center text-muted-foreground">
+        请先在顶部选择构型
+      </div>
+    );
   }
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /></div>;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const overallStatus = (report?.overall_status || 'pass') as keyof typeof STATUS_CFG;
@@ -66,147 +97,220 @@ export function DashboardPage() {
   const buses = (elEngine?.details?.buses || {}) as Record<string, any>;
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div className="mx-auto max-w-[1200px]">
       {/* Row 0: Overall Status Banner */}
-      <div style={{
-        padding: '16px 24px', marginBottom: 16, borderRadius: 8,
-        background: sc.bg, border: `1px solid ${sc.border}`,
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <span style={{ fontSize: 24, color: sc.color }}>{sc.icon}</span>
+      <div className={cn(
+        'mb-4 flex items-center gap-3 rounded-lg border px-6 py-4',
+        sc.bg, sc.border,
+      )}>
+        <span className={sc.color}>{sc.icon}</span>
         <div>
-          <Text strong style={{ fontSize: 16, color: sc.color }}>{sc.text}</Text>
-          <br />
-          <Text style={{ fontSize: 12, color: '#888' }}>
+          <p className={cn('text-base font-semibold', sc.color)}>{sc.text}</p>
+          <p className="text-xs text-muted-foreground">
             CG {wbDetails.cg_pct_mac?.toFixed(1) || '-'}% MAC 包线内 |
             最高母线负荷 {Math.max(...Object.values(buses).map((b: any) => b.load_ratio_pct || 0), 0).toFixed(0)}% |
             总重量 {wbDetails.total_mass_kg?.toFixed(0) || '-'} kg
-          </Text>
+          </p>
         </div>
       </div>
 
       {/* Row 1: KPI Cards */}
-      <Row gutter={12} style={{ marginBottom: 16 }}>
-        <Col span={5}>
-          <Card size="small"><Statistic title="设备总数" value={stats?.equipment_count || 0} suffix="台" valueStyle={{ color: '#1677ff' }} /></Card>
-        </Col>
-        <Col span={5}>
-          <Card size="small"><Statistic title="总重量" value={wbDetails.total_mass_kg?.toFixed(1) || 0} suffix="kg" valueStyle={{ color: '#333' }} /></Card>
-        </Col>
-        <Col span={5}>
-          <Card size="small"><Statistic title="CG 位置" value={wbDetails.cg_pct_mac?.toFixed(1) || 0} suffix="% MAC" valueStyle={{ color: sc.color }} /></Card>
-        </Col>
-        <Col span={5}>
-          <Card size="small"><Statistic title="有重量数据" value={stats?.weight_equipped_count || 0} suffix={`/ ${stats?.equipment_count || 0}`} valueStyle={{ color: '#888' }} /></Card>
-        </Col>
-        <Col span={4}>
-          <Card size="small"><Statistic title="构型版本" value={stats?.config_count || 0} suffix="个" valueStyle={{ color: '#5ac8fa' }} /></Card>
-        </Col>
-      </Row>
+      <div className="mb-4 grid grid-cols-5 gap-3">
+        <Card size="sm">
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-500">
+              {stats?.equipment_count || 0}<span className="ml-1 text-sm font-normal text-muted-foreground">台</span>
+            </div>
+            <div className="text-xs text-muted-foreground">设备总数</div>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">
+              {wbDetails.total_mass_kg?.toFixed(1) || 0}<span className="ml-1 text-sm font-normal text-muted-foreground">kg</span>
+            </div>
+            <div className="text-xs text-muted-foreground">总重量</div>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardContent>
+            <div className={cn('text-2xl font-bold', sc.color)}>
+              {wbDetails.cg_pct_mac?.toFixed(1) || 0}<span className="ml-1 text-sm font-normal text-muted-foreground">% MAC</span>
+            </div>
+            <div className="text-xs text-muted-foreground">CG 位置</div>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">
+              {stats?.weight_equipped_count || 0}<span className="ml-1 text-sm font-normal text-muted-foreground">/ {stats?.equipment_count || 0}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">有重量数据</div>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardContent>
+            <div className="text-2xl font-bold text-sky-400">
+              {stats?.config_count || 0}<span className="ml-1 text-sm font-normal text-muted-foreground">个</span>
+            </div>
+            <div className="text-xs text-muted-foreground">构型版本</div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Row 2: CG Envelope + Bus Status */}
-      <Row gutter={12} style={{ marginBottom: 16 }}>
-        <Col span={14}>
-          <Card size="small" title="CG 包线图">
-            <CGEnvelopeChart
-              cgPctMac={wbDetails.cg_pct_mac || 0}
-              totalMassKg={wbDetails.total_mass_kg || 0}
-              mtowKg={100000}
-              fwdLimitPct={20}
-              aftLimitPct={40}
-              status={wbEngine?.status as any || 'pass'}
-              width={500}
-              height={220}
-            />
+      <div className="mb-4 flex gap-3">
+        <div className="min-w-0" style={{ flex: '14 1 0%' }}>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>CG 包线图</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CGEnvelopeChart
+                cgPctMac={wbDetails.cg_pct_mac || 0}
+                totalMassKg={wbDetails.total_mass_kg || 0}
+                mtowKg={100000}
+                fwdLimitPct={20}
+                aftLimitPct={40}
+                status={wbEngine?.status as any || 'pass'}
+                width={500}
+                height={220}
+              />
+            </CardContent>
           </Card>
-        </Col>
-        <Col span={10}>
-          <Card size="small" title="母线状态" style={{ marginBottom: 12 }}>
-            <BusStatusDots buses={buses} />
+        </div>
+        <div className="min-w-0 flex flex-col gap-3" style={{ flex: '10 1 0%' }}>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>母线状态</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BusStatusDots buses={buses} />
+            </CardContent>
           </Card>
-          <Card size="small" title="约束健康度">
-            {report?.engines.map(eng => {
-              const eColor = eng.status === 'pass' ? '#34C759' : eng.status === 'warning' ? '#FF9500' : '#FF3B30';
-              const eIcon = eng.status === 'pass' ? '\u2713' : eng.status === 'warning' ? '\u26A0' : '\u2717';
-              return (
-                <div key={eng.engine_name} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f5f5f5' }}>
-                  <Text style={{ fontSize: 13 }}>{eng.engine_name === 'weight_balance' ? '重量/CG' : '电气负荷'}</Text>
-                  <Text style={{ fontSize: 13, color: eColor, fontWeight: 600 }}>{eIcon} {eng.summary.slice(0, 30)}</Text>
-                </div>
-              );
-            })}
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>约束健康度</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {report?.engines.map(eng => {
+                const eColor = eng.status === 'pass' ? 'text-green-500' : eng.status === 'warning' ? 'text-orange-500' : 'text-red-500';
+                const eIcon = eng.status === 'pass' ? '\u2713' : eng.status === 'warning' ? '\u26A0' : '\u2717';
+                return (
+                  <div key={eng.engine_name} className="flex items-center justify-between border-b border-muted py-1.5 last:border-b-0">
+                    <span className="text-[13px]">{eng.engine_name === 'weight_balance' ? '重量/CG' : '电气负荷'}</span>
+                    <span className={cn('text-[13px] font-semibold', eColor)}>{eIcon} {eng.summary.slice(0, 30)}</span>
+                  </div>
+                );
+              })}
+            </CardContent>
           </Card>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       {/* Row 3: Distribution Charts */}
-      <Row gutter={12} style={{ marginBottom: 16 }}>
-        <Col span={8}>
-          <Card size="small" title="ATA 系统分布">
+      <div className="mb-4 grid grid-cols-3 gap-3">
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>ATA 系统分布</CardTitle>
+          </CardHeader>
+          <CardContent>
             {stats?.ata_distribution && <ATADistributionBar data={stats.ata_distribution} total={stats.equipment_count} />}
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card size="small" title="区域分布">
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>区域分布</CardTitle>
+          </CardHeader>
+          <CardContent>
             {stats?.zone_distribution && <ZoneDonutChart data={stats.zone_distribution} total={stats.equipment_count} />}
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card size="small" title="重量分布 (按ATA)">
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>重量分布 (按ATA)</CardTitle>
+          </CardHeader>
+          <CardContent>
             {stats?.weight_distribution && (
-              <div>
+              <div className="space-y-1.5">
                 {stats.weight_distribution.map((item: any, i: number) => (
-                  <div key={item.ata} style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-                    <Text style={{ width: 52, fontSize: 11, textAlign: 'right', marginRight: 8, color: '#999' }}>ATA-{item.ata}</Text>
-                    <div style={{ flex: 1, height: 16, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${(item.weight_kg / (stats.weight_distribution[0]?.weight_kg || 1)) * 100}%`,
-                        height: '100%',
-                        background: ['#ff6b6b', '#ff9500', '#ffcc00', '#34c759', '#5ac8fa', '#007aff', '#af52de', '#30b0c7', '#a2845e', '#636366'][i % 10],
-                        borderRadius: 3,
-                      }} />
+                  <div key={item.ata} className="flex items-center">
+                    <span className="w-13 shrink-0 text-right text-[11px] text-muted-foreground mr-2">ATA-{item.ata}</span>
+                    <div className="flex-1 h-4 rounded bg-muted overflow-hidden">
+                      <div
+                        className={cn('h-full rounded', BAR_COLORS[i % BAR_COLORS.length])}
+                        style={{ width: `${(item.weight_kg / (stats.weight_distribution[0]?.weight_kg || 1)) * 100}%` }}
+                      />
                     </div>
-                    <Text style={{ width: 55, fontSize: 11, marginLeft: 8, color: '#666' }}>{item.weight_kg}kg</Text>
+                    <span className="w-14 shrink-0 ml-2 text-[11px] text-muted-foreground">{item.weight_kg}kg</span>
                   </div>
                 ))}
               </div>
             )}
-          </Card>
-        </Col>
-      </Row>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Row 4: Timeline + Info */}
-      <Row gutter={12}>
-        <Col span={16}>
-          <Card size="small" title="构型变更时间线">
-            <Timeline
-              items={configs.map(c => ({
-                color: c.status === 'baseline' ? 'green' : 'blue',
-                children: (
-                  <div>
-                    <Text strong>{c.version}</Text>
-                    <Tag color={c.status === 'baseline' ? 'green' : 'blue'} style={{ marginLeft: 8 }}>
-                      {c.status === 'baseline' ? '基线' : '草稿'}
-                    </Tag>
-                    <br />
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                      {c.equipment_count} 台设备 {c.description ? `\u00B7 ${c.description}` : ''}
-                    </Text>
-                  </div>
-                ),
-              }))}
-            />
+      <div className="flex gap-3">
+        <div className="min-w-0" style={{ flex: '16 1 0%' }}>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>构型变更时间线</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-0">
+                {configs.map((c, index) => {
+                  const isLast = index === configs.length - 1;
+                  return (
+                    <div key={c.id} className={cn('relative pl-6', isLast ? 'pb-0' : 'pb-4')}>
+                      {/* Timeline dot */}
+                      <div className={cn(
+                        'absolute left-0 top-1 size-3 rounded-full border-2 bg-background',
+                        c.status === 'baseline' ? 'border-green-500' : 'border-blue-500',
+                      )} />
+                      {/* Timeline connector line */}
+                      {!isLast && (
+                        <div className="absolute left-[5px] top-4 bottom-0 w-px bg-border" />
+                      )}
+                      {/* Content */}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold">{c.version}</span>
+                          <Badge variant={c.status === 'baseline' ? 'default' : 'secondary'}>
+                            {c.status === 'baseline' ? '基线' : '草稿'}
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {c.equipment_count} 台设备{c.description ? ` \u00B7 ${c.description}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
           </Card>
-        </Col>
-        <Col span={8}>
-          <Card size="small" title="待办提醒" style={{ marginBottom: 12 }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>评审流程模块（待开发）</Text>
+        </div>
+        <div className="min-w-0 flex flex-col gap-3" style={{ flex: '8 1 0%' }}>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>待办提醒</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">评审流程模块（待开发）</p>
+            </CardContent>
           </Card>
-          <Card size="small" title="供应商状态">
-            <Text type="secondary" style={{ fontSize: 12 }}>供应商协同模块（待开发）</Text>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>供应商状态</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">供应商协同模块（待开发）</p>
+            </CardContent>
           </Card>
-        </Col>
-      </Row>
+        </div>
+      </div>
     </div>
   );
 }
