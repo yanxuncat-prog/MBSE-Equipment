@@ -1,9 +1,14 @@
 import React from 'react';
-import { LAYOUT } from '../../../styles/layout';
+import { cn } from '@/lib/utils';
 
-export function StatsRow({ children }: { children: React.ReactNode }) {
+interface StatsRowProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function StatsRow({ children, className }: StatsRowProps) {
   return (
-    <div style={{ display: 'flex', gap: LAYOUT.GAP.MD, marginBottom: LAYOUT.GAP.LG }}>
+    <div className={cn("grid auto-cols-fr grid-flow-col gap-3", className)}>
       {children}
     </div>
   );

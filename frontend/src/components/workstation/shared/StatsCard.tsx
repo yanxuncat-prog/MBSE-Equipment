@@ -1,18 +1,20 @@
 import React from 'react';
-import { Card, Statistic } from 'antd';
+import { cn } from '@/lib/utils';
 
-interface Props {
-  title: string;
-  value: number | string;
-  suffix?: string;
+interface StatsCardProps {
+  label: string;
+  value: React.ReactNode;
   color?: string;
-  precision?: number;
+  className?: string;
 }
 
-export function StatsCard({ title, value, suffix, color = '#333', precision }: Props) {
+export function StatsCard({ label, value, color, className }: StatsCardProps) {
   return (
-    <Card size="small" style={{ flex: 1 }}>
-      <Statistic title={title} value={value} suffix={suffix} precision={precision} valueStyle={{ color, fontSize: 20 }} />
-    </Card>
+    <div className={cn("rounded-lg border bg-card p-3", className)}>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-lg font-semibold" style={color ? { color } : undefined}>
+        {value}
+      </div>
+    </div>
   );
 }

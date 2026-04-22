@@ -1,17 +1,14 @@
 import React from 'react';
-import { LAYOUT } from '../../../styles/layout';
+import { cn } from '@/lib/utils';
 
-export function ProfessionalPanel({ children }: { children: React.ReactNode }) {
+interface ProfessionalPanelProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ProfessionalPanel({ children, className }: ProfessionalPanelProps) {
   return (
-    <div style={{
-      width: LAYOUT.RIGHT_PANEL_WIDTH,
-      flexShrink: 0,
-      paddingLeft: LAYOUT.GAP.LG,
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: LAYOUT.GAP.MD,
-    }}>
+    <div className={cn("w-[280px] shrink-0 space-y-4 overflow-y-auto", className)}>
       {children}
     </div>
   );
