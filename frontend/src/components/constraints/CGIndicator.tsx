@@ -1,8 +1,5 @@
 import React from 'react';
-import { Typography } from 'antd';
 import type { ConstraintStatus } from '../../types';
-
-const { Text } = Typography;
 
 interface Props {
   details: Record<string, any>;
@@ -30,12 +27,12 @@ export function CGIndicator({ details, status }: Props) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <Text style={{ fontSize: 12 }}>重量: {totalMass.toFixed(1)} kg</Text>
-        <Text style={{ fontSize: 12 }}>MTOW: {mtowRatio.toFixed(0)}%</Text>
+      <div className="mb-1 flex justify-between">
+        <span className="text-xs">重量: {totalMass.toFixed(1)} kg</span>
+        <span className="text-xs">MTOW: {mtowRatio.toFixed(0)}%</span>
       </div>
 
-      <svg width={barWidth} height={28} style={{ display: 'block', margin: '4px 0' }}>
+      <svg width={barWidth} height={28} className="my-1 block">
         {/* Background */}
         <rect x={0} y={8} width={barWidth} height={12} rx={6} fill="#e8e8e8" />
         {/* Safe zone */}
@@ -51,9 +48,9 @@ export function CGIndicator({ details, status }: Props) {
         <text x={aftX} y={3} fontSize={8} textAnchor="middle" fill="#999">{aftLimit}%</text>
       </svg>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 11, color }}>CG: {cgPct.toFixed(1)}% MAC</Text>
-        <Text style={{ fontSize: 11 }}>余量: {mtowMargin.toFixed(0)} kg</Text>
+      <div className="flex justify-between">
+        <span className="text-[11px]" style={{ color }}>CG: {cgPct.toFixed(1)}% MAC</span>
+        <span className="text-[11px] text-muted-foreground">余量: {mtowMargin.toFixed(0)} kg</span>
       </div>
     </div>
   );

@@ -1,7 +1,5 @@
 import React from 'react';
-import { Progress, Typography } from 'antd';
-
-const { Text } = Typography;
+import { cn } from '@/lib/utils';
 
 interface Props {
   busName: string;
@@ -11,21 +9,28 @@ interface Props {
 }
 
 export function BusLoadBar({ busName, loadKva, capacityKva, loadRatioPct }: Props) {
-  const color = loadRatioPct > 100 ? '#FF3B30' : loadRatioPct > 85 ? '#FF9500' : '#34C759';
+  const pct = Math.min(loadRatioPct, 100);
+  const color =
+    loadRatioPct > 100
+      ? 'bg-destructive'
+      : loadRatioPct > 85
+        ? 'bg-yellow-500'
+        : 'bg-green-500';
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-        <Text style={{ fontSize: 12 }}>{busName}</Text>
-        <Text style={{ fontSize: 11, color }}>{loadKva.toFixed(1)}/{capacityKva.toFixed(0)} kVA</Text>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-medium">{busName}</span>
+        <span className={cn('text-muted-foreground', loadRatioPct > 100 && 'text-destructive', loadRatioPct > 85 && loadRatioPct <= 100 && 'text-yellow-600')}>
+          {loadKva.toFixed(1)}/{capacityKva.toFixed(0)} kVA
+        </span>
       </div>
-      <Progress
-        percent={Math.min(loadRatioPct, 100)}
-        size="small"
-        strokeColor={color}
-        showInfo={false}
-        style={{ marginBottom: 0 }}
-      />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn('h-full rounded-full transition-all', color)}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }
