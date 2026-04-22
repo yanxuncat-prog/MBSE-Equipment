@@ -13,8 +13,8 @@ interface Props {
 
 export function OverviewTab({ configId, search, report, onEdit, onSelect }: Props) {
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 180px)' }}>
-      <div style={{ flex: 1, overflow: 'auto', paddingRight: 16 }}>
+    <div className="flex gap-4 h-[calc(100vh-180px)]">
+      <div className="flex-1 overflow-auto">
         <EquipmentTable configId={configId} search={search} onEdit={onEdit} onSelect={onSelect} />
       </div>
       <ConstraintPanel report={report} />
