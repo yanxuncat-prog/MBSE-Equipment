@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Table, Tag, Button, Popconfirm, message, Spin } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Loader2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ProfessionalTable, type Column } from '@/components/workstation/shared/ProfessionalTable';
 import { listEquipment, deleteEquipment } from '../../api/equipment';
 import type { Equipment } from '../../types';
 
@@ -12,16 +14,16 @@ interface Props {
   onSelect: (equip: Equipment) => void;
 }
 
-const STATUS_TAGS: Record<string, { color: string; text: string }> = {
-  approved: { color: 'green', text: '已批准' },
-  in_development: { color: 'blue', text: '在研' },
-  qualifying: { color: 'orange', text: '鉴定中' },
-  discontinued: { color: 'red', text: '停产' },
+const STATUS_BADGES: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; text: string }> = {
+  approved: { variant: 'default', text: '已批准' },
+  in_development: { variant: 'secondary', text: '在研' },
+  qualifying: { variant: 'outline', text: '鉴定中' },
+  discontinued: { variant: 'destructive', text: '停产' },
 };
 
 const PAGE_SIZE = 50;
 
-export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
+export function EquipmentTable({ configId, search, onEdit: _onEdit, onSelect }: Props) {
   const [data, setData] = useState<Equipment[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -45,7 +47,7 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
       setTotal(result.total);
       setOffset(result.items.length);
     } catch {
-      message.error('加载设备列表失败');
+      toast.error('加载设备列表失败');
     } finally {
       setLoading(false);
     }
@@ -92,30 +94,36 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await deleteEquipment(id);
-    message.success('已删除');
-    fetchInitial();
-    (window as any).__constraintRefresh?.();
+    if (!window.confirm('确认删除该设备?')) return;
+    try {
+      await deleteEquipment(id);
+      toast.success('已删除');
+      fetchInitial();
+      (window as any).__constraintRefresh?.();
+    } catch {
+      toast.error('删除失败');
+    }
   };
 
-  const columns: ColumnsType<Equipment> = [
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 120, fixed: 'left',
+  const columns: Column<Equipment>[] = [
+    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 120,
       render: (v: string | null) => v || '-' },
-    { title: '名称', dataIndex: 'name', key: 'name', width: 180, ellipsis: true, fixed: 'left' },
+    { title: '名称', dataIndex: 'name', key: 'name', width: 180,
+      render: (v: string) => <span className="truncate block max-w-[170px]">{v}</span> },
     { title: '件号', dataIndex: 'part_number', key: 'part_number', width: 150 },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 55 },
     { title: '类型', dataIndex: 'equipment_type', key: 'type', width: 70 },
-    { title: '英文名称', dataIndex: 'name_en', key: 'name_en', width: 180, ellipsis: true,
-      render: (v: string | null) => v || '-' },
+    { title: '英文名称', dataIndex: 'name_en', key: 'name_en', width: 180,
+      render: (v: string | null) => <span className="truncate block max-w-[170px]">{v || '-'}</span> },
     { title: 'DAL', dataIndex: 'dal', key: 'dal', width: 50,
       render: (v: string | null) => v || '-' },
     {
-      title: '区域', key: 'zone', width: 130, ellipsis: true,
+      title: '区域', key: 'zone', width: 130,
       render: (_, r) => {
         const zone = r.config_data?.zone_name || '';
         const rack = r.config_data?.rack_position || '';
-        if (zone && rack) return `${zone}-${rack}`;
-        return zone || rack || '-';
+        if (zone && rack) return <span className="truncate block max-w-[120px]">{`${zone}-${rack}`}</span>;
+        return <span className="truncate block max-w-[120px]">{zone || rack || '-'}</span>;
       },
     },
     {
@@ -134,114 +142,108 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
       title: '重量(kg)', key: 'mass', width: 80, align: 'right',
       render: (_, r) => r.weight_balance?.mass_kg?.toFixed(1) || '-',
     },
-    { title: '尺寸(mm)', dataIndex: 'dimensions_mm', key: 'dims', width: 120, ellipsis: true,
-      render: (v: string | null) => v || '-' },
+    { title: '尺寸(mm)', dataIndex: 'dimensions_mm', key: 'dims', width: 120,
+      render: (v: string | null) => <span className="truncate block max-w-[110px]">{v || '-'}</span> },
     { title: '连接器数', dataIndex: 'connector_count', key: 'connector', width: 75, align: 'right',
       render: (v: number | null) => v ?? '-' },
-    { title: '电压范围(V)', dataIndex: 'voltage_range', key: 'voltage', width: 110, ellipsis: true,
-      render: (v: string | null) => v || '-' },
+    { title: '电压范围(V)', dataIndex: 'voltage_range', key: 'voltage', width: 110,
+      render: (v: string | null) => <span className="truncate block max-w-[100px]">{v || '-'}</span> },
     {
       title: '壳体金属', dataIndex: 'is_metal_shell', key: 'metal', width: 75,
       render: (v: boolean | null) => v === true ? '是' : v === false ? '否' : '-',
     },
-    { title: '接地方式', dataIndex: 'shell_grounding_method', key: 'grounding', width: 90, ellipsis: true,
-      render: (v: string | null) => v || '-' },
+    { title: '接地方式', dataIndex: 'shell_grounding_method', key: 'grounding', width: 90,
+      render: (v: string | null) => <span className="truncate block max-w-[80px]">{v || '-'}</span> },
     {
-      title: '安装方式', key: 'install', width: 110, ellipsis: true,
-      render: (_, r) => r.config_data?.install_method || '-',
+      title: '安装方式', key: 'install', width: 110,
+      render: (_, r) => <span className="truncate block max-w-[100px]">{r.config_data?.install_method || '-'}</span>,
     },
     {
-      title: '电搭接方式', key: 'bond_method', width: 90, ellipsis: true,
-      render: (_, r) => r.config_data?.bonding_method || '-',
+      title: '电搭接方式', key: 'bond_method', width: 90,
+      render: (_, r) => <span className="truncate block max-w-[80px]">{r.config_data?.bonding_method || '-'}</span>,
     },
     {
-      title: '电搭接类型', key: 'bond_type', width: 100, ellipsis: true,
-      render: (_, r) => r.config_data?.bonding_type || '-',
+      title: '电搭接类型', key: 'bond_type', width: 100,
+      render: (_, r) => <span className="truncate block max-w-[90px]">{r.config_data?.bonding_type || '-'}</span>,
     },
     {
       title: 'EICD', dataIndex: 'has_eicd', key: 'eicd', width: 55,
       render: (v: boolean | null) => v === true ? '有' : v === false ? '无' : '-',
     },
     {
-      title: '母线', key: 'bus', width: 100, ellipsis: true,
-      render: (_, r) => r.config_data?.bus_name || '-',
+      title: '母线', key: 'bus', width: 100,
+      render: (_, r) => <span className="truncate block max-w-[90px]">{r.config_data?.bus_name || '-'}</span>,
     },
     {
       title: '功耗(kVA)', key: 'power', width: 80, align: 'right',
       render: (_, r) => r.electrical_load?.power_kva_normal?.toFixed(1) || '-',
     },
-    { title: '供电电压', dataIndex: 'power_voltage', key: 'pv', width: 80, ellipsis: true,
-      render: (v: string | null) => v || '-' },
-    { title: '供电余度', dataIndex: 'power_redundancy', key: 'pr', width: 80, ellipsis: true,
-      render: (v: string | null) => v || '-' },
-    { title: '负责人', dataIndex: 'responsible_person', key: 'person', width: 80, ellipsis: true,
-      render: (v: string | null) => v || '-' },
-    { title: '温度鉴定等级', dataIndex: 'do160_temp_qual_level', key: 'temp_level', width: 120, ellipsis: true,
-      render: (v: string | null) => v || '-' },
-    { title: '正常工作温度', dataIndex: 'normal_operating_temp', key: 'normal_temp', width: 110, ellipsis: true,
-      render: (v: string | null) => v || '-' },
+    { title: '供电电压', dataIndex: 'power_voltage', key: 'pv', width: 80,
+      render: (v: string | null) => <span className="truncate block max-w-[70px]">{v || '-'}</span> },
+    { title: '供电余度', dataIndex: 'power_redundancy', key: 'pr', width: 80,
+      render: (v: string | null) => <span className="truncate block max-w-[70px]">{v || '-'}</span> },
+    { title: '负责人', dataIndex: 'responsible_person', key: 'person', width: 80,
+      render: (v: string | null) => <span className="truncate block max-w-[70px]">{v || '-'}</span> },
+    { title: '温度鉴定等级', dataIndex: 'do160_temp_qual_level', key: 'temp_level', width: 120,
+      render: (v: string | null) => <span className="truncate block max-w-[110px]">{v || '-'}</span> },
+    { title: '正常工作温度', dataIndex: 'normal_operating_temp', key: 'normal_temp', width: 110,
+      render: (v: string | null) => <span className="truncate block max-w-[100px]">{v || '-'}</span> },
     {
-      title: '供应商', key: 'supplier', width: 120, ellipsis: true,
-      render: (_, r) => r.supplier_name || '-',
+      title: '供应商', key: 'supplier', width: 120,
+      render: (_, r) => <span className="truncate block max-w-[110px]">{r.supplier_name || '-'}</span>,
     },
     {
       title: '状态', dataIndex: 'status', key: 'status', width: 70,
       render: (s: string) => {
-        const cfg = STATUS_TAGS[s] || { color: 'default', text: s };
-        return <Tag color={cfg.color}>{cfg.text}</Tag>;
+        const cfg = STATUS_BADGES[s] || { variant: 'secondary' as const, text: s };
+        return <Badge variant={cfg.variant}>{cfg.text}</Badge>;
       },
     },
     {
-      title: '', key: 'action', width: 40, fixed: 'right',
+      title: '', key: 'action', width: 40,
       render: (_, record) => (
-        <Popconfirm title="确认删除?" onConfirm={(e) => handleDelete(record.id, e as any)} onCancel={(e) => e?.stopPropagation()}>
-          <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()} />
-        </Popconfirm>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={(e) => handleDelete(record.id, e)}
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
       ),
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Column snap CSS: horizontal scroll snaps to left edge of each column */}
-      <style>{`
-        .equip-table .ant-table-body {
-          scroll-snap-type: x proximity;
-        }
-        .equip-table .ant-table-body table {
-          border-collapse: separate;
-        }
-        .equip-table .ant-table-thead > tr > th:not(.ant-table-cell-fix-left):not(.ant-table-cell-fix-right),
-        .equip-table .ant-table-tbody > tr > td:not(.ant-table-cell-fix-left):not(.ant-table-cell-fix-right) {
-          scroll-snap-align: start;
-        }
-      `}</style>
-      <div style={{ marginBottom: 8, color: '#999', fontSize: 12 }}>
+      <div className="mb-2 text-xs text-muted-foreground">
         共 {total} 台设备{data.length < total ? `，已加载 ${data.length} 台` : ''}
       </div>
-      <Table
-        className="equip-table"
+      <ProfessionalTable
         columns={columns}
         dataSource={data}
         rowKey="id"
-        loading={loading}
-        size="small"
-        pagination={false}
-        scroll={{ x: 3200 }}
         onRow={(record) => ({
           onClick: () => onSelect(record),
-          style: { cursor: 'pointer' },
         })}
       />
       {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} style={{ height: 1 }} />
+      <div ref={sentinelRef} className="h-px" />
       {loadingMore && (
-        <div style={{ textAlign: 'center', padding: 16 }}>
-          <Spin size="small" />
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
         </div>
       )}
       {offset >= total && total > 0 && (
-        <div style={{ textAlign: 'center', padding: 12, color: '#ccc', fontSize: 12 }}>
+        <div className="py-3 text-center text-xs text-muted-foreground/50">
           — 全部 {total} 台设备 —
         </div>
       )}
