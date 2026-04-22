@@ -83,7 +83,7 @@ export function ConfigPage() {
         </Button>
       </Space>
 
-      <div style={{ display: 'flex', gap: 24 }}>
+      <div style={{ display: 'flex', gap: 16 }}>
         <div style={{ width: 320, flexShrink: 0 }}>
           <Title level={5}>版本历史</Title>
           <ConfigTimeline configs={configs} activeId={activeConfigId} onSelect={setActiveConfig} />

@@ -2,6 +2,7 @@ import React from 'react';
 import { Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Equipment } from '../../../types';
+import { HEIGHTS } from '../../../styles/layout';
 
 interface Props {
   columns: ColumnsType<Equipment>;
@@ -19,7 +20,7 @@ export function ProfessionalTable({ columns, data, scrollX = 1600, onRowClick, r
       rowKey="id"
       size="small"
       pagination={false}
-      scroll={{ x: scrollX, y: 'calc(100vh - 340px)' }}
+      scroll={{ x: scrollX, y: HEIGHTS.TABLE_SCROLL }}
       rowClassName={rowClassName}
       onRow={onRowClick ? (record) => ({ onClick: () => onRowClick(record), style: { cursor: 'pointer' } }) : undefined}
     />

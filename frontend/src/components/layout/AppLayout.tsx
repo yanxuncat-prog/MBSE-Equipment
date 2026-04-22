@@ -13,6 +13,7 @@ import {
   ShoppingOutlined,
 } from '@ant-design/icons';
 import { GlobalNav } from './GlobalNav';
+import { LAYOUT, HEIGHTS } from '../../styles/layout';
 
 const { Sider, Header, Content } = Layout;
 
@@ -104,7 +105,7 @@ export function AppLayout() {
       {/* Hidden drag image */}
       <div ref={dragNodeRef} style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1 }} />
 
-      <Sider width={200} theme="dark" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100 }}>
+      <Sider width={LAYOUT.SIDEBAR_WIDTH} theme="dark" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100 }}>
         <div style={{ height: 48, margin: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>AeroEquip</span>
         </div>
@@ -155,7 +156,7 @@ export function AppLayout() {
           })}
         </div>
       </Sider>
-      <Layout style={{ marginLeft: 200 }}>
+      <Layout style={{ marginLeft: LAYOUT.SIDEBAR_WIDTH }}>
         <Header style={{
           background: '#fff',
           padding: '0 24px',
@@ -169,7 +170,7 @@ export function AppLayout() {
         }}>
           <GlobalNav />
         </Header>
-        <Content style={{ margin: 16, padding: 24, background: '#fff', borderRadius: 8, minHeight: 'calc(100vh - 96px)' }}>
+        <Content style={{ margin: LAYOUT.CONTENT_MARGIN, padding: LAYOUT.CONTENT_PADDING, background: '#fff', borderRadius: 8, minHeight: HEIGHTS.PAGE_CONTENT }}>
           <Outlet />
         </Content>
       </Layout>
