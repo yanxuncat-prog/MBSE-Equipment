@@ -1,19 +1,18 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
-import { AppLayout } from './components/layout/AppLayout';
-import { WorkstationPage } from './pages/WorkstationPage';
-import { ConfigPage } from './pages/ConfigPage';
-import { LoginPage } from './pages/LoginPage';
-import { GuidePage } from './pages/GuidePage';
-import { DashboardPage } from './pages/DashboardPage';
-import { EquipmentDefPage } from './pages/EquipmentDefPage';
-import { ProcurementPage } from './pages/ProcurementPage';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { WorkstationPage } from '@/pages/WorkstationPage';
+import { ConfigPage } from '@/pages/ConfigPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { GuidePage } from '@/pages/GuidePage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { EquipmentDefPage } from '@/pages/EquipmentDefPage';
+import { ProcurementPage } from '@/pages/ProcurementPage';
 
 export default function App() {
   return (
-    <ConfigProvider locale={zhCN}>
+    <TooltipProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -28,6 +27,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </ConfigProvider>
+      <Toaster />
+    </TooltipProvider>
   );
 }

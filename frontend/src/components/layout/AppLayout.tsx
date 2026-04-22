@@ -1,21 +1,11 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Layout } from 'antd';
+import React, { useState, useCallback, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  ToolOutlined,
-  EnvironmentOutlined,
-  BranchesOutlined,
-  QuestionCircleOutlined,
-  DashboardOutlined,
-  HolderOutlined,
-  DatabaseOutlined,
-  EyeOutlined,
-  ShoppingOutlined,
-} from '@ant-design/icons';
+  Eye, GitBranch, HelpCircle, LayoutDashboard,
+  GripVertical, Database, ShoppingCart, PanelLeftClose, PanelLeft,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { GlobalNav } from './GlobalNav';
-import { LAYOUT, HEIGHTS } from '../../styles/layout';
-
-const { Sider, Header, Content } = Layout;
 
 interface MenuItem {
   key: string;
@@ -24,12 +14,12 @@ interface MenuItem {
 }
 
 const DEFAULT_MENU: MenuItem[] = [
-  { key: '/guide', icon: <QuestionCircleOutlined />, label: '使用指南' },
-  { key: '/equipment-def', icon: <DatabaseOutlined />, label: '设备定义' },
-  { key: '/workstation', icon: <EyeOutlined />, label: '构型查看' },
-  { key: '/config', icon: <BranchesOutlined />, label: '构型管理' },
-  { key: '/dashboard', icon: <DashboardOutlined />, label: '管理看板' },
-  { key: '/procurement', icon: <ShoppingOutlined />, label: '采购进度' },
+  { key: '/guide', icon: <HelpCircle className="size-4" />, label: '使用指南' },
+  { key: '/equipment-def', icon: <Database className="size-4" />, label: '设备定义' },
+  { key: '/workstation', icon: <Eye className="size-4" />, label: '构型查看' },
+  { key: '/config', icon: <GitBranch className="size-4" />, label: '构型管理' },
+  { key: '/dashboard', icon: <LayoutDashboard className="size-4" />, label: '管理看板' },
+  { key: '/procurement', icon: <ShoppingCart className="size-4" />, label: '采购进度' },
 ];
 
 const STORAGE_KEY = 'aeroequip_menu_order';
@@ -41,7 +31,6 @@ function loadMenuOrder(): MenuItem[] {
       const keys: string[] = JSON.parse(saved);
       const map = new Map(DEFAULT_MENU.map(m => [m.key, m]));
       const ordered = keys.map(k => map.get(k)).filter(Boolean) as MenuItem[];
-      // Append any new items not in saved order
       for (const item of DEFAULT_MENU) {
         if (!keys.includes(item.key)) ordered.push(item);
       }
@@ -59,6 +48,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuItems, setMenuItems] = useState<MenuItem[]>(loadMenuOrder);
+  const [collapsed, setCollapsed] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragNodeRef = useRef<HTMLDivElement | null>(null);
@@ -66,7 +56,6 @@ export function AppLayout() {
   const handleDragStart = useCallback((index: number, e: React.DragEvent) => {
     setDragIndex(index);
     e.dataTransfer.effectAllowed = 'move';
-    // Minimal drag image
     if (dragNodeRef.current) {
       e.dataTransfer.setDragImage(dragNodeRef.current, 0, 0);
     }
@@ -100,16 +89,37 @@ export function AppLayout() {
     setOverIndex(null);
   }, []);
 
-  return (
-    <Layout style={{ minHeight: '100vh' }}>
-      {/* Hidden drag image */}
-      <div ref={dragNodeRef} style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1 }} />
+  const sidebarWidth = collapsed ? 56 : 224;
 
-      <Sider width={LAYOUT.SIDEBAR_WIDTH} theme="dark" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100 }}>
-        <div style={{ height: 48, margin: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>AeroEquip</span>
+  return (
+    <div className="flex min-h-screen bg-background">
+      {/* Hidden drag image */}
+      <div ref={dragNodeRef} className="fixed -top-[9999px] -left-[9999px] size-px" />
+
+      {/* Sidebar */}
+      <aside
+        className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200"
+        style={{ width: sidebarWidth }}
+      >
+        {/* Logo */}
+        <div className="flex h-14 items-center border-b border-sidebar-border px-3">
+          <div className={cn(
+            "flex items-center gap-2 overflow-hidden transition-all duration-200",
+            collapsed ? "w-8 justify-center" : "w-full"
+          )}>
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+              A
+            </div>
+            {!collapsed && (
+              <span className="truncate text-sm font-semibold text-sidebar-foreground">
+                AeroEquip
+              </span>
+            )}
+          </div>
         </div>
-        <div style={{ padding: '0 0' }}>
+
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto py-2">
           {menuItems.map((item, index) => {
             const isActive = location.pathname === item.key;
             const isDragging = dragIndex === index;
@@ -124,56 +134,54 @@ export function AppLayout() {
                 onDrop={() => handleDrop(index)}
                 onDragEnd={handleDragEnd}
                 onClick={() => navigate(item.key)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '10px 16px 10px 24px',
-                  cursor: 'pointer',
-                  background: isActive ? 'rgba(24,144,255,0.2)' : 'transparent',
-                  borderRight: isActive ? '3px solid #1890ff' : '3px solid transparent',
-                  borderTop: isOver && dragIndex !== null && dragIndex > index ? '2px solid #1890ff' : '2px solid transparent',
-                  borderBottom: isOver && dragIndex !== null && dragIndex < index ? '2px solid #1890ff' : '2px solid transparent',
-                  opacity: isDragging ? 0.4 : 1,
-                  transition: 'background 0.2s, opacity 0.15s',
-                  userSelect: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.08)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'transparent';
-                }}
+                className={cn(
+                  "group relative mx-2 mb-0.5 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors select-none",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                  isDragging && "opacity-40",
+                  isOver && dragIndex !== null && dragIndex > index && "border-t-2 border-primary",
+                  isOver && dragIndex !== null && dragIndex < index && "border-b-2 border-primary",
+                )}
               >
-                <HolderOutlined style={{ color: '#555', fontSize: 10, marginRight: 10, cursor: 'grab', flexShrink: 0 }} />
-                <span style={{ color: isActive ? '#1890ff' : 'rgba(255,255,255,0.65)', fontSize: 16, marginRight: 10, flexShrink: 0 }}>
-                  {item.icon}
-                </span>
-                <span style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.65)', fontSize: 14 }}>
-                  {item.label}
-                </span>
+                {!collapsed && (
+                  <GripVertical className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 cursor-grab" />
+                )}
+                <span className="shrink-0">{item.icon}</span>
+                {!collapsed && <span className="truncate">{item.label}</span>}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
+                )}
               </div>
             );
           })}
+        </nav>
+
+        {/* Collapse toggle */}
+        <div className="border-t border-sidebar-border p-2">
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="flex w-full items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          >
+            {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
+          </button>
         </div>
-      </Sider>
-      <Layout style={{ marginLeft: LAYOUT.SIDEBAR_WIDTH }}>
-        <Header style={{
-          background: '#fff',
-          padding: '0 24px',
-          borderBottom: '1px solid #f0f0f0',
-          display: 'flex',
-          alignItems: 'center',
-          position: 'sticky',
-          top: 0,
-          zIndex: 90,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        }}>
+      </aside>
+
+      {/* Main area */}
+      <div className="flex flex-1 flex-col transition-all duration-200" style={{ marginLeft: sidebarWidth }}>
+        {/* Header */}
+        <header className="sticky top-0 z-40 flex h-14 items-center border-b border-border bg-background/95 px-6 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
           <GlobalNav />
-        </Header>
-        <Content style={{ margin: LAYOUT.CONTENT_MARGIN, padding: LAYOUT.CONTENT_PADDING, background: '#fff', borderRadius: 8, minHeight: HEIGHTS.PAGE_CONTENT }}>
-          <Outlet />
-        </Content>
-      </Layout>
-    </Layout>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 p-4">
+          <div className="rounded-xl bg-card p-6 shadow-sm ring-1 ring-border/50 min-h-[calc(100vh-88px)]">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </div>
   );
 }

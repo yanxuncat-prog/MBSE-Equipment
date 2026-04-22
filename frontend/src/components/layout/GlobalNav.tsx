@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Select, Space, Button, Input, Divider } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Plus, Search } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { useConfigStore } from '../../store/configStore';
-import { listPrograms, listSeries, listConfigs } from '../../api/configurations';
-import type { Program, Series, Configuration } from '../../types';
+import { useConfigStore } from '@/store/configStore';
+import { listPrograms, listSeries, listConfigs } from '@/api/configurations';
+import type { Program, Series, Configuration } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
-// Workstation actions are exposed via a global callback so the header can trigger them
-// without tight coupling to WorkstationPage state
 export const workstationActions = {
   onAdd: null as (() => void) | null,
   onSearch: null as ((value: string) => void) | null,
@@ -58,57 +59,80 @@ export function GlobalNav() {
     workstationActions.onSearch?.(value);
   };
 
+  const handleProgramChange = (value: string | null) => {
+    if (value) setActiveProgram(value);
+  };
+
+  const handleSeriesChange = (value: string | null) => {
+    if (value) setActiveSeries(value);
+  };
+
+  const handleConfigChange = (value: string | null) => {
+    if (value) setActiveConfig(value);
+  };
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 8 }}>
+    <div className="flex w-full items-center gap-2">
       {isEquipmentDef && (
-        <span style={{ color: '#999', fontSize: 13 }}>设备定义 — 管理设备固有属性（不依赖构型）</span>
+        <span className="text-sm text-muted-foreground">设备定义 — 管理设备固有属性（不依赖构型）</span>
       )}
-      {needsConfig && <Space size={6}>
-        <span style={{ color: '#999', fontSize: 12 }}>型号:</span>
-        <Select
-          value={activeProgramId || undefined}
-          onChange={setActiveProgram}
-          style={{ width: 140 }}
-          placeholder="选择型号"
-          size="small"
-          options={programs.map((p) => ({ value: p.id, label: p.name }))}
-        />
-        <span style={{ color: '#999', fontSize: 12 }}>系列:</span>
-        <Select
-          value={activeSeriesId || undefined}
-          onChange={setActiveSeries}
-          style={{ width: 100 }}
-          placeholder="选择系列"
-          size="small"
-          options={seriesList.map((s) => ({ value: s.id, label: s.variant_name }))}
-        />
-        <span style={{ color: '#999', fontSize: 12 }}>构型:</span>
-        <Select
-          value={activeConfigId || undefined}
-          onChange={setActiveConfig}
-          style={{ width: 160 }}
-          placeholder="选择构型"
-          size="small"
-          options={configs.map((c) => ({ value: c.id, label: `${c.version} (${c.status})` }))}
-        />
-      </Space>}
+
+      {needsConfig && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">型号:</span>
+          <Select value={activeProgramId || undefined} onValueChange={handleProgramChange}>
+            <SelectTrigger size="sm" className="w-[140px]">
+              <SelectValue placeholder="选择型号" />
+            </SelectTrigger>
+            <SelectContent>
+              {programs.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <span className="text-xs text-muted-foreground">系列:</span>
+          <Select value={activeSeriesId || undefined} onValueChange={handleSeriesChange}>
+            <SelectTrigger size="sm" className="w-[100px]">
+              <SelectValue placeholder="选择系列" />
+            </SelectTrigger>
+            <SelectContent>
+              {seriesList.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.variant_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <span className="text-xs text-muted-foreground">构型:</span>
+          <Select value={activeConfigId || undefined} onValueChange={handleConfigChange}>
+            <SelectTrigger size="sm" className="w-[160px]">
+              <SelectValue placeholder="选择构型" />
+            </SelectTrigger>
+            <SelectContent>
+              {configs.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{`${c.version} (${c.status})`}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {isWorkstation && (
         <>
-          <Divider type="vertical" style={{ height: 24, margin: '0 8px' }} />
-          <Button type="primary" icon={<PlusOutlined />} size="small" onClick={() => workstationActions.onAdd?.()}>
+          <Separator orientation="vertical" className="mx-1 h-6" />
+          <Button size="sm" onClick={() => workstationActions.onAdd?.()}>
+            <Plus className="size-3.5" />
             添加设备
           </Button>
-          <Input
-            placeholder="搜索件号/名称"
-            prefix={<SearchOutlined />}
-            value={search}
-            onChange={e => handleSearch(e.target.value)}
-            allowClear
-            size="small"
-            style={{ width: 200 }}
-            onClear={() => handleSearch('')}
-          />
+          <div className="relative w-[200px]">
+            <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="搜索件号/名称"
+              value={search}
+              onChange={e => handleSearch(e.target.value)}
+              className="h-7 pl-7 text-sm"
+            />
+          </div>
         </>
       )}
     </div>
