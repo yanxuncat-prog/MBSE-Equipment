@@ -1,15 +1,14 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { Card, Switch, Tooltip, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { StatsCard } from '../shared/StatsCard';
-import { StatsRow } from '../shared/StatsRow';
-import { ProfessionalTable } from '../shared/ProfessionalTable';
-import { ProfessionalPanel } from '../shared/ProfessionalPanel';
-import { CoverageRing } from '../charts/CoverageRing';
-import { SimpleDonut } from '../charts/SimpleDonut';
-import type { Equipment, ValidationReport } from '../../../types';
-
-const { Text } = Typography;
+import { Card, CardHeader, CardTitle, CardContent, CardAction } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { StatsRow } from '@/components/workstation/shared/StatsRow';
+import { ProfessionalTable, type Column } from '@/components/workstation/shared/ProfessionalTable';
+import { ProfessionalPanel } from '@/components/workstation/shared/ProfessionalPanel';
+import { CoverageRing } from '@/components/workstation/charts/CoverageRing';
+import { SimpleDonut } from '@/components/workstation/charts/SimpleDonut';
+import type { Equipment, ValidationReport } from '@/types';
 
 interface Props {
   equipment: Equipment[];
@@ -72,10 +71,10 @@ function cellStyle(status: CellStatus): React.CSSProperties {
 
 function cellContent(value: any, status: CellStatus): React.ReactNode {
   switch (status) {
-    case 'missing': return <span style={{ fontSize: 11 }}>--</span>;
-    case 'bool-true': return <span style={{ color: '#34C759', fontSize: 14 }}>&#9679;</span>;
-    case 'bool-false': return <span style={{ color: '#FF3B30', fontSize: 14 }}>&#9679;</span>;
-    default: return <span style={{ fontSize: 11 }}>{String(value)}</span>;
+    case 'missing': return <span className="text-[11px]">--</span>;
+    case 'bool-true': return <span className="text-[#34C759] text-sm">&#9679;</span>;
+    case 'bool-false': return <span className="text-[#FF3B30] text-sm">&#9679;</span>;
+    default: return <span className="text-[11px]">{String(value)}</span>;
   }
 }
 
@@ -107,7 +106,7 @@ const HEATMAP_COLS: HeatmapColumn[] = [
 /* ------------------------------------------------------------------ */
 /* DO160Tab Component                                                  */
 /* ------------------------------------------------------------------ */
-export function DO160Tab({ equipment, report, onSelect }: Props) {
+export function DO160Tab({ equipment, report: _report, onSelect }: Props) {
   const [showProblemsOnly, setShowProblemsOnly] = useState(false);
 
   /* ---- Computed stats ---- */
@@ -163,39 +162,38 @@ export function DO160Tab({ equipment, report, onSelect }: Props) {
   }, [equipment]);
 
   /* ---- Standard table columns ---- */
-  const columns: ColumnsType<Equipment> = [
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin_number', fixed: 'left', width: 100 },
-    { title: '名称', dataIndex: 'name', key: 'name', fixed: 'left', width: 160, ellipsis: true },
+  const columns: Column<Equipment>[] = [
+    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin_number', width: 100 },
+    { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
     {
       title: 'DAL', dataIndex: 'dal', key: 'dal', width: 50,
-      sorter: (a, b) => (DAL_ORDER[a.dal ?? ''] ?? 99) - (DAL_ORDER[b.dal ?? ''] ?? 99),
       render: (v: string | null) => {
-        if (!v) return <span style={{ color: '#ccc' }}>-</span>;
-        return <span style={{ color: DAL_COLORS[v] || '#333', fontWeight: 700 }}>{v}</span>;
+        if (!v) return <span className="text-muted-foreground">-</span>;
+        return <span className="font-bold" style={{ color: DAL_COLORS[v] || '#333' }}>{v}</span>;
       },
     },
-    { title: '设计要求等级', key: 'design_level', width: 100, ellipsis: true, render: (_, r) => r.do160_temp_design_level || '-' },
-    { title: '鉴定等级', key: 'qual_level', width: 100, ellipsis: true, render: (_, r) => r.do160_temp_qual_level || '-' },
+    { title: '设计要求等级', key: 'design_level', width: 100, render: (_, r) => r.do160_temp_design_level || '-' },
+    { title: '鉴定等级', key: 'qual_level', width: 100, render: (_, r) => r.do160_temp_qual_level || '-' },
     {
-      title: '鉴定符合情况', key: 'compliance', width: 120, ellipsis: true,
+      title: '鉴定符合情况', key: 'compliance', width: 120,
       render: (_, r) => {
         const v = r.do160_temp_compliance || '-';
         const isNon = v.includes('不') || v.includes('未');
-        return <span style={isNon ? { color: '#FF3B30', fontWeight: 600 } : undefined}>{v}</span>;
+        return <span className={isNon ? 'text-[#FF3B30] font-semibold' : ''}>{v}</span>;
       },
     },
     { title: '正常工作温度', key: 'normal_temp', width: 100, render: (_, r) => r.normal_operating_temp || '-' },
     { title: '短时工作温度', key: 'short_temp', width: 100, render: (_, r) => r.short_term_temp || '-' },
     { title: '地面停放温度', key: 'ground_temp', width: 100, render: (_, r) => r.ground_storage_temp || '-' },
     { title: '高度', key: 'altitude', width: 70, render: (_, r) => r.operating_altitude || '-' },
-    { title: '鉴定报告号', key: 'qual_report', width: 120, ellipsis: true, render: (_, r) => r.qual_report_number || '-' },
+    { title: '鉴定报告号', key: 'qual_report', width: 120, render: (_, r) => r.qual_report_number || '-' },
     {
       title: '首飞上机', key: 'first_flight', width: 70,
-      render: (_, r) => r.first_flight_onboard === true ? <span style={{ color: '#34C759' }}>是</span> : r.first_flight_onboard === false ? <span style={{ color: '#FF3B30' }}>否</span> : '-',
+      render: (_, r) => r.first_flight_onboard === true ? <span className="text-[#34C759]">是</span> : r.first_flight_onboard === false ? <span className="text-[#FF3B30]">否</span> : '-',
     },
     {
       title: '二阶段上机', key: 'phase2', width: 80,
-      render: (_, r) => r.phase2_onboard === true ? <span style={{ color: '#34C759' }}>是</span> : r.phase2_onboard === false ? <span style={{ color: '#FF3B30' }}>否</span> : '-',
+      render: (_, r) => r.phase2_onboard === true ? <span className="text-[#34C759]">是</span> : r.phase2_onboard === false ? <span className="text-[#FF3B30]">否</span> : '-',
     },
   ];
 
@@ -204,204 +202,238 @@ export function DO160Tab({ equipment, report, onSelect }: Props) {
   const bannerBg = hasDal < equipment.length * 0.5 ? '#FFF1F0' : hasDal < equipment.length * 0.8 ? '#FFF7E6' : '#F6FFED';
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 180px)' }}>
-      <style>{`
-        .do160-matrix-table { border-collapse: collapse; font-size: 11px; width: 100%; }
-        .do160-matrix-table th {
-          background: #f7f8fa; color: #666; font-weight: 600; font-size: 10px;
-          padding: 6px 4px; border: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 2;
-          white-space: nowrap;
-        }
-        .do160-matrix-table td {
-          padding: 4px 6px; border: 1px solid #e8e8e8; text-align: center;
-          transition: all 0.15s;
-        }
-        .do160-matrix-table tr:hover td { outline: 2px solid #3B82F6; outline-offset: -1px; }
-        .do160-matrix-table .fixed-col {
-          position: sticky; background: #fff; z-index: 1; text-align: left;
-        }
-        .do160-matrix-table .fixed-col-0 { left: 0; }
-        .do160-matrix-table .fixed-col-1 { left: 90px; }
-        .do160-heatmap-cell { min-height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
-        .do160-dal-badge {
-          display: inline-block; padding: 1px 6px; border-radius: 3px; font-weight: 700; font-size: 11px;
-        }
-      `}</style>
-
-      <div style={{ flex: 1, overflow: 'auto', paddingRight: 16 }}>
-        {/* Hook Banner */}
-        <div style={{ padding: '10px 16px', borderRadius: 6, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, background: bannerBg, border: `1px solid ${bannerColor}33` }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: bannerColor, flexShrink: 0 }} />
-          <Text style={{ fontSize: 13, color: '#333' }}>
-            <strong>{equipment.length}</strong> 台设备中，仅{' '}
-            <span style={{ color: '#1E40AF', fontWeight: 700 }}>{hasDal} 台</span> 完成 DAL 鉴定 (
-            <span style={{ color: bannerColor, fontWeight: 700 }}>{dalPct}%</span>
-            )。首飞前需完成所有 A/B 级设备鉴定。
-          </Text>
-        </div>
-
-        {/* Stats Row with CoverageRing */}
-        <StatsRow>
-          <Card size="small" style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>DAL 覆盖</div>
-            <CoverageRing covered={hasDal} total={equipment.length} label="已有 DAL" color="#1E40AF" size={90} />
-          </Card>
-          <Card size="small" style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>温度鉴定</div>
-            <CoverageRing covered={hasTemp} total={equipment.length} label="温度数据" color="#3B82F6" size={90} />
-          </Card>
-          <Card size="small" style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>首飞就绪</div>
-            <CoverageRing covered={firstFlightCount} total={equipment.length} label="首飞上机" color="#34C759" size={90} />
-          </Card>
-          <Card size="small" style={{ flex: 1 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: '#999', marginBottom: 8 }}>缺鉴定</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#FF3B30' }}>{noDal}</div>
-              <div style={{ fontSize: 11, color: '#999' }}>台设备</div>
-            </div>
-          </Card>
-        </StatsRow>
-
-        {/* Qualification Matrix Heatmap */}
-        <Card
-          size="small"
-          title={`鉴定矩阵热力图 (${displayEquipment.length} 台)`}
-          style={{ marginBottom: 16 }}
-          bodyStyle={{ padding: 0, maxHeight: 420, overflowY: 'auto', overflowX: 'auto' }}
-          extra={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 12, color: '#999' }}>只看问题项</Text>
-              <Switch
-                size="small"
-                checked={showProblemsOnly}
-                onChange={setShowProblemsOnly}
-              />
-              {showProblemsOnly && (
-                <Text style={{ fontSize: 11, color: '#FF9500' }}>({problemCount} 台)</Text>
-              )}
-            </div>
+    <TooltipProvider>
+      <div className="flex h-[calc(100vh-180px)]">
+        <style>{`
+          .do160-matrix-table { border-collapse: collapse; font-size: 11px; width: 100%; }
+          .do160-matrix-table th {
+            background: #f7f8fa; color: #666; font-weight: 600; font-size: 10px;
+            padding: 6px 4px; border: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 2;
+            white-space: nowrap;
           }
-        >
-          <table className="do160-matrix-table">
-            <thead>
-              <tr>
-                <th className="fixed-col fixed-col-0" style={{ width: 90, minWidth: 90 }}>LIN号</th>
-                <th className="fixed-col fixed-col-1" style={{ width: 130, minWidth: 130 }}>名称</th>
-                {HEATMAP_COLS.map(col => (
-                  <th key={col.key} style={{ width: col.width, minWidth: col.width }}>{col.title}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayEquipment.map(eq => (
-                <tr
-                  key={eq.id}
-                  onClick={() => onSelect(eq)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <td className="fixed-col fixed-col-0" style={{ fontSize: 10, color: '#666', whiteSpace: 'nowrap' }}>
-                    {eq.lin_number || '-'}
-                  </td>
-                  <td className="fixed-col fixed-col-1" style={{ fontSize: 10, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>
-                    <Tooltip title={eq.name}>{eq.name}</Tooltip>
-                  </td>
-                  {HEATMAP_COLS.map(col => {
-                    const val = col.getValue(eq);
-                    const status = evaluateCell(val, col.isBool);
-                    const style = cellStyle(status);
+          .do160-matrix-table td {
+            padding: 4px 6px; border: 1px solid #e8e8e8; text-align: center;
+            transition: all 0.15s;
+          }
+          .do160-matrix-table tr:hover td { outline: 2px solid #3B82F6; outline-offset: -1px; }
+          .do160-matrix-table .fixed-col {
+            position: sticky; background: #fff; z-index: 1; text-align: left;
+          }
+          .do160-matrix-table .fixed-col-0 { left: 0; }
+          .do160-matrix-table .fixed-col-1 { left: 90px; }
+          .do160-heatmap-cell { min-height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
+          .do160-dal-badge {
+            display: inline-block; padding: 1px 6px; border-radius: 3px; font-weight: 700; font-size: 11px;
+          }
+        `}</style>
 
-                    // Special rendering for DAL column
-                    if (col.key === 'dal' && val) {
-                      return (
-                        <td key={col.key}>
-                          <span
-                            className="do160-dal-badge"
-                            style={{ background: `${DAL_COLORS[val] || '#999'}22`, color: DAL_COLORS[val] || '#999' }}
-                          >
-                            {val}
-                          </span>
-                        </td>
-                      );
-                    }
+        <div className="flex-1 overflow-auto pr-4">
+          {/* Hook Banner */}
+          <div
+            className="flex items-center gap-2 rounded-md px-4 py-2.5 mb-3"
+            style={{ background: bannerBg, border: `1px solid ${bannerColor}33` }}
+          >
+            <div className="size-2 shrink-0 rounded-full" style={{ background: bannerColor }} />
+            <p className="text-[13px] text-foreground">
+              <strong>{equipment.length}</strong> 台设备中，仅{' '}
+              <span className="font-bold text-[#1E40AF]">{hasDal} 台</span> 完成 DAL 鉴定 (
+              <span className="font-bold" style={{ color: bannerColor }}>{dalPct}%</span>
+              )。首飞前需完成所有 A/B 级设备鉴定。
+            </p>
+          </div>
 
-                    return (
-                      <td key={col.key} style={style}>
-                        <div className="do160-heatmap-cell">
-                          {cellContent(val, status)}
-                        </div>
+          {/* Stats Row with CoverageRing */}
+          <StatsRow>
+            <Card size="sm" className="flex-1 text-center">
+              <CardContent>
+                <div className="text-[11px] text-muted-foreground mb-1">DAL 覆盖</div>
+                <CoverageRing covered={hasDal} total={equipment.length} label="已有 DAL" color="#1E40AF" size={90} />
+              </CardContent>
+            </Card>
+            <Card size="sm" className="flex-1 text-center">
+              <CardContent>
+                <div className="text-[11px] text-muted-foreground mb-1">温度鉴定</div>
+                <CoverageRing covered={hasTemp} total={equipment.length} label="温度数据" color="#3B82F6" size={90} />
+              </CardContent>
+            </Card>
+            <Card size="sm" className="flex-1 text-center">
+              <CardContent>
+                <div className="text-[11px] text-muted-foreground mb-1">首飞就绪</div>
+                <CoverageRing covered={firstFlightCount} total={equipment.length} label="首飞上机" color="#34C759" size={90} />
+              </CardContent>
+            </Card>
+            <Card size="sm" className="flex-1">
+              <CardContent className="text-center">
+                <div className="text-[11px] text-muted-foreground mb-2">缺鉴定</div>
+                <div className="text-[28px] font-bold text-[#FF3B30]">{noDal}</div>
+                <div className="text-[11px] text-muted-foreground">台设备</div>
+              </CardContent>
+            </Card>
+          </StatsRow>
+
+          {/* Qualification Matrix Heatmap */}
+          <Card size="sm" className="mb-4">
+            <CardHeader className="border-b">
+              <CardTitle>{`鉴定矩阵热力图 (${displayEquipment.length} 台)`}</CardTitle>
+              <CardAction>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="problems-only" className="text-xs text-muted-foreground cursor-pointer">只看问题项</Label>
+                  <Checkbox
+                    id="problems-only"
+                    checked={showProblemsOnly}
+                    onCheckedChange={(checked: boolean) => setShowProblemsOnly(checked)}
+                  />
+                  {showProblemsOnly && (
+                    <span className="text-[11px] text-[#FF9500]">({problemCount} 台)</span>
+                  )}
+                </div>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="p-0 max-h-[420px] overflow-y-auto overflow-x-auto">
+              <table className="do160-matrix-table">
+                <thead>
+                  <tr>
+                    <th className="fixed-col fixed-col-0 w-[90px] min-w-[90px]">LIN号</th>
+                    <th className="fixed-col fixed-col-1 w-[130px] min-w-[130px]">名称</th>
+                    {HEATMAP_COLS.map(col => (
+                      <th key={col.key} style={{ width: col.width, minWidth: col.width }}>{col.title}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayEquipment.map(eq => (
+                    <tr
+                      key={eq.id}
+                      onClick={() => onSelect(eq)}
+                      className="cursor-pointer"
+                    >
+                      <td className="fixed-col fixed-col-0 text-[10px] text-muted-foreground whitespace-nowrap">
+                        {eq.lin_number || '-'}
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              {displayEquipment.length === 0 && (
-                <tr>
-                  <td colSpan={2 + HEATMAP_COLS.length} style={{ padding: 24, color: '#ccc', textAlign: 'center' }}>
-                    {showProblemsOnly ? '无问题项设备' : '无设备数据'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
+                      <td className="fixed-col fixed-col-1 text-[10px] text-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                        <Tooltip>
+                          <TooltipTrigger>{eq.name}</TooltipTrigger>
+                          <TooltipContent>{eq.name}</TooltipContent>
+                        </Tooltip>
+                      </td>
+                      {HEATMAP_COLS.map(col => {
+                        const val = col.getValue(eq);
+                        const status = evaluateCell(val, col.isBool);
+                        const style = cellStyle(status);
 
-        {/* Heatmap Legend */}
-        <div style={{ display: 'flex', gap: 16, padding: '4px 8px', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 14, height: 14, borderRadius: 2, background: 'radial-gradient(circle at center, #34C759, #e8f5e9)' }} />
-            <Text style={{ fontSize: 10, color: '#888' }}>数据完整</Text>
+                        // Special rendering for DAL column
+                        if (col.key === 'dal' && val) {
+                          return (
+                            <td key={col.key}>
+                              <span
+                                className="do160-dal-badge"
+                                style={{ background: `${DAL_COLORS[val] || '#999'}22`, color: DAL_COLORS[val] || '#999' }}
+                              >
+                                {val}
+                              </span>
+                            </td>
+                          );
+                        }
+
+                        return (
+                          <td key={col.key} style={style}>
+                            <div className="do160-heatmap-cell">
+                              {cellContent(val, status)}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  {displayEquipment.length === 0 && (
+                    <tr>
+                      <td colSpan={2 + HEATMAP_COLS.length} className="p-6 text-muted-foreground text-center">
+                        {showProblemsOnly ? '无问题项设备' : '无设备数据'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+
+          {/* Heatmap Legend */}
+          <div className="flex gap-4 px-2 py-1 mb-3">
+            <div className="flex items-center gap-1">
+              <div className="size-3.5 rounded-sm" style={{ background: 'radial-gradient(circle at center, #34C759, #e8f5e9)' }} />
+              <span className="text-[10px] text-muted-foreground">数据完整</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="size-3.5 rounded-sm" style={{ background: 'radial-gradient(circle at center, #FF3B30, #ffebee)' }} />
+              <span className="text-[10px] text-muted-foreground">不符合/未完成</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="size-3.5 rounded-sm" style={{ background: 'repeating-linear-gradient(-45deg, #f5f5f5, #f5f5f5 3px, #e0e0e0 3px, #e0e0e0 6px)' }} />
+              <span className="text-[10px] text-muted-foreground">缺失</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[#34C759] text-xs">&#9679;</span>
+              <span className="text-[10px] text-muted-foreground">是</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[#FF3B30] text-xs">&#9679;</span>
+              <span className="text-[10px] text-muted-foreground">否</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 14, height: 14, borderRadius: 2, background: 'radial-gradient(circle at center, #FF3B30, #ffebee)' }} />
-            <Text style={{ fontSize: 10, color: '#888' }}>不符合/未完成</Text>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 14, height: 14, borderRadius: 2, background: 'repeating-linear-gradient(-45deg, #f5f5f5, #f5f5f5 3px, #e0e0e0 3px, #e0e0e0 6px)' }} />
-            <Text style={{ fontSize: 10, color: '#888' }}>缺失</Text>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ color: '#34C759', fontSize: 12 }}>&#9679;</span>
-            <Text style={{ fontSize: 10, color: '#888' }}>是</Text>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ color: '#FF3B30', fontSize: 12 }}>&#9679;</span>
-            <Text style={{ fontSize: 10, color: '#888' }}>否</Text>
-          </div>
+
+          {/* Professional Table (full detail) */}
+          <ProfessionalTable columns={columns} dataSource={displayEquipment} onRow={(record) => ({ onClick: () => onSelect(record) })} />
         </div>
 
-        {/* Professional Table (full detail) */}
-        <ProfessionalTable columns={columns} data={displayEquipment} onRowClick={onSelect} scrollX={1500} />
+        {/* Right Panel */}
+        <ProfessionalPanel>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>DAL 分布</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SimpleDonut segments={dalSegments} />
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>DAL 覆盖率</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CoverageRing covered={hasDal} total={equipment.length} label="已完成 DAL 鉴定" color="#1E40AF" />
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>温度数据覆盖</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CoverageRing covered={hasTemp} total={equipment.length} label="有温度鉴定数据" color="#3B82F6" />
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>上机统计</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-[13px] leading-[2.2] py-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">首飞上机</span>
+                  <strong className="text-[#34C759]">{firstFlightCount} 台</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">二阶段上机</span>
+                  <strong className="text-[#3B82F6]">{phase2Count} 台</strong>
+                </div>
+                <div className="flex justify-between pt-1 border-t">
+                  <span className="text-muted-foreground">问题设备</span>
+                  <strong className="text-[#FF3B30]">{problemCount} 台</strong>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ProfessionalPanel>
       </div>
-
-      {/* Right Panel */}
-      <ProfessionalPanel>
-        <Card size="small" title="DAL 分布">
-          <SimpleDonut segments={dalSegments} />
-        </Card>
-        <Card size="small" title="DAL 覆盖率">
-          <CoverageRing covered={hasDal} total={equipment.length} label="已完成 DAL 鉴定" color="#1E40AF" />
-        </Card>
-        <Card size="small" title="温度数据覆盖">
-          <CoverageRing covered={hasTemp} total={equipment.length} label="有温度鉴定数据" color="#3B82F6" />
-        </Card>
-        <Card size="small" title="上机统计">
-          <div style={{ fontSize: 13, lineHeight: 2.2, padding: '4px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#666' }}>首飞上机</span>
-              <strong style={{ color: '#34C759' }}>{firstFlightCount} 台</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#666' }}>二阶段上机</span>
-              <strong style={{ color: '#3B82F6' }}>{phase2Count} 台</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid #f0f0f0' }}>
-              <span style={{ color: '#666' }}>问题设备</span>
-              <strong style={{ color: '#FF3B30' }}>{problemCount} 台</strong>
-            </div>
-          </div>
-        </Card>
-      </ProfessionalPanel>
-    </div>
+    </TooltipProvider>
   );
 }
