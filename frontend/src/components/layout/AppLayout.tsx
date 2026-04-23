@@ -195,6 +195,48 @@ export function AppLayout() {
 
               return navItem;
             })}
+
+            {/* Separator before settings */}
+            <div className="my-2 mx-1">
+              <Separator />
+            </div>
+
+            {/* Settings menu item */}
+            <Popover>
+              <PopoverTrigger render={
+                <div
+                  className={cn(
+                    "group relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150 select-none",
+                    "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                    collapsed && "justify-center px-2"
+                  )}
+                >
+                  <span className="shrink-0"><Settings className="size-4" /></span>
+                  {!collapsed && <span className="truncate">设置</span>}
+                </div>
+              } />
+              <PopoverContent side="right" align="start" className="w-[220px]">
+                <div className="space-y-3">
+                  <div className="text-xs font-medium text-muted-foreground">界面风格</div>
+                  <div className="space-y-1">
+                    <ThemeOption
+                      icon={<Sun className="size-4" />}
+                      label="ShadCN"
+                      description="Light Mode"
+                      active={mode === 'shadcn'}
+                      onClick={() => setMode('shadcn')}
+                    />
+                    <ThemeOption
+                      icon={<Moon className="size-4" />}
+                      label="MUI"
+                      description="Dark Mode"
+                      active={mode === 'mui'}
+                      onClick={() => setMode('mui')}
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </nav>
 
@@ -226,46 +268,13 @@ export function AppLayout() {
 
           <Separator />
 
-          {/* Settings + Collapse */}
-          <div className="flex items-center gap-1">
-            {/* Theme settings */}
-            <Popover>
-              <PopoverTrigger render={
-                <button className="flex flex-1 items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
-                  <Settings className="size-4" />
-                </button>
-              } />
-              <PopoverContent side="top" align="start" className="w-[220px]">
-                <div className="space-y-3">
-                  <div className="text-xs font-medium text-muted-foreground">界面风格</div>
-                  <div className="space-y-1">
-                    <ThemeOption
-                      icon={<Sun className="size-4" />}
-                      label="ShadCN"
-                      description="Light Mode"
-                      active={mode === 'shadcn'}
-                      onClick={() => setMode('shadcn')}
-                    />
-                    <ThemeOption
-                      icon={<Moon className="size-4" />}
-                      label="MUI"
-                      description="Dark Mode"
-                      active={mode === 'mui'}
-                      onClick={() => setMode('mui')}
-                    />
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Collapse toggle */}
-            <button
-              onClick={() => setCollapsed(c => !c)}
-              className="flex flex-1 items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-            >
-              {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
-            </button>
-          </div>
+          {/* Collapse toggle */}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="flex w-full items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          >
+            {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
+          </button>
         </div>
       </aside>
 
