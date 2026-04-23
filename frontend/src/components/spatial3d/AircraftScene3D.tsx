@@ -2,11 +2,10 @@ import React, { useState, useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Grid, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { Checkbox, Space, Typography } from 'antd';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { FuselageSTL } from './FuselageSTL';
 import type { Equipment, Zone } from '../../types';
-
-const { Text } = Typography;
 
 /**
  * CE-25A full aircraft from STEP:
@@ -66,14 +65,11 @@ function EquipMarker({ equipment, position, selected, onClick, size }: {
       </mesh>
       {(hovered || selected) && (
         <Html position={[0, 0, r * 3]} center style={{ pointerEvents: 'none' }}>
-          <div style={{
-            background: 'rgba(0,0,0,0.9)', color: '#fff', padding: '5px 8px',
-            borderRadius: 5, fontSize: 10, whiteSpace: 'nowrap',
-            border: `1px solid ${color}`,
-          }}>
-            <div style={{ fontWeight: 600, color }}>{equipment.part_number}</div>
+          <div className="rounded-md border bg-popover/95 px-2 py-1.5 text-[10px] text-popover-foreground whitespace-nowrap"
+            style={{ borderColor: color }}>
+            <div className="font-semibold" style={{ color }}>{equipment.part_number}</div>
             <div>{equipment.name}</div>
-            {equipment.weight_balance && <div style={{ color: '#aaa' }}>{equipment.weight_balance.mass_kg.toFixed(1)} kg</div>}
+            {equipment.weight_balance && <div className="text-muted-foreground">{equipment.weight_balance.mass_kg.toFixed(1)} kg</div>}
           </div>
         </Html>
       )}
@@ -103,44 +99,37 @@ export function AircraftScene3D({ equipment, zones, selectedId, onSelect }: Prop
   const markerSize = 1.5; // scene units
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div className="relative w-full h-full">
       {/* Controls */}
-      <div style={{
-        position: 'absolute', top: 8, left: 8, zIndex: 10,
-        background: 'rgba(255,255,255,0.93)', padding: '6px 10px',
-        borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
-      }}>
-        <Space size={12}>
-          <Checkbox checked={showEquipment} onChange={e => setShowEquipment(e.target.checked)}>设备标记</Checkbox>
-          <Text type="secondary" style={{ fontSize: 10 }}>
-            {positioned.length} 台 | 左键旋转 · 滚轮缩放 · 右键平移
-          </Text>
-        </Space>
+      <div className="absolute top-2 left-2 z-10 flex items-center gap-3 rounded-md bg-background/95 px-2.5 py-1.5 shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <Checkbox
+            id="show-equipment"
+            checked={showEquipment}
+            onCheckedChange={(checked) => setShowEquipment(checked === true)}
+          />
+          <Label htmlFor="show-equipment" className="text-xs cursor-pointer">设备标记</Label>
+        </div>
+        <span className="text-[10px] text-muted-foreground">
+          {positioned.length} 台 | 左键旋转 · 滚轮缩放 · 右键平移
+        </span>
       </div>
 
       {/* Model info */}
-      <div style={{
-        position: 'absolute', top: 8, right: 8, zIndex: 10,
-        background: 'rgba(0,0,0,0.75)', padding: '4px 8px', borderRadius: 4,
-        fontSize: 9, color: '#999',
-      }}>
+      <div className="absolute top-2 right-2 z-10 rounded bg-black/75 px-2 py-1 text-[9px] text-neutral-400">
         CE-25A 完整模型 · 19.6m × 6.3m
       </div>
 
       {/* ATA legend */}
-      <div style={{
-        position: 'absolute', bottom: 8, left: 8, zIndex: 10,
-        background: 'rgba(255,255,255,0.93)', padding: '5px 8px',
-        borderRadius: 5, fontSize: 9, display: 'flex', gap: 6, flexWrap: 'wrap', maxWidth: 450,
-      }}>
+      <div className="absolute bottom-2 left-2 z-10 flex flex-wrap gap-1.5 rounded-md bg-background/95 px-2 py-1.5 text-[9px] max-w-[450px]">
         {[
           ['23', '通信', '#34c759'], ['24', '电源', '#ff9500'], ['26', '防火', '#af52de'],
           ['27', '飞控', '#007aff'], ['31', '指示', '#30b0c7'], ['34', '导航', '#ff6b6b'],
           ['86', '电推进', '#ff3b30'], ['其他', '', '#8e8e93'],
         ].map(([a, n, c]) => (
-          <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: c, display: 'inline-block' }} />
-            <span style={{ color: '#555' }}>{a}{n ? ` ${n}` : ''}</span>
+          <span key={a} className="flex items-center gap-0.5">
+            <span className="inline-block size-[7px] rounded-full" style={{ background: c }} />
+            <span className="text-muted-foreground">{a}{n ? ` ${n}` : ''}</span>
           </span>
         ))}
       </div>

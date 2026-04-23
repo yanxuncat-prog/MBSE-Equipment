@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { message } from 'antd';
-import { SpatialView } from '../components/spatial/SpatialView';
-import { EquipmentDetail } from '../components/equipment/EquipmentDetail';
-import { useConfigStore } from '../store/configStore';
-import { listEquipment } from '../api/equipment';
-import type { Equipment, Zone } from '../types';
-import client from '../api/client';
+import { useEffect, useState, useCallback } from 'react';
+import { toast } from 'sonner';
+import { SpatialView } from '@/components/spatial/SpatialView';
+import { EquipmentDetail } from '@/components/equipment/EquipmentDetail';
+import { useConfigStore } from '@/store/configStore';
+import { listEquipment } from '@/api/equipment';
+import type { Equipment, Zone } from '@/types';
+import client from '@/api/client';
 
 export function SpatialViewPage() {
   const { activeConfigId, activeSeriesId } = useConfigStore();
@@ -21,7 +21,7 @@ export function SpatialViewPage() {
       const result = await listEquipment({ config_id: activeConfigId, limit: 200 });
       setEquipment(result.items.filter(e => e.config_data));
     } catch {
-      message.error('加载设备失败');
+      toast.error('加载设备失败');
     }
   }, [activeConfigId]);
 

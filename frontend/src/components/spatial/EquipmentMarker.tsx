@@ -40,7 +40,7 @@ export function EquipmentMarker({ equipment, view, selected, onClick }: Props) {
       onClick={() => onClick(equipment)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ cursor: 'pointer' }}
+      className="cursor-pointer"
     >
       {selected && (
         <circle cx={cx} cy={cy} r={12} fill="none" stroke={color} strokeWidth={2} opacity={0.5}>
