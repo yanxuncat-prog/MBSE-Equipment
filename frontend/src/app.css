@@ -83,6 +83,42 @@
   --sidebar-ring: oklch(0.55 0.18 260);
 }
 
+/* MUI-inspired Dark Mode */
+.dark {
+  --background: oklch(0.16 0.005 270);
+  --foreground: oklch(0.93 0.005 260);
+  --card: oklch(0.21 0.008 270);
+  --card-foreground: oklch(0.93 0.005 260);
+  --popover: oklch(0.23 0.01 270);
+  --popover-foreground: oklch(0.93 0.005 260);
+  --primary: oklch(0.72 0.17 300);
+  --primary-foreground: oklch(0.13 0.01 270);
+  --secondary: oklch(0.25 0.015 270);
+  --secondary-foreground: oklch(0.90 0.005 260);
+  --muted: oklch(0.25 0.01 270);
+  --muted-foreground: oklch(0.65 0.015 260);
+  --accent: oklch(0.28 0.02 270);
+  --accent-foreground: oklch(0.93 0.005 260);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.30 0.015 270);
+  --input: oklch(0.28 0.015 270);
+  --ring: oklch(0.72 0.17 300);
+  --chart-1: oklch(0.72 0.17 300);
+  --chart-2: oklch(0.70 0.16 170);
+  --chart-3: oklch(0.75 0.15 80);
+  --chart-4: oklch(0.65 0.18 320);
+  --chart-5: oklch(0.70 0.14 40);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.14 0.008 270);
+  --sidebar-foreground: oklch(0.90 0.005 260);
+  --sidebar-primary: oklch(0.72 0.17 300);
+  --sidebar-primary-foreground: oklch(0.13 0.01 270);
+  --sidebar-accent: oklch(0.22 0.02 270);
+  --sidebar-accent-foreground: oklch(0.90 0.005 260);
+  --sidebar-border: oklch(0.26 0.015 270);
+  --sidebar-ring: oklch(0.72 0.17 300);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

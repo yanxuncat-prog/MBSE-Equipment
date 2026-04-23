@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Eye, GitBranch, HelpCircle, LayoutDashboard,
   GripVertical, Database, ShoppingCart, PanelLeftClose, PanelLeft,
-  Plane, LogOut,
+  Plane, LogOut, Settings, Sun, Moon, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GlobalNav } from './GlobalNav';
@@ -12,6 +12,8 @@ import { Separator } from '@/components/ui/separator';
 import {
   Tooltip, TooltipTrigger, TooltipContent,
 } from '@/components/ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useThemeStore, type ThemeMode } from '@/store/themeStore';
 
 interface MenuItem {
   key: string;
@@ -108,6 +110,8 @@ export function AppLayout() {
     localStorage.removeItem('token');
     navigate('/login');
   };
+
+  const { mode, setMode } = useThemeStore();
 
   const sidebarWidth = collapsed ? 60 : 240;
   const pageTitle = PAGE_TITLES[location.pathname] || '';
@@ -222,13 +226,46 @@ export function AppLayout() {
 
           <Separator />
 
-          {/* Collapse toggle */}
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            className="flex w-full items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-          >
-            {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
-          </button>
+          {/* Settings + Collapse */}
+          <div className="flex items-center gap-1">
+            {/* Theme settings */}
+            <Popover>
+              <PopoverTrigger render={
+                <button className="flex flex-1 items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
+                  <Settings className="size-4" />
+                </button>
+              } />
+              <PopoverContent side="top" align="start" className="w-[220px]">
+                <div className="space-y-3">
+                  <div className="text-xs font-medium text-muted-foreground">界面风格</div>
+                  <div className="space-y-1">
+                    <ThemeOption
+                      icon={<Sun className="size-4" />}
+                      label="ShadCN"
+                      description="Light Mode"
+                      active={mode === 'shadcn'}
+                      onClick={() => setMode('shadcn')}
+                    />
+                    <ThemeOption
+                      icon={<Moon className="size-4" />}
+                      label="MUI"
+                      description="Dark Mode"
+                      active={mode === 'mui'}
+                      onClick={() => setMode('mui')}
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Collapse toggle */}
+            <button
+              onClick={() => setCollapsed(c => !c)}
+              className="flex flex-1 items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+            >
+              {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -253,5 +290,37 @@ export function AppLayout() {
         </main>
       </div>
     </div>
+  );
+}
+
+function ThemeOption({ icon, label, description, active, onClick }: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+        active
+          ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+          : "hover:bg-muted text-foreground"
+      )}
+    >
+      <div className={cn(
+        "flex size-8 items-center justify-center rounded-md",
+        active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+      )}>
+        {icon}
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-medium">{label}</div>
+        <div className="text-[11px] text-muted-foreground">{description}</div>
+      </div>
+      {active && <Check className="size-4 text-primary shrink-0" />}
+    </button>
   );
 }
