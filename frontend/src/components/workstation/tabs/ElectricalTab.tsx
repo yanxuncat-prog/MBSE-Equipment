@@ -1,16 +1,16 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { Card, Button, Tag, Tooltip, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { StatsCard } from '../shared/StatsCard';
-import { StatsRow } from '../shared/StatsRow';
-import { ProfessionalTable } from '../shared/ProfessionalTable';
-import { ProfessionalPanel } from '../shared/ProfessionalPanel';
-import { BusStatusDots } from '../../charts/BusStatusDots';
-import { HorizontalBar } from '../charts/HorizontalBar';
-import { SimpleDonut } from '../charts/SimpleDonut';
-import type { Equipment, ValidationReport } from '../../../types';
-
-const { Text } = Typography;
+import { useMemo, useState, useCallback } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardAction } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { StatsCard } from '@/components/workstation/shared/StatsCard';
+import { StatsRow } from '@/components/workstation/shared/StatsRow';
+import { ProfessionalTable } from '@/components/workstation/shared/ProfessionalTable';
+import type { Column } from '@/components/workstation/shared/ProfessionalTable';
+import { ProfessionalPanel } from '@/components/workstation/shared/ProfessionalPanel';
+import { BusStatusDots } from '@/components/charts/BusStatusDots';
+import { HorizontalBar } from '@/components/workstation/charts/HorizontalBar';
+import { SimpleDonut } from '@/components/workstation/charts/SimpleDonut';
+import type { Equipment, ValidationReport } from '@/types';
 
 interface Props {
   equipment: Equipment[];
@@ -71,6 +71,15 @@ interface SankeyLink {
 }
 
 const FLIGHT_PHASES = ['地面', '起飞', '巡航', '着陆', '应急'] as const;
+
+/* ------------------------------------------------------------------ */
+/* Bus Badge variant helper                                            */
+/* ------------------------------------------------------------------ */
+function busBadgeClasses(pct: number): string {
+  if (pct > 100) return 'bg-red-500/15 text-red-700 border-red-200';
+  if (pct > 85) return 'bg-orange-500/15 text-orange-700 border-orange-200';
+  return 'bg-green-500/15 text-green-700 border-green-200';
+}
 
 /* ------------------------------------------------------------------ */
 /* ElectricalTab Component                                             */
@@ -256,37 +265,44 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
   );
 
   /* ---- Table columns ---- */
-  const columns: ColumnsType<Equipment> = [
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin_number', fixed: 'left', width: 100 },
-    { title: '名称', dataIndex: 'name', key: 'name', fixed: 'left', width: 160, ellipsis: true },
+  const columns: Column<Equipment>[] = [
+    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin_number', width: 100 },
+    { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
     {
       title: '母线', key: 'bus', width: 100,
       render: (_, r) => {
         const bn = r.config_data?.bus_name;
-        if (!bn) return '-';
+        if (!bn) return <span className="text-muted-foreground">-</span>;
         const busInfo = busEntries.find(b => b.bus_name === bn);
-        const color = busInfo ? busColor(busInfo.load_ratio_pct) : '#999';
-        return <Tag color={color === '#34C759' ? 'green' : color === '#FF9500' ? 'orange' : color === '#FF3B30' ? 'red' : 'default'}>{bn}</Tag>;
+        const pct = busInfo?.load_ratio_pct ?? 0;
+        return (
+          <Badge variant="outline" className={busBadgeClasses(pct)}>
+            {bn}
+          </Badge>
+        );
       },
     },
     {
       title: '功耗(kVA)', key: 'power', width: 90, align: 'right',
-      sorter: (a, b) => (a.electrical_load?.power_kva_normal ?? 0) - (b.electrical_load?.power_kva_normal ?? 0),
-      render: (_, r) => r.electrical_load?.power_kva_normal?.toFixed(2) || '-',
+      render: (_, r) => (
+        <span className="tabular-nums">
+          {r.electrical_load?.power_kva_normal?.toFixed(2) || '-'}
+        </span>
+      ),
     },
     { title: '供电电压', key: 'voltage', width: 80, render: (_, r) => r.power_voltage || '-' },
     { title: '供电余度', key: 'redundancy', width: 80, render: (_, r) => r.power_redundancy || '-' },
     {
       title: '一级设备', key: 'primary', width: 70, align: 'center',
       render: (_, r) => r.is_primary_electrical === true
-        ? <span style={{ color: '#F59E0B', fontWeight: 700 }}>&#9733;</span>
-        : <span style={{ color: '#ddd' }}>-</span>,
+        ? <span className="text-amber-500 font-bold">&#9733;</span>
+        : <span className="text-muted-foreground/40">-</span>,
     },
     {
       title: '电设备', key: 'is_elec', width: 70, align: 'center',
       render: (_, r) => r.is_electrical === true
-        ? <span style={{ color: '#34C759' }}>&#9679;</span>
-        : <span style={{ color: '#ccc' }}>&#9675;</span>,
+        ? <span className="text-green-500">&#9679;</span>
+        : <span className="text-muted-foreground/30">&#9675;</span>,
     },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 55 },
   ];
@@ -294,247 +310,269 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
   const handleBusHover = useCallback((busId: string | null) => setHoveredBus(busId), []);
 
   /* Banner */
-  const bannerColor = maxLoadRatio > 100 ? '#FF3B30' : maxLoadRatio > 85 ? '#FF9500' : '#34C759';
-  const bannerBg = maxLoadRatio > 100 ? '#FFF1F0' : maxLoadRatio > 85 ? '#FFF7E6' : '#F6FFED';
+  const bannerClasses = maxLoadRatio > 100
+    ? 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
+    : maxLoadRatio > 85
+      ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800'
+      : 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
+
+  const bannerDotColor = maxLoadRatio > 100 ? 'bg-red-500' : maxLoadRatio > 85 ? 'bg-orange-500' : 'bg-green-500';
+  const bannerValueColor = maxLoadRatio > 100 ? 'text-red-600' : maxLoadRatio > 85 ? 'text-orange-600' : 'text-green-600';
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 180px)' }}>
+    <div className="flex h-[calc(100vh-180px)]">
       <style>{`
         .el-row-non-electrical td { opacity: 0.35; }
         .el-sankey-link { transition: opacity 0.2s; }
         .el-sankey-node { transition: opacity 0.2s; cursor: pointer; }
-        .el-phase-btn { border-radius: 4px !important; font-size: 12px !important; padding: 2px 10px !important; }
-        .el-phase-btn.active { background: #1E40AF !important; color: #fff !important; border-color: #1E40AF !important; }
       `}</style>
 
-      <div style={{ flex: 1, overflow: 'auto', paddingRight: 16 }}>
+      <div className="flex-1 overflow-auto pr-4">
         {/* Hook Banner */}
-        <div style={{ padding: '10px 16px', borderRadius: 6, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, background: bannerBg, border: `1px solid ${bannerColor}33` }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: bannerColor, flexShrink: 0 }} />
-          <Text style={{ fontSize: 13, color: '#333' }}>
+        <div className={`flex items-center gap-2 rounded-md border px-4 py-2.5 mb-3 ${bannerClasses}`}>
+          <div className={`h-2 w-2 shrink-0 rounded-full ${bannerDotColor}`} />
+          <p className="text-[13px] text-foreground">
             {maxLoadBus ? (
               <>
                 <strong>{maxLoadBus.bus_name}</strong> 母线负荷率{' '}
-                <span style={{ color: bannerColor, fontWeight: 700 }}>{maxLoadRatio.toFixed(1)}%</span>
+                <span className={`font-bold ${bannerValueColor}`}>{maxLoadRatio.toFixed(1)}%</span>
                 ——距满载仅剩{' '}
-                <span style={{ color: '#1E40AF', fontWeight: 700 }}>{maxLoadMargin.toFixed(1)} kVA</span>。
+                <span className="font-bold text-blue-700 dark:text-blue-400">{maxLoadMargin.toFixed(1)} kVA</span>。
               </>
             ) : (
               '无母线负荷数据。'
             )}
-          </Text>
+          </p>
         </div>
 
         {/* Stats Row */}
         <StatsRow>
-          <Card size="small" style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>母线状态</div>
-            {busEntries.length > 0 ? <BusStatusDots buses={buses} /> : <span style={{ color: '#ccc', fontSize: 12 }}>无数据</span>}
+          <Card size="sm" className="flex-1">
+            <CardContent>
+              <div className="text-xs text-muted-foreground mb-2">母线状态</div>
+              {busEntries.length > 0 ? <BusStatusDots buses={buses} /> : <span className="text-muted-foreground/50 text-xs">无数据</span>}
+            </CardContent>
           </Card>
           <StatsCard
-            title="最高负荷"
-            value={maxLoadRatio.toFixed(1)}
-            suffix="%"
+            label="最高负荷"
+            value={`${maxLoadRatio.toFixed(1)}%`}
             color={maxLoadRatio > 85 ? '#FF9500' : '#34C759'}
           />
-          <StatsCard title="一级用电设备" value={primaryCount} color="#F59E0B" />
+          <StatsCard label="一级用电设备" value={primaryCount} color="#F59E0B" />
         </StatsRow>
 
         {/* Sankey Flow Diagram */}
-        <Card
-          size="small"
-          title="供电流向图"
-          style={{ marginBottom: 16 }}
-          bodyStyle={{ padding: 8, overflowX: 'auto' }}
-          extra={
-            <div style={{ display: 'flex', gap: 4 }}>
-              {FLIGHT_PHASES.map(phase => (
-                <Button
-                  key={phase}
-                  size="small"
-                  className={`el-phase-btn ${activePhase === phase ? 'active' : ''}`}
-                  type={activePhase === phase ? 'primary' : 'default'}
-                  onClick={() => setActivePhase(phase)}
-                >
-                  {phase}
-                </Button>
-              ))}
-            </div>
-          }
-        >
-          <svg
-            width={sankeyData.svgW}
-            height={sankeyData.svgH}
-            viewBox={`0 0 ${sankeyData.svgW} ${sankeyData.svgH}`}
-            style={{ display: 'block', width: '100%', minHeight: 300 }}
-          >
-            <defs>
-              {/* Glow filter for highlighted buses */}
-              <filter id="el-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
+        <Card size="sm" className="mb-4">
+          <CardHeader className="border-b">
+            <CardTitle>供电流向图</CardTitle>
+            <CardAction>
+              <div className="flex gap-1">
+                {FLIGHT_PHASES.map(phase => (
+                  <Button
+                    key={phase}
+                    size="xs"
+                    variant={activePhase === phase ? 'default' : 'outline'}
+                    onClick={() => setActivePhase(phase)}
+                  >
+                    {phase}
+                  </Button>
+                ))}
+              </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="overflow-x-auto p-2">
+            <svg
+              width={sankeyData.svgW}
+              height={sankeyData.svgH}
+              viewBox={`0 0 ${sankeyData.svgW} ${sankeyData.svgH}`}
+              className="block w-full min-h-[300px]"
+            >
+              <defs>
+                {/* Glow filter for highlighted buses */}
+                <filter id="el-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
 
-            {/* Links (draw first, behind nodes) */}
-            {sankeyData.links.map((link, i) => {
-              const isHighlighted = hoveredBus === null || hoveredBus === link.busId;
-              return (
-                <path
-                  key={i}
-                  className="el-sankey-link"
-                  d={bezierPath(link.sx, link.sy, link.tx, link.ty)}
-                  fill="none"
-                  stroke={link.color}
-                  strokeWidth={link.width}
-                  strokeOpacity={isHighlighted ? 0.35 : 0.06}
-                />
-              );
-            })}
-
-            {/* Nodes */}
-            {sankeyData.nodes.map(node => {
-              const isHighlighted = hoveredBus === null || hoveredBus === `bus-${node.label}` ||
-                sankeyData.links.some(l => (l.sourceId === node.id || l.targetId === node.id) && hoveredBus === l.busId);
-              const isBus = node.column === 'bus';
-
-              return (
-                <g
-                  key={node.id}
-                  className="el-sankey-node"
-                  style={{ opacity: isHighlighted ? 1 : 0.1 }}
-                  onMouseEnter={() => isBus ? handleBusHover(node.id) : undefined}
-                  onMouseLeave={() => isBus ? handleBusHover(null) : undefined}
-                >
-                  {/* Node rectangle */}
-                  <rect
-                    x={node.x} y={node.y} width={node.w} height={node.h}
-                    rx={3}
-                    fill={isBus ? busColorBg(node.loadPct ?? 0) : node.color}
-                    fillOpacity={isBus ? 1 : 0.85}
-                    stroke={node.color}
-                    strokeWidth={isBus ? 2 : 1}
-                    filter={isBus && hoveredBus === node.id ? 'url(#el-glow)' : undefined}
+              {/* Links (draw first, behind nodes) */}
+              {sankeyData.links.map((link, i) => {
+                const isHighlighted = hoveredBus === null || hoveredBus === link.busId;
+                return (
+                  <path
+                    key={i}
+                    className="el-sankey-link"
+                    d={bezierPath(link.sx, link.sy, link.tx, link.ty)}
+                    fill="none"
+                    stroke={link.color}
+                    strokeWidth={link.width}
+                    strokeOpacity={isHighlighted ? 0.35 : 0.06}
                   />
-                  {/* Bus: filled bar showing load% */}
-                  {isBus && node.loadPct !== undefined && (
+                );
+              })}
+
+              {/* Nodes */}
+              {sankeyData.nodes.map(node => {
+                const isHighlighted = hoveredBus === null || hoveredBus === `bus-${node.label}` ||
+                  sankeyData.links.some(l => (l.sourceId === node.id || l.targetId === node.id) && hoveredBus === l.busId);
+                const isBus = node.column === 'bus';
+
+                return (
+                  <g
+                    key={node.id}
+                    className="el-sankey-node"
+                    style={{ opacity: isHighlighted ? 1 : 0.1 }}
+                    onMouseEnter={() => isBus ? handleBusHover(node.id) : undefined}
+                    onMouseLeave={() => isBus ? handleBusHover(null) : undefined}
+                  >
+                    {/* Node rectangle */}
                     <rect
-                      x={node.x + 2}
-                      y={node.y + node.h * (1 - Math.min(node.loadPct, 100) / 100)}
-                      width={node.w - 4}
-                      height={node.h * Math.min(node.loadPct, 100) / 100}
-                      rx={2}
-                      fill={node.color}
-                      fillOpacity={0.55}
+                      x={node.x} y={node.y} width={node.w} height={node.h}
+                      rx={3}
+                      fill={isBus ? busColorBg(node.loadPct ?? 0) : node.color}
+                      fillOpacity={isBus ? 1 : 0.85}
+                      stroke={node.color}
+                      strokeWidth={isBus ? 2 : 1}
+                      filter={isBus && hoveredBus === node.id ? 'url(#el-glow)' : undefined}
                     />
-                  )}
-                  {/* Labels */}
-                  {node.column === 'source' && (
-                    <>
-                      <text
-                        x={node.x + node.w / 2} y={node.y + node.h / 2 - 4}
-                        textAnchor="middle" fill="#fff" fontSize={10} fontWeight={600}
-                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
-                      >
-                        {node.label}
-                      </text>
-                      <text
-                        x={node.x + node.w / 2} y={node.y + node.h / 2 + 10}
-                        textAnchor="middle" fill="#fff" fontSize={8} fillOpacity={0.8}
-                      >
-                        {(node.value ?? 0).toFixed(0)} kVA
-                      </text>
-                    </>
-                  )}
-                  {isBus && (
-                    <>
-                      <text
-                        x={node.x - 4} y={node.y + node.h / 2 - 4}
-                        textAnchor="end" fill="#333" fontSize={9} fontWeight={600}
-                      >
-                        {node.label}
-                      </text>
-                      <text
-                        x={node.x - 4} y={node.y + node.h / 2 + 8}
-                        textAnchor="end" fill={node.color} fontSize={8}
-                      >
-                        {(node.loadPct ?? 0).toFixed(0)}% | {(node.value ?? 0).toFixed(1)} kVA
-                      </text>
-                    </>
-                  )}
-                  {node.column === 'equipment' && (
-                    <Tooltip title={`${node.label}: ${(node.value ?? 0).toFixed(2)} kVA`}>
+                    {/* Bus: filled bar showing load% */}
+                    {isBus && node.loadPct !== undefined && (
+                      <rect
+                        x={node.x + 2}
+                        y={node.y + node.h * (1 - Math.min(node.loadPct, 100) / 100)}
+                        width={node.w - 4}
+                        height={node.h * Math.min(node.loadPct, 100) / 100}
+                        rx={2}
+                        fill={node.color}
+                        fillOpacity={0.55}
+                      />
+                    )}
+                    {/* Labels */}
+                    {node.column === 'source' && (
+                      <>
+                        <text
+                          x={node.x + node.w / 2} y={node.y + node.h / 2 - 4}
+                          textAnchor="middle" fill="#fff" fontSize={10} fontWeight={600}
+                          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
+                        >
+                          {node.label}
+                        </text>
+                        <text
+                          x={node.x + node.w / 2} y={node.y + node.h / 2 + 10}
+                          textAnchor="middle" fill="#fff" fontSize={8} fillOpacity={0.8}
+                        >
+                          {(node.value ?? 0).toFixed(0)} kVA
+                        </text>
+                      </>
+                    )}
+                    {isBus && (
+                      <>
+                        <text
+                          x={node.x - 4} y={node.y + node.h / 2 - 4}
+                          textAnchor="end" fill="#333" fontSize={9} fontWeight={600}
+                        >
+                          {node.label}
+                        </text>
+                        <text
+                          x={node.x - 4} y={node.y + node.h / 2 + 8}
+                          textAnchor="end" fill={node.color} fontSize={8}
+                        >
+                          {(node.loadPct ?? 0).toFixed(0)}% | {(node.value ?? 0).toFixed(1)} kVA
+                        </text>
+                      </>
+                    )}
+                    {node.column === 'equipment' && (
                       <text
                         x={node.x + node.w + 6} y={node.y + node.h / 2 + 3}
                         fill="#666" fontSize={8}
-                        style={{ pointerEvents: 'none' }}
+                        className="pointer-events-auto"
                       >
+                        <title>{node.label}: {(node.value ?? 0).toFixed(2)} kVA</title>
                         {node.label.length > 14 ? node.label.slice(0, 14) + '...' : node.label}
                         {' '}{(node.value ?? 0).toFixed(1)}
                       </text>
-                    </Tooltip>
-                  )}
-                </g>
-              );
-            })}
+                    )}
+                  </g>
+                );
+              })}
 
-            {/* Column headers */}
-            <text x={64} y={14} fill="#999" fontSize={10} fontWeight={600}>电源</text>
-            <text x={334} y={14} fill="#999" fontSize={10} fontWeight={600}>母线</text>
-            <text x={614} y={14} fill="#999" fontSize={10} fontWeight={600}>用电设备</text>
-          </svg>
+              {/* Column headers */}
+              <text x={64} y={14} fill="#999" fontSize={10} fontWeight={600}>电源</text>
+              <text x={334} y={14} fill="#999" fontSize={10} fontWeight={600}>母线</text>
+              <text x={614} y={14} fill="#999" fontSize={10} fontWeight={600}>用电设备</text>
+            </svg>
+          </CardContent>
         </Card>
 
         {/* Professional Table */}
         <ProfessionalTable
           columns={columns}
-          data={equipment}
-          onRowClick={onSelect}
-          scrollX={1000}
-          rowClassName={(record) => (record.is_electrical === false || record.is_electrical == null) ? 'el-row-non-electrical' : ''}
+          dataSource={equipment}
+          onRow={(record) => ({ onClick: () => onSelect(record) })}
+          rowKey="id"
         />
       </div>
 
       {/* Right Panel */}
       <ProfessionalPanel>
-        <Card size="small" title="母线负荷排序">
-          {busBarItems.length > 0 ? (
-            <HorizontalBar items={busBarItems} />
-          ) : (
-            <span style={{ color: '#ccc', fontSize: 12 }}>无数据</span>
-          )}
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>母线负荷排序</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {busBarItems.length > 0 ? (
+              <HorizontalBar items={busBarItems} />
+            ) : (
+              <span className="text-muted-foreground/50 text-xs">无数据</span>
+            )}
+          </CardContent>
         </Card>
-        <Card size="small" title="飞行阶段">
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-            {FLIGHT_PHASES.map(phase => (
-              <Tag
-                key={phase}
-                color={activePhase === phase ? '#1E40AF' : undefined}
-                style={{ cursor: 'pointer', fontSize: 11 }}
-                onClick={() => setActivePhase(phase)}
-              >
-                {phase}
-              </Tag>
-            ))}
-          </div>
-          <Text style={{ fontSize: 11, color: '#999' }}>
-            当前选中: <strong>{activePhase}</strong> 阶段
-          </Text>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>飞行阶段</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {FLIGHT_PHASES.map(phase => (
+                <Badge
+                  key={phase}
+                  variant={activePhase === phase ? 'default' : 'outline'}
+                  className={`cursor-pointer text-[11px] ${activePhase === phase ? 'bg-blue-800 hover:bg-blue-700' : ''}`}
+                  onClick={() => setActivePhase(phase)}
+                >
+                  {phase}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              当前选中: <strong>{activePhase}</strong> 阶段
+            </p>
+          </CardContent>
         </Card>
-        <Card size="small" title="用电设备统计">
-          <SimpleDonut segments={[
-            { label: '电设备', value: elecCount, color: '#1E40AF' },
-            { label: '非电设备', value: nonElecCount, color: '#d1d1d6' },
-          ]} />
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>用电设备统计</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SimpleDonut segments={[
+              { label: '电设备', value: elecCount, color: '#1E40AF' },
+              { label: '非电设备', value: nonElecCount, color: '#d1d1d6' },
+            ]} />
+          </CardContent>
         </Card>
-        <Card size="small" title="一级设备">
-          <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#F59E0B' }}>{primaryCount}</div>
-            <div style={{ fontSize: 11, color: '#999' }}>一级用电设备</div>
-          </div>
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>一级设备</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-2">
+              <div className="text-[28px] font-bold text-amber-500">{primaryCount}</div>
+              <div className="text-[11px] text-muted-foreground">一级用电设备</div>
+            </div>
+          </CardContent>
         </Card>
       </ProfessionalPanel>
     </div>
