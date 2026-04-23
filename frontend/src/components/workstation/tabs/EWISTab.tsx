@@ -91,7 +91,7 @@ function chordPath(
 /* ------------------------------------------------------------------ */
 /* EWISTab Component                                                   */
 /* ------------------------------------------------------------------ */
-export function EWISTab({ equipment, report, onSelect }: Props) {
+export function EWISTab({ equipment, report: _report, onSelect }: Props) {
   const [hoveredAta, setHoveredAta] = useState<string | null>(null);
 
   /* ---- Basic stats ---- */

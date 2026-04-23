@@ -1,4 +1,4 @@
-import React from 'react';
+
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import type { Zone } from '../../types';

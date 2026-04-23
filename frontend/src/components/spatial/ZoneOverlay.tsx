@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Zone } from '../../types';
 
 const ZONE_COLORS: Record<string, string> = {

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useLoader } from '@react-three/fiber';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';

@@ -1,4 +1,4 @@
-import React from 'react';
+
 const COLORS = ['#34c759', '#5ac8fa', '#ff9500', '#ff6b6b', '#af52de', '#007aff', '#ffcc00', '#636366'];
 
 interface Segment { label: string; value: number; color?: string; }

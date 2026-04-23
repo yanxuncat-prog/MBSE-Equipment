@@ -1,7 +1,5 @@
-import React from 'react';
-import { Popover, Progress, Typography } from 'antd';
-
-const { Text } = Typography;
+import { cn } from '@/lib/utils';
+import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle } from '@/components/ui/popover';
 
 interface BusInfo {
   bus_name: string;
@@ -18,33 +16,36 @@ export function BusStatusDots({ buses }: Props) {
   const entries = Object.entries(buses);
 
   return (
-    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+    <div className="flex flex-wrap gap-3">
       {entries.map(([id, bus]) => {
+        const pct = Math.min(bus.load_ratio_pct, 100);
         const color = bus.load_ratio_pct > 100 ? '#FF3B30' : bus.load_ratio_pct > 85 ? '#FF9500' : '#34C759';
+        const barClass = bus.load_ratio_pct > 100 ? 'bg-destructive' : bus.load_ratio_pct > 85 ? 'bg-yellow-500' : 'bg-green-500';
         const shortName = bus.bus_name.replace('BUS ', '').replace(' ', '');
 
         return (
-          <Popover
-            key={id}
-            title={bus.bus_name}
-            content={
-              <div style={{ width: 180 }}>
-                <Progress percent={Math.min(bus.load_ratio_pct, 100)} strokeColor={color} size="small" />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                  <Text style={{ fontSize: 12 }}>{bus.load_kva.toFixed(1)} / {bus.capacity_kva.toFixed(0)} kVA</Text>
-                  <Text style={{ fontSize: 12, color }}>余量 {(bus.capacity_kva - bus.load_kva).toFixed(1)}</Text>
-                </div>
+          <Popover key={id}>
+            <PopoverTrigger>
+              <div className="cursor-pointer text-center">
+                <div
+                  className={cn("size-5 rounded-full flex items-center justify-center")}
+                  style={{ backgroundColor: color, boxShadow: bus.load_ratio_pct > 85 ? `0 0 8px ${color}` : 'none' }}
+                />
+                <div className="mt-0.5 text-[9px] text-muted-foreground">{shortName}</div>
               </div>
-            }
-          >
-            <div style={{ textAlign: 'center', cursor: 'pointer' }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: '50%',
-                backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: bus.load_ratio_pct > 85 ? `0 0 8px ${color}` : 'none',
-              }} />
-              <div style={{ fontSize: 9, color: '#999', marginTop: 2 }}>{shortName}</div>
-            </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px]">
+              <PopoverHeader>
+                <PopoverTitle>{bus.bus_name}</PopoverTitle>
+              </PopoverHeader>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className={cn("h-full rounded-full transition-all", barClass)} style={{ width: `${pct}%` }} />
+              </div>
+              <div className="mt-1 flex justify-between text-xs">
+                <span>{bus.load_kva.toFixed(1)} / {bus.capacity_kva.toFixed(0)} kVA</span>
+                <span style={{ color }}>余量 {(bus.capacity_kva - bus.load_kva).toFixed(1)}</span>
+              </div>
+            </PopoverContent>
           </Popover>
         );
       })}

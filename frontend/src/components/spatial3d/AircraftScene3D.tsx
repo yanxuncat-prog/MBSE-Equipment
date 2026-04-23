@@ -1,4 +1,4 @@
-import React, { useState, useRef, Suspense } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Grid, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -86,7 +86,7 @@ interface Props {
   onSelect: (equip: Equipment) => void;
 }
 
-export function AircraftScene3D({ equipment, zones, selectedId, onSelect }: Props) {
+export function AircraftScene3D({ equipment, zones: _zones, selectedId, onSelect }: Props) {
   const [showEquipment, setShowEquipment] = useState(true);
 
   const positioned = equipment.filter(e => e.config_data?.sta != null);

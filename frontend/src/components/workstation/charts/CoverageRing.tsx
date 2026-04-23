@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 interface Props { covered: number; total: number; label: string; color?: string; size?: number; }
 

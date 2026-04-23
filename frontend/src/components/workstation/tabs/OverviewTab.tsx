@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { EquipmentTable } from '../../equipment/EquipmentTable';
 import { ConstraintPanel } from '../../constraints/ConstraintPanel';
 import type { Equipment, ValidationReport } from '../../../types';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useConfigStore } from '@/store/configStore';

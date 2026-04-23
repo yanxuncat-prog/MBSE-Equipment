@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';

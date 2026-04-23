@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Equipment } from '../../types';
 
 const ATA_COLORS: Record<string, string> = {

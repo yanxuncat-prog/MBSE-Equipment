@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Equipment, Zone } from '../../types';
 import { ZoneOverlay } from './ZoneOverlay';
 import { EquipmentMarker } from './EquipmentMarker';

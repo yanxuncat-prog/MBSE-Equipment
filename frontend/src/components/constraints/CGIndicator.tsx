@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { ConstraintStatus } from '../../types';
 
 interface Props {

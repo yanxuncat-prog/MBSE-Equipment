@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Equipment, Zone } from '../../types';
 import { EquipmentMarker } from './EquipmentMarker';
 
@@ -11,7 +11,7 @@ interface Props {
 
 const FUSELAGE_TOP_PATH = 'M 50,150 Q 0,150 30,140 L 200,120 L 600,110 L 800,110 L 1050,120 L 1150,145 Q 1160,150 1150,155 L 1050,180 L 800,190 L 600,190 L 200,180 L 30,160 Q 0,150 50,150 Z';
 
-export function AircraftTopView({ equipment, zones, selectedId, onSelect }: Props) {
+export function AircraftTopView({ equipment, zones: _zones, selectedId, onSelect }: Props) {
   return (
     <svg viewBox="-20 80 1250 140" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', background: '#fafafa' }}>
       {/* Centerline */}

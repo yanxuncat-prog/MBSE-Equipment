@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Equipment } from '../../types';
 import { EquipmentMarker } from './EquipmentMarker';
 

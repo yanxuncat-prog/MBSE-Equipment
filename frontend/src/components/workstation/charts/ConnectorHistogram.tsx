@@ -1,7 +1,3 @@
-import React from 'react';
-import { Typography } from 'antd';
-const { Text } = Typography;
-
 interface Props { equipment: { connector_count: number | null }[]; }
 
 export function ConnectorHistogram({ equipment }: Props) {
@@ -17,16 +13,17 @@ export function ConnectorHistogram({ equipment }: Props) {
   }
   const max = Math.max(...Object.values(buckets), 1);
   const colors = ['#e0e0e0', '#5ac8fa', '#34c759', '#ff9500', '#ff6b6b', '#999'];
+
   return (
     <div>
-      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>连接器数分布</div>
+      <div className="mb-2 text-xs font-semibold">连接器数分布</div>
       {Object.entries(buckets).map(([label, count], i) => (
-        <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-          <Text style={{ width: 32, fontSize: 10, textAlign: 'right', marginRight: 6, color: '#999' }}>{label}</Text>
-          <div style={{ flex: 1, height: 14, background: '#f5f5f5', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ width: `${(count / max) * 100}%`, height: '100%', background: colors[i % colors.length], borderRadius: 3 }} />
+        <div key={label} className="mb-1 flex items-center">
+          <span className="mr-1.5 w-8 text-right text-[10px] text-muted-foreground">{label}</span>
+          <div className="h-3.5 flex-1 overflow-hidden rounded bg-muted">
+            <div className="h-full rounded" style={{ width: `${(count / max) * 100}%`, background: colors[i % colors.length] }} />
           </div>
-          <Text style={{ width: 30, fontSize: 10, marginLeft: 4, color: '#666' }}>{count}</Text>
+          <span className="ml-1 w-[30px] text-[10px] text-muted-foreground">{count}</span>
         </div>
       ))}
     </div>
