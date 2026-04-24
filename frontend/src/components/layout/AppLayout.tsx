@@ -4,7 +4,7 @@ import {
   Eye, GitBranch, LayoutDashboard, Database,
   GripVertical, ShoppingCart, PanelLeftClose, PanelLeft,
   Plane, LogOut, Settings, Sun, Moon, Check, ChevronDown,
-  Weight, Zap, Thermometer, MapPin, Cable,
+  Weight, Zap, Thermometer, MapPin, Cable, ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GlobalNav } from './GlobalNav';
@@ -38,6 +38,7 @@ const DEFAULT_MENU: MenuItem[] = [
       { key: '/workstation?tab=elec-details', icon: <Zap className="size-3.5" />, label: '电负载分析' },
       { key: '/workstation?tab=do160', icon: <Thermometer className="size-3.5" />, label: '环境综合' },
       { key: '/workstation?tab=layout', icon: <MapPin className="size-3.5" />, label: '设备布置' },
+      { key: '/workstation?tab=micd', icon: <ClipboardCheck className="size-3.5" />, label: 'MICD管控' },
       { key: '/workstation?tab=ewis', icon: <Cable className="size-3.5" />, label: 'EWIS' },
     ],
   },
