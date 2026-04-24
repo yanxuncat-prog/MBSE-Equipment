@@ -1,454 +1,556 @@
-import { useMemo, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
-import { StatsCard } from '@/components/workstation/shared/StatsCard';
-import { StatsRow } from '@/components/workstation/shared/StatsRow';
-import { ProfessionalTable } from '@/components/workstation/shared/ProfessionalTable';
-import type { Column } from '@/components/workstation/shared/ProfessionalTable';
-import { ProfessionalPanel } from '@/components/workstation/shared/ProfessionalPanel';
-import { CGEnvelopeChart } from '@/components/charts/CGEnvelopeChart';
-import { HorizontalBar } from '@/components/workstation/charts/HorizontalBar';
-import type { Equipment, ValidationReport } from '@/types';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import type { Equipment, ValidationReport } from '../../../types';
 
+/* ------------------------------------------------------------------ */
+/* Types                                                              */
+/* ------------------------------------------------------------------ */
 interface Props {
   equipment: Equipment[];
   report?: ValidationReport | null;
   onSelect: (equip: Equipment) => void;
+  onEdit?: (equip: Equipment) => void;
 }
 
-const STATUS_BADGES: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string; text: string }> = {
-  approved: { variant: 'default', className: 'bg-green-500/15 text-green-700 border-green-200', text: '已批准' },
-  in_development: { variant: 'default', className: 'bg-blue-500/15 text-blue-700 border-blue-200', text: '在研' },
-  qualifying: { variant: 'default', className: 'bg-orange-500/15 text-orange-700 border-orange-200', text: '鉴定中' },
-  discontinued: { variant: 'default', className: 'bg-red-500/15 text-red-700 border-red-200', text: '停产' },
-};
-
-const ATA_COLORS = [
-  '#1E40AF', '#3B82F6', '#2563EB', '#1D4ED8', '#60A5FA',
-  '#93C5FD', '#7C3AED', '#8B5CF6', '#A78BFA', '#C4B5FD',
-  '#059669', '#10B981', '#34D399', '#6EE7B7', '#F59E0B',
-  '#FBBF24', '#FCD34D', '#F97316', '#FB923C', '#FDBA74',
-  '#DC2626', '#EF4444', '#F87171', '#0EA5E9', '#38BDF8',
-];
-
-/* ------------------------------------------------------------------ */
-/* Squarified Treemap Layout                                          */
-/* ------------------------------------------------------------------ */
-interface TreemapRect {
+interface TreemapNode {
+  id: string;
   label: string;
   value: number;
   x: number;
   y: number;
   w: number;
   h: number;
-  color: string;
-  isLargest: boolean;
-  hasMissing: boolean;
+  opacity: number;
+  colorVar?: string;
+  children?: TreemapNode[];
 }
 
-/* Simple row-based squarified layout for better aspect ratios */
-function layoutTreemap(
-  items: { label: string; value: number; color: string; hasMissing: boolean }[],
-  x: number, y: number, w: number, h: number,
-): TreemapRect[] {
-  if (items.length === 0) return [];
-  const sorted = [...items].sort((a, b) => b.value - a.value);
-  const total = sorted.reduce((s, i) => s + i.value, 0);
-  if (total === 0) return [];
-  const largestLabel = sorted[0].label;
+interface ATAGroup {
+  ata: string;
+  ataName: string;
+  totalWeight: number;
+  devices: { name: string; weight: number }[];
+}
 
-  const rects: TreemapRect[] = [];
-  let remaining = [...sorted];
-  let cx = x, cy = y, cw = w, ch = h;
-  let remainingTotal = total;
+/* ------------------------------------------------------------------ */
+/* ATA Name Extraction                                                */
+/* ------------------------------------------------------------------ */
+function extractATAName(description: string | null): string {
+  if (!description) return '未知系统';
+  const parts = description.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : description;
+}
+
+/* ------------------------------------------------------------------ */
+/* Squarify Treemap Algorithm                                         */
+/* ------------------------------------------------------------------ */
+function squarify(
+  items: { id: string; label: string; value: number; opacity: number }[],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): TreemapNode[] {
+  if (items.length === 0 || w <= 0 || h <= 0) return [];
+
+  const totalValue = items.reduce((s, i) => s + i.value, 0);
+  if (totalValue <= 0) return [];
+
+  const sorted = [...items].sort((a, b) => b.value - a.value);
+  const normalizedItems = sorted.map((item) => ({
+    ...item,
+    normalizedValue: (item.value / totalValue) * w * h,
+  }));
+
+  const result: TreemapNode[] = [];
+  let remaining = [...normalizedItems];
+  let cx = x,
+    cy = y,
+    cw = w,
+    ch = h;
 
   while (remaining.length > 0) {
-    const isHorizontal = cw >= ch;
-    const sideLength = isHorizontal ? ch : cw;
+    const isWide = cw >= ch;
+    const side = isWide ? ch : cw;
 
-    // Greedily fill a row
-    const row: typeof remaining = [];
-    let rowTotal = 0;
+    // Find the best row using worst aspect ratio heuristic
+    let bestRow: typeof remaining = [];
+    let bestWorst = Infinity;
 
-    for (const item of remaining) {
-      const testTotal = rowTotal + item.value;
-      const testFraction = testTotal / remainingTotal;
-      const rowLength = isHorizontal ? cw * testFraction : ch * testFraction;
+    for (let i = 1; i <= remaining.length; i++) {
+      const row = remaining.slice(0, i);
+      const rowSum = row.reduce((s, r) => s + r.normalizedValue, 0);
+      const rowWidth = rowSum / side;
 
-      if (row.length > 0) {
-        // Check aspect ratio of last item
-        const lastLen = (item.value / testTotal) * sideLength;
-        const ar = Math.max(rowLength / lastLen, lastLen / rowLength);
-        if (ar > 4 && row.length >= 2) break;
+      let worst = 0;
+      for (const item of row) {
+        const itemLen = item.normalizedValue / rowWidth;
+        const ar = Math.max(rowWidth / itemLen, itemLen / rowWidth);
+        worst = Math.max(worst, ar);
       }
 
-      row.push(item);
-      rowTotal = testTotal;
+      if (worst <= bestWorst) {
+        bestWorst = worst;
+        bestRow = row;
+      } else {
+        break; // aspect ratio getting worse, stop
+      }
     }
 
-    // Layout the row
-    const rowFraction = rowTotal / remainingTotal;
-    const rowWidth = isHorizontal ? cw * rowFraction : cw;
-    const rowHeight = isHorizontal ? ch : ch * rowFraction;
+    if (bestRow.length === 0) bestRow = [remaining[0]];
 
-    let rx = cx, ry = cy;
-    for (const item of row) {
-      const itemFraction = item.value / rowTotal;
-      const itemW = isHorizontal ? rowWidth : rowWidth * itemFraction;
-      const itemH = isHorizontal ? rowHeight * itemFraction : rowHeight;
+    // Layout the best row
+    const rowSum = bestRow.reduce((s, r) => s + r.normalizedValue, 0);
+    const rowThickness = rowSum / side;
 
-      rects.push({
+    let rx = cx,
+      ry = cy;
+    for (const item of bestRow) {
+      const itemLen = item.normalizedValue / rowThickness;
+      const nodeW = isWide ? rowThickness : itemLen;
+      const nodeH = isWide ? itemLen : rowThickness;
+
+      result.push({
+        id: item.id,
         label: item.label,
         value: item.value,
         x: rx,
         y: ry,
-        w: Math.max(itemW, 1),
-        h: Math.max(itemH, 1),
-        color: item.color,
-        isLargest: item.label === largestLabel,
-        hasMissing: item.hasMissing,
+        w: Math.max(nodeW, 0),
+        h: Math.max(nodeH, 0),
+        opacity: item.opacity,
       });
 
-      if (isHorizontal) {
-        ry += itemH;
+      if (isWide) {
+        ry += itemLen;
       } else {
-        rx += itemW;
+        rx += itemLen;
       }
     }
 
     // Shrink remaining area
-    if (isHorizontal) {
-      cx += rowWidth;
-      cw -= rowWidth;
+    if (isWide) {
+      cx += rowThickness;
+      cw -= rowThickness;
     } else {
-      cy += rowHeight;
-      ch -= rowHeight;
+      cy += rowThickness;
+      ch -= rowThickness;
     }
 
-    remaining = remaining.slice(row.length);
-    remainingTotal -= rowTotal;
+    remaining = remaining.slice(bestRow.length);
   }
 
-  return rects;
+  return result;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tooltip Component                                                  */
+/* ------------------------------------------------------------------ */
+function TreemapTooltip({
+  x,
+  y,
+  name,
+  weight,
+  containerWidth,
+}: {
+  x: number;
+  y: number;
+  name: string;
+  weight: number;
+  containerWidth: number;
+}) {
+  const tipWidth = 160;
+  const adjustedX = x + tipWidth > containerWidth ? x - tipWidth - 8 : x + 12;
+  const adjustedY = y - 40;
+
+  return (
+    <div
+      className="pointer-events-none absolute z-50 rounded-md border bg-card px-3 py-2 shadow-md"
+      style={{
+        left: adjustedX,
+        top: Math.max(4, adjustedY),
+        minWidth: tipWidth,
+      }}
+    >
+      <p className="text-sm font-medium text-foreground">{name}</p>
+      <p className="text-xs text-muted-foreground">{weight.toFixed(2)} kg</p>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
 /* WeightTab Component                                                */
 /* ------------------------------------------------------------------ */
-export function WeightTab({ equipment, report, onSelect }: Props) {
-  const [hoveredAta, setHoveredAta] = useState<string | null>(null);
+export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onEdit: _onEdit }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(800);
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    name: string;
+    weight: number;
+  } | null>(null);
 
-  const weightEngine = report?.engines.find(e => e.engine_name === 'weight_balance');
-  const cgPctMac = weightEngine?.details?.cg_pct_mac ?? 0;
-  const totalMassKg = weightEngine?.details?.total_mass_kg ?? 0;
-  const mtowMarginKg = weightEngine?.details?.mtow_margin_kg ?? 0;
+  // Responsive container width
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-  const totalMass = useMemo(
-    () => equipment.reduce((sum, e) => sum + (e.weight_balance?.mass_kg ?? 0), 0),
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  /* ---- KPI calculations ---- */
+  const totalWeight = useMemo(
+    () => equipment.reduce((sum, e) => sum + ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0), 0),
     [equipment],
   );
-  const missingCount = useMemo(
-    () => equipment.filter(e => e.weight_balance == null).length,
+
+  const withWeightCount = useMemo(
+    () => equipment.filter((e) => (e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) != null).length,
     [equipment],
   );
 
-  const cgColor = weightEngine?.status === 'pass' ? '#34C759' : weightEngine?.status === 'warning' ? '#FF9500' : '#FF3B30';
+  const coveragePct = equipment.length > 0 ? (withWeightCount / equipment.length) * 100 : 0;
 
-  /* ---- Treemap data: group by ATA chapter ---- */
-  const ataGroups = useMemo(() => {
-    const groups: Record<string, { total: number; count: number; missingCount: number }> = {};
+  const heaviest = useMemo(() => {
+    let best: Equipment | null = null;
     for (const e of equipment) {
-      const ata = e.ata_chapter || '未知';
-      if (!groups[ata]) groups[ata] = { total: 0, count: 0, missingCount: 0 };
-      groups[ata].count++;
-      if (e.weight_balance?.mass_kg) {
-        groups[ata].total += e.weight_balance.mass_kg;
-      } else {
-        groups[ata].missingCount++;
+      const w = e.config_data?.mass_kg ?? e.weight_balance?.mass_kg;
+      if (
+        w != null &&
+        (best == null || w > ((best.config_data?.mass_kg ?? best.weight_balance?.mass_kg) ?? 0))
+      ) {
+        best = e;
       }
     }
-    return Object.entries(groups)
-      .map(([label, g], i) => ({
-        label,
-        value: Math.max(g.total, g.missingCount > 0 && g.total === 0 ? 1 : 0), // ensure visible
-        color: ATA_COLORS[i % ATA_COLORS.length],
-        hasMissing: g.missingCount > 0 && g.total === 0,
-        totalWeight: g.total,
-        count: g.count,
-        missingCount: g.missingCount,
-      }))
-      .filter(g => g.value > 0 || g.hasMissing)
-      .sort((a, b) => b.value - a.value);
+    return best;
   }, [equipment]);
 
-  const treemapRects = useMemo(
-    () => layoutTreemap(ataGroups, 4, 4, 692, 296),
+  /* ---- ATA grouping for treemap ---- */
+  const ataGroups = useMemo<ATAGroup[]>(() => {
+    const map = new Map<string, ATAGroup>();
+    for (const e of equipment) {
+      const ata = e.ata_chapter || '未知';
+      if (!map.has(ata)) {
+        map.set(ata, {
+          ata,
+          ataName: extractATAName(e.description),
+          totalWeight: 0,
+          devices: [],
+        });
+      }
+      const group = map.get(ata)!;
+      const w = (e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0;
+      group.totalWeight += w;
+      if (w > 0) {
+        group.devices.push({ name: e.name, weight: w });
+      }
+    }
+    return Array.from(map.values())
+      .filter((g) => g.totalWeight > 0)
+      .sort((a, b) => b.totalWeight - a.totalWeight);
+  }, [equipment]);
+
+  /* ---- Treemap layout ---- */
+  const treemapHeight = 340;
+  const padding = 3;
+
+  const maxGroupWeight = useMemo(
+    () => Math.max(...ataGroups.map((g) => g.totalWeight), 1),
     [ataGroups],
   );
 
-  /* ---- Bar chart data ---- */
-  const ataBarItems = useMemo(() => {
-    const groups: Record<string, number> = {};
-    for (const e of equipment) {
-      if (e.weight_balance?.mass_kg) {
-        const key = e.ata_chapter || '未知';
-        groups[key] = (groups[key] || 0) + e.weight_balance.mass_kg;
-      }
-    }
-    return Object.entries(groups)
-      .map(([label, value]) => ({ label, value: Math.round(value) }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
-  }, [equipment]);
-
-  const zoneBarItems = useMemo(() => {
-    const groups: Record<string, number> = {};
-    for (const e of equipment) {
-      if (e.weight_balance?.mass_kg) {
-        const key = e.config_data?.zone_name || '未知';
-        groups[key] = (groups[key] || 0) + e.weight_balance.mass_kg;
-      }
-    }
-    return Object.entries(groups)
-      .map(([label, value]) => ({ label, value: Math.round(value) }))
-      .sort((a, b) => b.value - a.value);
-  }, [equipment]);
-
-  /* ---- Sorted equipment for table ---- */
-  const sortedEquipment = useMemo(
-    () => [...equipment].sort((a, b) => (b.weight_balance?.mass_kg ?? 0) - (a.weight_balance?.mass_kg ?? 0)),
-    [equipment],
+  // Outer treemap: ATA groups
+  const outerRects = useMemo(
+    () =>
+      squarify(
+        ataGroups.map((g) => ({
+          id: g.ata,
+          label: `ATA-${g.ata} ${g.ataName}`,
+          value: g.totalWeight,
+          opacity: 0.15 + 0.85 * (g.totalWeight / maxGroupWeight),
+        })),
+        0,
+        0,
+        containerWidth,
+        treemapHeight,
+      ),
+    [ataGroups, containerWidth, maxGroupWeight],
   );
 
-  const columns: Column<Equipment>[] = [
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin_number', width: 100 },
-    { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
-    { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata_chapter', width: 55 },
-    {
-      title: '重量(kg)', key: 'mass_kg', width: 80, align: 'right',
-      render: (_, r) => r.weight_balance?.mass_kg?.toFixed(1) || <span className="text-muted-foreground/40">-</span>,
-    },
-    {
-      title: 'STA(力臂)', key: 'sta', width: 70, align: 'right',
-      render: (_, r) => r.config_data?.sta?.toFixed(0) || '-',
-    },
-    {
-      title: '力矩(kg·mm)', key: 'moment', width: 110, align: 'right',
-      render: (_, r) => {
-        const mass = r.weight_balance?.mass_kg;
-        const sta = r.config_data?.sta;
-        if (mass != null && sta != null) return (mass * sta).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
-        return '-';
-      },
-    },
-    { title: '区域', key: 'zone', width: 100, render: (_, r) => r.config_data?.zone_name || '-' },
-    { title: '供应商', key: 'supplier', width: 100, render: (_, r) => r.supplier_name || '-' },
-    {
-      title: '状态', dataIndex: 'status', key: 'status', width: 70,
-      render: (s: string) => {
-        const cfg = STATUS_BADGES[s] || { variant: 'outline' as const, className: '', text: s };
-        return <Badge variant={cfg.variant} className={cfg.className}>{cfg.text}</Badge>;
-      },
-    },
-  ];
+  // Inner treemap: devices within each ATA group
+  // Global max device weight for consistent color mapping
+  const globalMaxWeight = useMemo(
+    () => Math.max(...ataGroups.flatMap(g => g.devices.map(d => d.weight)), 1),
+    [ataGroups],
+  );
 
-  const handleMouseEnter = useCallback((label: string) => setHoveredAta(label), []);
-  const handleMouseLeave = useCallback(() => setHoveredAta(null), []);
+  const innerRects = useMemo(() => {
+    const allInner: TreemapNode[] = [];
+    for (let gi = 0; gi < outerRects.length; gi++) {
+      const outer = outerRects[gi];
+      const group = ataGroups.find((g) => g.ata === outer.id);
+      if (!group || group.devices.length === 0) continue;
 
-  /* Banner severity */
-  const bannerColor = missingCount > 20 ? '#FF3B30' : missingCount > 5 ? '#FF9500' : '#34C759';
-  const bannerBg = missingCount > 20 ? 'bg-red-50' : missingCount > 5 ? 'bg-orange-50' : 'bg-green-50';
-  const bannerBorder = missingCount > 20 ? 'border-red-200' : missingCount > 5 ? 'border-orange-200' : 'border-green-200';
+      const inset = padding + 18;
+      const innerX = outer.x + padding;
+      const innerY = outer.y + inset;
+      const innerW = outer.w - padding * 2;
+      const innerH = outer.h - inset - padding;
+
+      if (innerW <= 0 || innerH <= 0) continue;
+
+      const deviceRects = squarify(
+        group.devices.map((d, i) => ({
+          id: `${outer.id}-${i}`,
+          label: d.name,
+          value: d.weight,
+          // Log-scale opacity to handle extreme weight differences (0.02kg ~ 201kg)
+          opacity: 0.3 + 0.7 * (Math.log(1 + d.weight) / Math.log(1 + globalMaxWeight)),
+        })),
+        innerX,
+        innerY,
+        innerW,
+        innerH,
+      );
+      allInner.push(...deviceRects);
+    }
+    return allInner;
+  }, [outerRects, ataGroups, globalMaxWeight]);
+
+  /* ---- Tooltip handlers ---- */
+  const handleCellMouseMove = useCallback(
+    (e: React.MouseEvent, name: string, weight: number) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltip({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        name,
+        weight,
+      });
+    },
+    [],
+  );
+
+  const handleCellMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
 
   return (
-    <div className="flex h-[calc(100vh-180px)]">
-      <style>{`
-        .wt-treemap-rect { transition: opacity 0.2s, stroke-width 0.2s; cursor: pointer; }
-        .wt-treemap-rect:hover { stroke: #1E40AF !important; stroke-width: 3 !important; }
-        @keyframes wt-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-      `}</style>
+    <div className="space-y-4 p-1">
+      {/* ---- KPI Cards ---- */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Total Weight */}
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              总重量
+            </p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+              {totalWeight.toFixed(2)}{' '}
+              <span className="text-sm font-normal text-muted-foreground">kg</span>
+            </p>
+          </CardContent>
+        </Card>
 
-      <div className="flex-1 overflow-auto pr-4">
-        {/* Hook Banner */}
-        <div className={`flex items-center gap-2 rounded-md border px-4 py-2.5 mb-3 ${bannerBg} ${bannerBorder}`}>
-          <div className="h-2 w-2 shrink-0 rounded-full" style={{ background: bannerColor }} />
-          <p className="text-[13px] text-foreground">
-            <strong>CE-25A</strong> 当前总重{' '}
-            <span className="font-bold text-blue-800">{totalMass.toFixed(1)} kg</span>
-            ，CG <span className="font-bold" style={{ color: cgColor }}>{cgPctMac.toFixed(1)}% MAC</span>
-            。{missingCount > 0 && (
-              <span className="text-orange-500">
-                {missingCount} 台设备缺重量数据。
-              </span>
+        {/* Data Coverage */}
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              数据覆盖率
+            </p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+              {coveragePct.toFixed(1)}
+              <span className="text-sm font-normal text-muted-foreground">%</span>
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {withWeightCount} / {equipment.length} 台设备有重量数据
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Heaviest Device */}
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              最重设备
+            </p>
+            {heaviest ? (
+              <>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                  {((heaviest.config_data?.mass_kg ?? heaviest.weight_balance?.mass_kg) ?? 0).toFixed(2)}{' '}
+                  <span className="text-sm font-normal text-muted-foreground">kg</span>
+                </p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{heaviest.name}</p>
+              </>
+            ) : (
+              <p className="mt-1 text-lg text-muted-foreground">-</p>
             )}
-          </p>
-        </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Stats Row */}
-        <StatsRow className="mb-3">
-          <StatsCard label="总重量" value={`${totalMass.toFixed(1)} kg`} color="#1E40AF" />
-          <StatsCard label="CG 位置" value={`${cgPctMac.toFixed(1)}% MAC`} color={cgColor} />
-          <StatsCard label="MTOW 余量" value={`${mtowMarginKg.toFixed(1)} kg`} color="#3B82F6" />
-          <StatsCard label="缺重量数据" value={missingCount} color="#FF9500" />
-        </StatsRow>
+      {/* Data Insights */}
+      <div className="rounded-lg border border-chart-1/20 bg-chart-1/5 px-4 py-2.5 space-y-1">
+        {(() => {
+          const sorted = [...ataGroups].sort((a, b) => b.totalWeight - a.totalWeight);
+          const top3Weight = sorted.slice(0, 3).reduce((s, g) => s + g.totalWeight, 0);
+          const top3Pct = totalWeight > 0 ? (top3Weight / totalWeight * 100).toFixed(0) : '0';
+          const top3Names = sorted.slice(0, 3).map(g => `${g.ataName} ${g.totalWeight.toFixed(0)}kg`).join(' + ');
+          const lightCount = equipment.filter(e => ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) > 0 && ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) < 1).length;
+          const lightPct = withWeightCount > 0 ? (lightCount / withWeightCount * 100).toFixed(0) : '0';
+          const lightWeightPct = totalWeight > 0 ? (equipment.filter(e => ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) > 0 && ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) < 1).reduce((s, e) => s + ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0), 0) / totalWeight * 100).toFixed(1) : '0';
+          return (
+            <>
+              <p className="text-xs"><span className="font-semibold text-chart-1">前 3 个 ATA 系统贡献 {top3Pct}% 重量</span> — {top3Names}</p>
+              <p className="text-xs text-muted-foreground">{lightPct}% 的设备 &lt;1kg，仅贡献 {lightWeightPct}% 重量</p>
+            </>
+          );
+        })()}
+      </div>
 
-        {/* Treemap Visualization */}
-        <Card size="sm" className="mb-4">
-          <CardHeader className="border-b">
-            <CardTitle>重量分布图 (按ATA章节)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <svg width={700} height={304} viewBox="0 0 700 304" className="block w-full">
-              <defs>
-                <pattern id="wt-hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
-                  <line x1="0" y1="0" x2="0" y2="6" stroke="#999" strokeWidth="1" strokeOpacity="0.4" />
-                </pattern>
-              </defs>
-              {treemapRects.map((rect) => {
-                const dimmed = hoveredAta !== null && hoveredAta !== rect.label;
-                const showLabel = rect.w > 40 && rect.h > 28;
-                const showValue = rect.w > 50 && rect.h > 42;
+      {/* ---- Treemap Visualization ---- */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-medium text-foreground">
+              重量分布图
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                面积与颜色深浅均正比于设备重量
+              </span>
+            </p>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>轻</span>
+              <div className="flex h-3">
+                {[0.15, 0.3, 0.5, 0.7, 0.9].map(op => (
+                  <div key={op} className="w-5 h-full" style={{ backgroundColor: 'var(--chart-1)', opacity: op }} />
+                ))}
+              </div>
+              <span>重</span>
+            </div>
+          </div>
+          <div ref={containerRef} className="relative w-full" style={{ height: treemapHeight }}>
+            <svg
+              width={containerWidth}
+              height={treemapHeight}
+              viewBox={`0 0 ${containerWidth} ${treemapHeight}`}
+              className="block"
+              role="img"
+              aria-label="重量分布矩形树图"
+            >
+              <title>重量分布矩形树图</title>
+              {/* ATA group outlines */}
+              {outerRects.map((rect) => (
+                <g key={`group-${rect.id}`}>
+                  <rect
+                    x={rect.x + 0.5}
+                    y={rect.y + 0.5}
+                    width={Math.max(rect.w - 1, 0)}
+                    height={Math.max(rect.h - 1, 0)}
+                    rx={4}
+                    className="fill-muted/40 stroke-border"
+                    strokeWidth={1}
+                  />
+                  {rect.w > 50 && rect.h > 24 && (
+                    <text
+                      x={rect.x + padding + 2}
+                      y={rect.y + 13}
+                      className="fill-muted-foreground"
+                      fontSize={10}
+                      fontWeight={500}
+                    >
+                      {rect.label}
+                    </text>
+                  )}
+                </g>
+              ))}
+
+              {/* Device cells with clipped text */}
+              {innerRects.map((rect) => {
+                const rw = Math.max(rect.w - 1, 0);
+                const rh = Math.max(rect.h - 1, 0);
+                const showLabel = rw > 36 && rh > 18;
                 return (
-                  <g
-                    key={rect.label}
-                    className="wt-treemap-rect"
-                    onMouseEnter={() => handleMouseEnter(rect.label)}
-                    onMouseLeave={handleMouseLeave}
-                    style={{ opacity: dimmed ? 0.25 : 1 }}
-                  >
-                    {/* Background rect */}
-                    <rect
-                      x={rect.x} y={rect.y} width={rect.w} height={rect.h}
-                      rx={3}
-                      fill={rect.hasMissing ? 'url(#wt-hatch)' : rect.color}
-                      fillOpacity={rect.hasMissing ? 1 : 0.82}
-                      stroke={rect.isLargest ? '#F59E0B' : '#fff'}
-                      strokeWidth={rect.isLargest ? 3 : 1.5}
-                    />
-                    {/* Label */}
+                  <g key={rect.id}>
+                    {/* Clip path to prevent text overflow */}
                     {showLabel && (
-                      <text
-                        x={rect.x + rect.w / 2}
-                        y={rect.y + rect.h / 2 - (showValue ? 6 : 0)}
-                        textAnchor="middle"
-                        fill="#fff"
-                        fontSize={rect.w > 80 ? 12 : 10}
-                        fontWeight={600}
-                        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)', pointerEvents: 'none' }}
-                      >
-                        ATA-{rect.label}
-                      </text>
+                      <defs>
+                        <clipPath id={`clip-${rect.id}`}>
+                          <rect x={rect.x + 2} y={rect.y + 1} width={rw - 4} height={rh - 2} />
+                        </clipPath>
+                      </defs>
                     )}
-                    {showValue && (
-                      <text
-                        x={rect.x + rect.w / 2}
-                        y={rect.y + rect.h / 2 + 10}
-                        textAnchor="middle"
-                        fill="#fff"
-                        fontSize={rect.w > 80 ? 11 : 9}
-                        fillOpacity={0.9}
-                        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)', pointerEvents: 'none' }}
-                      >
-                        {rect.value.toFixed(0)} kg
-                      </text>
-                    )}
-                    {/* Largest annotation callout */}
-                    {rect.isLargest && rect.w > 60 && (
-                      <>
-                        <line
-                          x1={rect.x + rect.w - 4} y1={rect.y + 4}
-                          x2={rect.x + rect.w + 16} y2={rect.y - 12}
-                          stroke="#F59E0B" strokeWidth={1.5}
-                        />
-                        <rect
-                          x={rect.x + rect.w + 14} y={rect.y - 26}
-                          width={56} height={18} rx={3}
-                          fill="#F59E0B"
-                        />
+                    <rect
+                      x={rect.x + 0.5}
+                      y={rect.y + 0.5}
+                      width={rw}
+                      height={rh}
+                      rx={2}
+                      style={{
+                        fill: 'var(--chart-1)',
+                        fillOpacity: rect.opacity,
+                        cursor: 'pointer',
+                        transition: 'fill-opacity 0.15s ease',
+                      }}
+                      stroke="var(--background)"
+                      strokeWidth={1}
+                      onMouseMove={(e) => handleCellMouseMove(e, rect.label, rect.value)}
+                      onMouseLeave={handleCellMouseLeave}
+                    />
+                    {showLabel && (
+                      <g clipPath={`url(#clip-${rect.id})`} className="pointer-events-none">
                         <text
-                          x={rect.x + rect.w + 42} y={rect.y - 14}
-                          textAnchor="middle" fill="#fff" fontSize={9} fontWeight={600}
+                          x={rect.x + rect.w / 2}
+                          y={rect.y + rect.h / 2 - (rh > 32 ? 5 : 0)}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={rw > 80 ? 10 : 8}
+                          fontWeight={500}
+                          fill="var(--primary-foreground)"
                         >
-                          最重
+                          {rect.label}
                         </text>
-                      </>
+                        {rh > 32 && (
+                          <text
+                            x={rect.x + rect.w / 2}
+                            y={rect.y + rect.h / 2 + 9}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fontSize={8}
+                            fill="var(--primary-foreground)"
+                            opacity={0.8}
+                          >
+                            {rect.value.toFixed(1)}kg
+                          </text>
+                        )}
+                      </g>
                     )}
                   </g>
                 );
               })}
             </svg>
-            {/* Legend */}
-            <TooltipProvider>
-              <div className="flex flex-wrap gap-2 border-t px-1 pt-2 mt-1">
-                {ataGroups.slice(0, 12).map((g) => (
-                  <Tooltip key={g.label}>
-                    <TooltipTrigger
-                      render={
-                        <div
-                          className={`flex items-center gap-1 cursor-pointer rounded px-1.5 py-0.5 ${hoveredAta === g.label ? 'bg-blue-50' : ''}`}
-                          onMouseEnter={() => handleMouseEnter(g.label)}
-                          onMouseLeave={handleMouseLeave}
-                        />
-                      }
-                    >
-                      <div className="h-2.5 w-2.5 rounded-sm" style={{ background: g.hasMissing ? '#ccc' : g.color }} />
-                      <span className="text-[10px] text-muted-foreground">ATA-{g.label}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {`ATA-${g.label}: ${g.totalWeight.toFixed(0)} kg (${g.count} 台${g.missingCount > 0 ? `, ${g.missingCount} 台缺数据` : ''})`}
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-            </TooltipProvider>
-          </CardContent>
-        </Card>
 
-        {/* Professional Table */}
-        <ProfessionalTable
-          columns={columns}
-          dataSource={sortedEquipment}
-          onRow={(record) => ({ onClick: () => onSelect(record) })}
-        />
-      </div>
+            {/* Hover tooltip */}
+            {tooltip && (
+              <TreemapTooltip
+                x={tooltip.x}
+                y={tooltip.y}
+                name={tooltip.name}
+                weight={tooltip.weight}
+                containerWidth={containerWidth}
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Right Panel */}
-      <ProfessionalPanel>
-        <Card size="sm">
-          <CardHeader className="border-b">
-            <CardTitle>CG 包线图</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CGEnvelopeChart
-              cgPctMac={cgPctMac}
-              totalMassKg={totalMassKg}
-              mtowKg={100000}
-              fwdLimitPct={20}
-              aftLimitPct={40}
-              status={weightEngine?.status ?? 'pass'}
-              width={250}
-              height={180}
-            />
-          </CardContent>
-        </Card>
-        <Card size="sm">
-          <CardHeader className="border-b">
-            <CardTitle>按ATA重量分布 (Top 8)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <HorizontalBar items={ataBarItems} />
-          </CardContent>
-        </Card>
-        <Card size="sm">
-          <CardHeader className="border-b">
-            <CardTitle>按区域重量分布</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <HorizontalBar items={zoneBarItems} />
-          </CardContent>
-        </Card>
-      </ProfessionalPanel>
     </div>
   );
 }
