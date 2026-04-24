@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { NotificationCenter } from './NotificationCenter';
 
 export const workstationActions = {
   onAdd: null as (() => void) | null,
@@ -149,6 +150,10 @@ export function GlobalNav() {
           </div>
         </div>
       )}
+
+      {/* Spacer + Notification Center */}
+      <div className="flex-1" />
+      <NotificationCenter />
     </div>
   );
 }
