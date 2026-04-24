@@ -30,6 +30,15 @@ class ConfigEquipment(Base):
     # Display name override (may differ from Equipment.name per config)
     config_name: Mapped[str | None] = mapped_column(String(200), comment="构型中的设备名称(可与设备库名称不同)")
 
+    # --- Per-config equipment attributes (moved from equipment) ---
+    equipment_status: Mapped[str | None] = mapped_column(String(20), comment="设备状态: in_development/qualifying/approved/discontinued")
+    responsible_person: Mapped[str | None] = mapped_column(String(50), comment="设备负责人")
+    has_special_wiring: Mapped[bool | None] = mapped_column(comment="是否有特殊布线需求")
+    equipment_level: Mapped[str | None] = mapped_column(String(50), comment="设备等级")
+    is_optional: Mapped[bool | None] = mapped_column(comment="是否选装设备")
+    internal_number: Mapped[str | None] = mapped_column(String(50), comment="内部设备编号")
+    lin_number: Mapped[str | None] = mapped_column(String(50), comment="LIN号")
+
     # --- Per-config weight & CG ---
     mass_kg: Mapped[float | None] = mapped_column(Float, comment="设备实测重量(kg)")
     cg_x: Mapped[float | None] = mapped_column(Float, comment="重心X坐标(mm,全机坐标系)")

@@ -34,7 +34,7 @@ function EquipmentVisualPreview({ equipment, allEquipment }: { equipment: Equipm
     const weightFields = [e.config_data?.mass_kg ?? e.weight_balance?.mass_kg, e.dimensions_mm];
     const layoutFields = [e.config_data?.sta, e.config_data?.bl, e.config_data?.wl, e.config_data?.install_method];
     const elecFields = [e.power_voltage, e.electrical_load?.power_kva_normal, e.power_redundancy, e.is_electrical];
-    const envFields = [e.do160_temp_design_level, e.do160_temp_compliance, e.normal_operating_temp];
+    const envFields: any[] = [];  // DO-160 fields moved to do160_records
 
     const completeness = (fields: any[]) => fields.filter(f => f != null && f !== '' && f !== undefined).length / fields.length;
 
@@ -86,10 +86,9 @@ function EquipmentVisualPreview({ equipment, allEquipment }: { equipment: Equipm
 
   // Status dots
   const statuses = [
-    { label: 'DO-160', value: e.do160_temp_compliance, color: e.do160_temp_compliance === '符合' ? 'bg-status-ok' : e.do160_temp_compliance === '不符合' ? 'bg-status-danger' : e.do160_temp_compliance ? 'bg-status-warn' : 'bg-muted' },
     { label: '搭接', value: e.config_data?.bonding_type || null, color: e.config_data?.bonding_type ? 'bg-chart-1' : 'bg-muted' },
     { label: 'EICD', value: e.has_eicd, color: e.has_eicd === true ? 'bg-status-ok' : e.has_eicd === false ? 'bg-status-danger' : 'bg-muted' },
-    { label: '首飞', value: e.first_flight_onboard, color: e.first_flight_onboard === true ? 'bg-status-ok' : e.first_flight_onboard === false ? 'bg-muted-foreground/30' : 'bg-muted' },
+    { label: '选装', value: e.config_data?.is_optional, color: e.config_data?.is_optional === true ? 'bg-status-warn' : e.config_data?.is_optional === false ? 'bg-status-ok' : 'bg-muted' },
   ];
 
   const displayVal = (v: any) => {

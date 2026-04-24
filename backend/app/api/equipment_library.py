@@ -68,7 +68,7 @@ async def list_equipment_library(
             "name": equip.name,
             "ata_chapter": equip.ata_chapter,
             "equipment_type": equip.equipment_type,
-            "status": equip.status,
+            "is_primary_electrical": equip.is_primary_electrical,
             "is_electrical": equip.is_electrical,
             "config_count": cfg_count,
         })

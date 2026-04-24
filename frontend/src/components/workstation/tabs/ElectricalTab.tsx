@@ -267,7 +267,7 @@ export function ElectricalTab({ equipment, report, onSelect, onEdit }: Props) {
 
   /* ---- Table columns ---- */
   const columns: Column<Equipment>[] = [
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin_number', width: 100 },
+    { title: 'LIN号', key: 'lin_number', width: 100, render: (_: any, r: Equipment) => r.config_data?.lin_number || '-' },
     { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
     {
       title: '母线', key: 'bus', width: 100,

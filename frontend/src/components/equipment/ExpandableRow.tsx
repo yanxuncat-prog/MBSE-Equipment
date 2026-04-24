@@ -103,7 +103,7 @@ export function ExpandableRow({ equipment }: Props) {
           <Field label="布置调整" value={display(e.config_data?.layout_adjustment)} />
           <Field label="PACE图纸" value={displayBool(e.config_data?.in_pace_drawing)} />
           <Field label="搭接位置" value={display(e.config_data?.bonding_position)} />
-          <Field label="负责人" value={display(e.responsible_person)} />
+          <Field label="负责人" value={display(e.config_data?.responsible_person)} />
         </div>
       )}
 
@@ -127,15 +127,7 @@ export function ExpandableRow({ equipment }: Props) {
 
       {activeTab === 'environment' && (
         <div className="grid grid-cols-4 gap-x-6 gap-y-3">
-          <Field label="设计等级" value={display(e.do160_temp_design_level)} highlight />
-          <Field label="鉴定等级" value={display(e.do160_temp_qual_level)} />
-          <Field label="鉴定符合" value={display(e.do160_temp_compliance)} highlight />
-          <Field label="温度范围" value={display(e.do160_temp_qual_range)} />
-          <Field label="正常工作温度" value={display(e.normal_operating_temp)} />
-          <Field label="短时温度" value={display(e.short_term_temp)} />
-          <Field label="地面停放温度" value={display(e.ground_storage_temp)} />
-          <Field label="高度" value={display(e.operating_altitude)} />
-          <Field label="鉴定报告编号" value={display(e.qual_report_number)} />
+          <span className="col-span-4 text-sm text-muted-foreground">DO-160 数据已迁移至 DO-160 鉴定记录表</span>
         </div>
       )}
     </div>

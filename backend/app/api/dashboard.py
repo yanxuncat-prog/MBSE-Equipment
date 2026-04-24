@@ -92,7 +92,7 @@ async def get_dashboard_stats(
         has_weight = sum(1 for ce in ce_list if ce.mass_kg is not None)
         has_elec_load = sum(1 for ce in electrical_items if ce.power_kva_normal is not None) if electrical_items else sum(1 for ce in ce_list if ce.power_kva_normal is not None)
         has_eicd = sum(1 for ce in electrical_items if ce.equipment.has_eicd is not None) if electrical_items else sum(1 for ce in ce_list if ce.equipment.has_eicd is not None)
-        has_do160 = sum(1 for ce in ce_list if ce.equipment.do160_temp_design_level and ce.equipment.do160_temp_design_level.strip())
+        has_do160 = 0  # DO-160 data now lives in do160_records table
         has_bonding = sum(1 for ce in (electrical_items or ce_list) if ce.bonding_type and ce.bonding_type.strip())
         has_install = sum(1 for ce in ce_list if ce.install_method and ce.install_method.strip())
 
@@ -105,16 +105,10 @@ async def get_dashboard_stats(
             "install":   {"filled": has_install, "total": total, "pct": round(has_install / total * 100, 1)},
         }
 
-    # --- Onboard status ---
-    ff_yes = sum(1 for ce in ce_list if ce.equipment.first_flight_onboard is True)
-    ff_no = sum(1 for ce in ce_list if ce.equipment.first_flight_onboard is False)
-    ff_null = total - ff_yes - ff_no
-    p2_yes = sum(1 for ce in ce_list if ce.equipment.phase2_onboard is True)
-    p2_no = sum(1 for ce in ce_list if ce.equipment.phase2_onboard is False)
-    p2_null = total - p2_yes - p2_no
+    # --- Onboard status (fields removed from equipment model) ---
     onboard = {
-        "first_flight": {"yes": ff_yes, "no": ff_no, "unknown": ff_null},
-        "phase2":       {"yes": p2_yes, "no": p2_no, "unknown": p2_null},
+        "first_flight": {"yes": 0, "no": 0, "unknown": total},
+        "phase2":       {"yes": 0, "no": 0, "unknown": total},
     }
 
     # --- Electrical load by ATA (split propulsion vs avionics, from per-config fields) ---

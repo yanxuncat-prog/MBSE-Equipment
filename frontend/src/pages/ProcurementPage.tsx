@@ -399,10 +399,9 @@ export function ProcurementPage() {
   const columns: Column<EnrichedEquipment>[] = [
     {
       title: 'LIN号',
-      dataIndex: 'lin_number',
       key: 'lin_number',
       width: 100,
-      render: (v: string | null) => v || '-',
+      render: (_: any, record: EnrichedEquipment) => record.config_data?.lin_number || '-',
     },
     {
       title: '名称',

@@ -31,7 +31,8 @@ function DescriptionItem({ label, children }: { label: string; children: React.R
 export function EquipmentDetail({ equipment, open, onClose }: Props) {
   if (!equipment) return null;
 
-  const statusCfg = STATUS_BADGES[equipment.status] || { variant: 'secondary' as const, text: equipment.status };
+  const eqStatus = equipment.config_data?.equipment_status || 'in_development';
+  const statusCfg = STATUS_BADGES[eqStatus] || { variant: 'secondary' as const, text: eqStatus };
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>

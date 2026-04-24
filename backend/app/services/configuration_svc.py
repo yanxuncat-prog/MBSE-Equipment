@@ -320,10 +320,8 @@ async def diff_configs(
 
         # Compare equipment-level fields (exclude part_number — import artifact)
         # Only flag as different when BOTH sides have non-empty values
-        for field in ("lin_number", "dimensions_mm", "is_electrical",
-                       "has_eicd", "power_redundancy", "power_voltage", "power_watts",
-                       "do160_temp_design_level", "do160_temp_qual_level",
-                       "first_flight_onboard", "phase2_onboard"):
+        for field in ("dimensions_mm", "is_electrical",
+                       "has_eicd", "power_redundancy", "power_voltage", "power_watts"):
             val_a = getattr(ea, field, None)
             val_b = getattr(eb, field, None)
             if _is_empty(val_a) and _is_empty(val_b):

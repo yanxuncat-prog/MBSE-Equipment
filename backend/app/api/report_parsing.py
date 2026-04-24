@@ -176,10 +176,10 @@ def _extract_fields(text: str) -> list[dict]:
 
 EQUIPMENT_FIELDS = {
     "part_number", "name", "ata_chapter", "equipment_type", "description",
-    "name_en", "abbreviation_en", "internal_number", "lin_number",
-    "supplier_part_number", "dal", "equipment_level", "dimensions_mm",
+    "name_en", "abbreviation_en",
+    "supplier_part_number", "dal", "dimensions_mm",
     "voltage_range", "power_redundancy", "power_voltage", "power_watts",
-    "shell_grounding_method", "responsible_person",
+    "shell_grounding_method",
 }
 CONFIG_EQUIPMENT_FIELDS = {
     "mass_kg", "power_kva_normal", "power_kva_emergency", "power_kva_max",

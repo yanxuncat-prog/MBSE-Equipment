@@ -28,8 +28,7 @@ const ATA_NAMES: Record<string, string> = {
 const FIELD_LABELS: Record<string, string> = {
   dimensions_mm: '尺寸', has_eicd: 'EICD', is_electrical: '电设备',
   install_method: '安装方式', bonding_type: '搭接类型', bonding_method: '搭接方式',
-  mass_kg: '重量(kg)', lin_number: 'LIN号', power_redundancy: '供电余度',
-  do160_temp_design_level: 'DO-160等级', first_flight_onboard: '首飞装机',
+  mass_kg: '重量(kg)', power_redundancy: '供电余度',
 };
 
 function fmtVal(v: any): string {

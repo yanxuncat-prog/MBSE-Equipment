@@ -99,8 +99,8 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
       render: (v: string) => <span className="font-medium text-foreground">{v}</span> },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 50,
       render: (v: string) => <span className="tabular-nums text-muted-foreground">{v}</span> },
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 110,
-      render: (v: string) => <span className="font-mono text-xs text-muted-foreground">{v || '-'}</span> },
+    { title: 'LIN号', key: 'lin', width: 110,
+      render: (_: any, r: Equipment) => <span className="font-mono text-xs text-muted-foreground">{r.config_data?.lin_number || '-'}</span> },
     { title: '重量', key: 'mass', width: 80, align: 'right' as const,
       render: (_: any, r: Equipment) => {
         const w = r.config_data?.mass_kg ?? r.weight_balance?.mass_kg;
@@ -109,11 +109,10 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
       } },
     { title: '电压', dataIndex: 'power_voltage', key: 'pv', width: 60,
       render: (v: string) => v ? <span className="tabular-nums">{v}V</span> : <span className="text-muted-foreground/40">-</span> },
-    { title: 'DO-160', dataIndex: 'do160_temp_design_level', key: 'do160', width: 65,
-      render: (v: string) => v ? <span className="font-medium">{v}</span> : <span className="text-muted-foreground/40">-</span> },
     {
-      title: '状态', dataIndex: 'status', key: 'status', width: 72,
-      render: (s: string) => {
+      title: '状态', key: 'status', width: 72,
+      render: (_: any, r: Equipment) => {
+        const s = r.config_data?.equipment_status || 'in_development';
         const cfg = STATUS_BADGES[s] || { variant: 'secondary' as const, text: s };
         return <Badge variant={cfg.variant}>{cfg.text}</Badge>;
       },

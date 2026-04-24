@@ -48,18 +48,19 @@ const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
       { key: 'part_number', label: '件号', type: 'text', target: 'equipment' },
       { key: 'name', label: '名称', type: 'text', target: 'equipment' },
       { key: 'name_en', label: '英文名称', type: 'text', target: 'equipment' },
-      { key: 'lin_number', label: 'LIN号', type: 'text', target: 'equipment' },
+      { key: 'lin_number', label: 'LIN号', type: 'text', target: 'config_equipment' },
+      { key: 'internal_number', label: '内部编号', type: 'text', target: 'config_equipment' },
       { key: 'ata_chapter', label: 'ATA章节', type: 'text', target: 'equipment' },
       { key: 'equipment_type', label: '类型', type: 'select', target: 'equipment', options: [
         { value: 'LRU', label: 'LRU' }, { value: 'SRU', label: 'SRU' },
         { value: 'structural', label: '结构件' }, { value: 'cable', label: '线缆' },
       ]},
-      { key: 'status', label: '状态', type: 'select', target: 'equipment', options: [
+      { key: 'equipment_status', label: '状态', type: 'select', target: 'config_equipment', options: [
         { value: 'in_development', label: '在研' }, { value: 'qualifying', label: '鉴定中' },
         { value: 'approved', label: '已批准' }, { value: 'discontinued', label: '停产' },
       ]},
       { key: 'description', label: '描述', type: 'textarea', target: 'equipment' },
-      { key: 'responsible_person', label: '负责人', type: 'text', target: 'equipment' },
+      { key: 'responsible_person', label: '负责人', type: 'text', target: 'config_equipment' },
     ],
   },
   {
@@ -68,13 +69,13 @@ const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
       { key: 'is_electrical', label: '是否电设备', type: 'boolean', target: 'equipment' },
       { key: 'is_primary_electrical', label: '一级用电设备', type: 'boolean', target: 'equipment' },
       { key: 'has_eicd', label: '是否有EICD', type: 'boolean', target: 'equipment' },
-      { key: 'first_flight_onboard', label: '首飞装机', type: 'boolean', target: 'equipment' },
-      { key: 'phase2_onboard', label: '二阶段装机', type: 'boolean', target: 'equipment' },
       { key: 'dal', label: 'DAL等级', type: 'select', target: 'equipment', options: [
         { value: '__none__', label: '未设置' }, { value: 'A', label: 'A' }, { value: 'B', label: 'B' },
         { value: 'C', label: 'C' }, { value: 'D', label: 'D' }, { value: 'E', label: 'E' },
       ]},
-      { key: 'is_optional', label: '是否选装', type: 'boolean', target: 'equipment' },
+      { key: 'is_optional', label: '是否选装', type: 'boolean', target: 'config_equipment' },
+      { key: 'equipment_level', label: '设备等级', type: 'text', target: 'config_equipment' },
+      { key: 'has_special_wiring', label: '特殊布线', type: 'boolean', target: 'config_equipment' },
     ],
   },
   {
@@ -113,26 +114,6 @@ const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
     ],
   },
   {
-    key: 'do160', label: 'DO-160',
-    fields: [
-      { key: 'do160_temp_design_level', label: '设计要求等级', type: 'select', target: 'equipment', options: [
-        { value: '__none__', label: '未设置' }, { value: 'A1', label: 'A1' }, { value: 'B2', label: 'B2' },
-      ]},
-      { key: 'do160_temp_qual_level', label: '鉴定等级', type: 'text', target: 'equipment' },
-      { key: 'do160_temp_compliance', label: '鉴定符合情况', type: 'select', target: 'equipment', options: [
-        { value: '__none__', label: '未设置' },
-        { value: '符合', label: '符合' }, { value: '不符合', label: '不符合' }, { value: '待确认', label: '待确认' },
-        { value: '高温符合，低温不符合', label: '高温符合，低温不符合' },
-        { value: '低温符合，高温不符合', label: '低温符合，高温不符合' },
-      ]},
-      { key: 'normal_operating_temp', label: '正常工作温度 (℃)', type: 'text', target: 'equipment' },
-      { key: 'short_term_temp', label: '短时工作温度 (℃)', type: 'text', target: 'equipment' },
-      { key: 'ground_storage_temp', label: '地面停放温度 (℃)', type: 'text', target: 'equipment' },
-      { key: 'operating_altitude', label: '高度 (m)', type: 'text', target: 'equipment' },
-      { key: 'qual_report_number', label: '鉴定报告编号', type: 'text', target: 'equipment' },
-    ],
-  },
-  {
     key: 'notes', label: '备注',
     fields: [
       { key: 'notes', label: '备注', type: 'textarea', target: 'equipment' },
@@ -144,7 +125,6 @@ const PRESETS: { label: string; groups: string[] }[] = [
   { label: '全部', groups: FIELD_GROUPS.map(g => g.key) },
   { label: '重量', groups: ['weight'] },
   { label: '搭接', groups: ['bonding'] },
-  { label: 'DO-160', groups: ['do160'] },
   { label: '电气', groups: ['electrical'] },
   { label: '基本+分类', groups: ['basic', 'classify'] },
 ];
@@ -244,7 +224,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
           name: form.name,
           ata_chapter: form.ata_chapter || '00',
           equipment_type: form.equipment_type || 'LRU',
-          status: form.status || 'in_development',
           description: form.description,
         };
         if (form.mass_kg) body.weight_balance = { mass_kg: parseFloat(form.mass_kg) };

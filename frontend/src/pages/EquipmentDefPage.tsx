@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { ProfessionalTable, type Column } from '@/components/workstation/shared/ProfessionalTable';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -12,13 +11,6 @@ import { toast } from 'sonner';
 import { listEquipment, deleteEquipment } from '../api/equipment';
 import { EquipmentForm } from '../components/equipment/EquipmentForm';
 import type { Equipment } from '../types';
-
-const STATUS_TAGS: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; text: string }> = {
-  approved:       { variant: 'default',     text: '已批准' },
-  in_development: { variant: 'secondary',   text: '在研' },
-  qualifying:     { variant: 'outline',      text: '鉴定中' },
-  discontinued:   { variant: 'destructive',  text: '停产' },
-};
 
 const PAGE_SIZE = 50;
 
@@ -113,8 +105,6 @@ export function EquipmentDefPage() {
   };
 
   const columns: Column<Equipment>[] = [
-    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 120,
-      render: (v: string | null) => v || '-' },
     { title: '名称', dataIndex: 'name', key: 'name', width: 180 },
     { title: '件号', dataIndex: 'part_number', key: 'pn', width: 150 },
     { title: 'ATA', dataIndex: 'ata_chapter', key: 'ata', width: 55 },
@@ -141,16 +131,6 @@ export function EquipmentDefPage() {
       render: (v: boolean | null) => v === true ? '有' : v === false ? '无' : '-' },
     { title: '供应商', key: 'supplier', width: 120,
       render: (_: any, r: Equipment) => r.supplier_name || '-' },
-    { title: '负责人', dataIndex: 'responsible_person', key: 'person', width: 80,
-      render: (v: string | null) => v || '-' },
-    { title: '温度鉴定等级', dataIndex: 'do160_temp_qual_level', key: 'temp', width: 120,
-      render: (v: string | null) => v || '-' },
-    { title: '状态', dataIndex: 'status', key: 'status', width: 70,
-      render: (s: string) => {
-        const cfg = STATUS_TAGS[s] || { variant: 'outline' as const, text: s };
-        return <Badge variant={cfg.variant}>{cfg.text}</Badge>;
-      },
-    },
     { title: '', key: 'action', width: 40,
       render: (_: any, record: Equipment) => (
         <Button
@@ -229,7 +209,7 @@ export function EquipmentDefPage() {
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>
-              {detailEquip ? `${detailEquip.lin_number || detailEquip.part_number} — ${detailEquip.name}` : ''}
+              {detailEquip ? `${detailEquip.part_number} — ${detailEquip.name}` : ''}
             </SheetTitle>
           </SheetHeader>
 
@@ -237,20 +217,13 @@ export function EquipmentDefPage() {
             <div className="px-4 pb-4 space-y-4">
               {/* Basic info */}
               <dl className="grid grid-cols-[auto_1fr_auto_1fr] border-t border-l text-left">
-                <DescItem label="LIN号">{detailEquip.lin_number || '-'}</DescItem>
                 <DescItem label="件号">{detailEquip.part_number}</DescItem>
+                <DescItem label="ATA">{detailEquip.ata_chapter}</DescItem>
                 <DescItem label="名称" span>{detailEquip.name}</DescItem>
                 <DescItem label="英文名称" span>{detailEquip.name_en || '-'}</DescItem>
-                <DescItem label="ATA">{detailEquip.ata_chapter}</DescItem>
                 <DescItem label="类型">{detailEquip.equipment_type}</DescItem>
                 <DescItem label="DAL">{detailEquip.dal || '-'}</DescItem>
-                <DescItem label="状态">
-                  <Badge variant={STATUS_TAGS[detailEquip.status]?.variant ?? 'outline'}>
-                    {STATUS_TAGS[detailEquip.status]?.text ?? detailEquip.status}
-                  </Badge>
-                </DescItem>
-                <DescItem label="供应商">{detailEquip.supplier_name || '-'}</DescItem>
-                <DescItem label="负责人">{detailEquip.responsible_person || '-'}</DescItem>
+                <DescItem label="供应商" span>{detailEquip.supplier_name || '-'}</DescItem>
               </dl>
 
               {detailEquip.weight_balance && (
@@ -271,7 +244,7 @@ export function EquipmentDefPage() {
                 <DescItem label="壳体金属">{detailEquip.is_metal_shell === true ? '是' : detailEquip.is_metal_shell === false ? '否' : '-'}</DescItem>
                 <DescItem label="电压范围">{detailEquip.voltage_range || '-'}</DescItem>
                 <DescItem label="接地方式" span>{detailEquip.shell_grounding_method || '-'}</DescItem>
-                <DescItem label="物理特性" span>{detailEquip.physical_characteristics || '-'}</DescItem>
+                <DescItem label="内部接地" span>{detailEquip.internal_grounding || '-'}</DescItem>
               </dl>
 
               <Separator />
@@ -283,17 +256,7 @@ export function EquipmentDefPage() {
                 <DescItem label="供电余度">{detailEquip.power_redundancy || '-'}</DescItem>
               </dl>
 
-              {detailEquip.do160_temp_qual_level && (
-                <>
-                  <Separator />
-                  <h4 className="text-sm font-medium text-muted-foreground">DO-160 温度鉴定</h4>
-                  <dl className="grid grid-cols-[auto_1fr] border-t border-l text-left">
-                    <DescItem label="鉴定等级">{detailEquip.do160_temp_qual_level || '-'}</DescItem>
-                    <DescItem label="正常工作温度">{detailEquip.normal_operating_temp || '-'}</DescItem>
-                    <DescItem label="鉴定报告号">{detailEquip.qual_report_number || '-'}</DescItem>
-                  </dl>
-                </>
-              )}
+              {/* DO-160 data now managed via DO-160 records */}
 
               <div className="pt-2">
                 <Button size="sm" onClick={() => { setDetailEquip(null); setEditEquip(detailEquip); setFormOpen(true); }}>

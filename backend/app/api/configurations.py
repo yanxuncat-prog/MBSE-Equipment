@@ -19,7 +19,7 @@ from app.services import configuration_svc
 
 router = APIRouter(tags=["configurations"])
 
-FROZEN_MASTER_FIELDS = {"name", "part_number", "lin_number"}
+FROZEN_MASTER_FIELDS = {"name", "part_number"}
 
 
 def _serialize(val):

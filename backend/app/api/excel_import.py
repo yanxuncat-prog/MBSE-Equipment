@@ -24,7 +24,7 @@ _preview_store: dict[str, dict[str, Any]] = {}
 # Boolean columns that use "是"/"否" in Excel
 BOOL_FIELDS = {
     "is_electrical", "is_primary_electrical", "has_eicd",
-    "first_flight_onboard", "phase2_onboard", "in_pace_drawing",
+    "in_pace_drawing", "is_optional", "has_special_wiring",
 }
 
 # Float fields that should be converted from string/int

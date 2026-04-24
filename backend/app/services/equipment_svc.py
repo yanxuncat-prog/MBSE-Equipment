@@ -82,6 +82,14 @@ async def list_equipment(
                 ce_alias.installation_ready,
                 ce_alias.planned_install_date,
                 ce_alias.actual_install_date,
+                # 7 moved fields
+                ce_alias.equipment_status,
+                ce_alias.responsible_person,
+                ce_alias.has_special_wiring,
+                ce_alias.equipment_level,
+                ce_alias.is_optional,
+                ce_alias.internal_number,
+                ce_alias.lin_number,
             )
             .where(ce_alias.config_id == config_id)
         )
@@ -171,6 +179,14 @@ async def list_equipment(
             ce_installation_ready = row[40]
             ce_planned_install_date = row[41]
             ce_actual_install_date = row[42]
+            # 7 moved fields
+            ce_equipment_status = row[43]
+            ce_responsible_person = row[44]
+            ce_has_special_wiring = row[45]
+            ce_equipment_level = row[46]
+            ce_is_optional = row[47]
+            ce_internal_number = row[48]
+            ce_lin_number = row[49]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -230,6 +246,14 @@ async def list_equipment(
                 installation_ready=ce_installation_ready,
                 planned_install_date=str(ce_planned_install_date) if ce_planned_install_date else None,
                 actual_install_date=str(ce_actual_install_date) if ce_actual_install_date else None,
+                # 7 moved fields
+                equipment_status=ce_equipment_status,
+                responsible_person=ce_responsible_person,
+                has_special_wiring=ce_has_special_wiring,
+                equipment_level=ce_equipment_level,
+                is_optional=ce_is_optional,
+                internal_number=ce_internal_number,
+                lin_number=ce_lin_number,
             )
 
             resp = EquipmentResponse.model_validate(equip)
@@ -266,7 +290,6 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
         ata_chapter=data.ata_chapter,
         equipment_type=data.equipment_type,
         supplier_id=data.supplier_id if data.supplier_id else None,
-        status=data.status,
         description=data.description,
     )
     db.add(equip)
