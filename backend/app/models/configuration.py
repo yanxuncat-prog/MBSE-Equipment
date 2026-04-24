@@ -66,6 +66,14 @@ class ConfigEquipment(Base):
     estimated_delivery_date: Mapped[date | None] = mapped_column(Date, comment="预计/实际交付日期")
     procurement_notes: Mapped[str | None] = mapped_column(Text, comment="采购备注")
 
+    # Physical asset lifecycle (8-step checklist)
+    actual_arrival_date: Mapped[date | None] = mapped_column(Date, comment="实际到货日期")
+    micd_confirmed: Mapped[bool | None] = mapped_column(comment="MICD是否已签署确认")
+    structure_ready: Mapped[bool | None] = mapped_column(comment="实物是否已开口(结构准备完成)")
+    installation_ready: Mapped[bool | None] = mapped_column(comment="设备是否达到安装要求")
+    planned_install_date: Mapped[date | None] = mapped_column(Date, comment="计划上机日期")
+    actual_install_date: Mapped[date | None] = mapped_column(Date, comment="实际上机日期")
+
     # Relationships
     equipment: Mapped["Equipment"] = relationship()
     zone: Mapped["Zone | None"] = relationship()

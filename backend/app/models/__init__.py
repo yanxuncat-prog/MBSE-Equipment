@@ -9,9 +9,14 @@ from app.models.bus import BusDefinition
 from app.models.supplier import Supplier
 from app.models.change_request import ChangeRequest
 from app.models.audit_log import AuditLog
+from app.models.electrical_detail import ElectricalDetail, FlightPhase, LoadWorkMode
+from app.models.micd import MICDRecord
+from app.models.do160 import DO160Record
 
 __all__ = [
     "User", "Program", "Series", "Equipment", "Configuration", "ConfigEquipment",
     "WeightBalance", "ElectricalLoad", "Zone", "BusDefinition",
     "Supplier", "ChangeRequest", "AuditLog",
+    "ElectricalDetail", "FlightPhase", "LoadWorkMode",
+    "MICDRecord", "DO160Record",
 ]
