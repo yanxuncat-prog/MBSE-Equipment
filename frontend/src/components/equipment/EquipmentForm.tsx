@@ -132,7 +132,7 @@ const PRESETS: { label: string; groups: string[] }[] = [
 /* ── Helpers ── */
 function getFieldValue(equip: Equipment | null, field: FieldDef): string {
   if (!equip) return '';
-  if (field.target === 'electrical_load') return String((equip.electrical_load as any)?.[field.key] ?? '');
+  if (field.target === 'config_equipment' && ['power_kva_normal','power_kva_emergency','power_kva_max'].includes(field.key)) return String((equip.config_data as any)?.[field.key] ?? '');
   if (field.target === 'config_equipment') return String((equip.config_data as any)?.[field.key] ?? '');
   const v = (equip as any)[field.key];
   if (v === true) return 'true';
@@ -195,10 +195,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
 
             if (field.target === 'equipment') eqFields[field.key] = parsed;
             else if (field.target === 'config_equipment') ceFields[field.key] = parsed;
-            else if (field.target === 'electrical_load') {
-              if (!elData) elData = {};
-              if (parsed != null) elData[field.key] = parsed;
-            }
           }
         }
 
@@ -222,7 +218,7 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
           equipment_type: form.equipment_type || 'LRU',
           description: form.description,
         };
-        if (form.power_kva_normal) body.electrical_load = { power_kva_normal: parseFloat(form.power_kva_normal) };
+        if (form.power_kva_normal) if (body.config_equipment) body.config_equipment.power_kva_normal = parseFloat(form.power_kva_normal); else body.config_equipment = { power_kva_normal: parseFloat(form.power_kva_normal) };
         onSave(body);
       }
     } finally {

@@ -2,7 +2,7 @@ import uuid
 from openpyxl import load_workbook
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Equipment, ElectricalLoad
+from app.models import Equipment
 
 
 COLUMN_MAP = {
@@ -90,15 +90,6 @@ async def import_from_excel(
             )
             db.add(equip)
             await db.flush()
-
-            # Electrical Load (no bus_id -- that comes from ConfigEquipment.bus_id)
-            power = val("power_kva_normal")
-            if power is not None:
-                el = ElectricalLoad(
-                    equipment_id=equip.id,
-                    power_kva_normal=float(power),
-                )
-                db.add(el)
 
             success_count += 1
 

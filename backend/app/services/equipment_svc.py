@@ -3,7 +3,7 @@ from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, ElectricalLoad, AuditLog, ConfigEquipment
+from app.models import Equipment, AuditLog, ConfigEquipment
 from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.schemas.equipment import EquipmentCreate, EquipmentUpdate, ConfigEquipmentData, EquipmentResponse
 
@@ -20,7 +20,6 @@ async def list_equipment(
     query = (
         select(Equipment)
         .options(
-            selectinload(Equipment.electrical_load),
             selectinload(Equipment.supplier),
         )
     )
@@ -34,7 +33,6 @@ async def list_equipment(
             query
             .join(ce_alias, ce_alias.equipment_id == Equipment.id)
             .options(
-                selectinload(Equipment.electrical_load),
                 selectinload(Equipment.supplier),
             )
             .add_columns(
@@ -263,7 +261,6 @@ async def get_equipment(db: AsyncSession, equipment_id: str) -> Equipment | None
     result = await db.execute(
         select(Equipment)
         .options(
-            selectinload(Equipment.electrical_load),
             selectinload(Equipment.supplier),
         )
         .where(Equipment.id == equipment_id)
@@ -282,15 +279,6 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
     )
     db.add(equip)
     await db.flush()
-
-    if data.electrical_load:
-        el = ElectricalLoad(
-            equipment_id=equip.id,
-            power_kva_normal=data.electrical_load.power_kva_normal,
-            power_kva_emergency=data.electrical_load.power_kva_emergency,
-            power_kva_max=data.electrical_load.power_kva_max,
-        )
-        db.add(el)
 
     audit = AuditLog(
         entity_type="equipment",
@@ -318,14 +306,6 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
             value = value
         setattr(equip, field, value)
 
-    if data.electrical_load is not None:
-        if equip.electrical_load:
-            for k, v in data.electrical_load.model_dump().items():
-                setattr(equip.electrical_load, k, v)
-        else:
-            el = ElectricalLoad(equipment_id=equip.id, **data.electrical_load.model_dump())
-            db.add(el)
-
     audit = AuditLog(
         entity_type="equipment", entity_id=equip.id, action="update",
         old_value=old_values, new_value=data.model_dump(exclude_unset=True),
@@ -333,7 +313,7 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
     )
     db.add(audit)
     await db.commit()
-    await db.refresh(equip, ["electrical_load"])
+    await db.refresh(equip)
     return equip
 
 

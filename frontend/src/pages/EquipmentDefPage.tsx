@@ -126,7 +126,7 @@ export function EquipmentDefPage() {
     { title: '接地方式', dataIndex: 'shell_grounding_method', key: 'gnd', width: 90,
       render: (v: string | null) => v || '-' },
     { title: '功耗(kVA)', key: 'power', width: 80, align: 'right',
-      render: (_: any, r: Equipment) => r.electrical_load?.power_kva_normal?.toFixed(1) || '-' },
+      render: (_: any, r: Equipment) => r.config_data?.power_kva_normal?.toFixed(1) || '-' },
     { title: 'EICD', dataIndex: 'has_eicd', key: 'eicd', width: 55,
       render: (v: boolean | null) => v === true ? '有' : v === false ? '无' : '-' },
     { title: '供应商', key: 'supplier', width: 120,
@@ -252,7 +252,7 @@ export function EquipmentDefPage() {
               <dl className="grid grid-cols-[auto_1fr_auto_1fr] border-t border-l text-left">
                 <DescItem label="是否电设备">{detailEquip.is_electrical === true ? '是' : detailEquip.is_electrical === false ? '否' : '-'}</DescItem>
                 <DescItem label="EICD">{detailEquip.has_eicd === true ? '有' : detailEquip.has_eicd === false ? '无' : '-'}</DescItem>
-                <DescItem label="功耗">{detailEquip.electrical_load?.power_kva_normal?.toFixed(2) || '-'} kVA</DescItem>
+                <DescItem label="功耗">{detailEquip.config_data?.power_kva_normal?.toFixed(2) || '-'} kVA</DescItem>
                 <DescItem label="供电余度">{detailEquip.power_redundancy || '-'}</DescItem>
               </dl>
 

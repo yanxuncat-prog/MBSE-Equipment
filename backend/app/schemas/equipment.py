@@ -67,11 +67,6 @@ class ConfigEquipmentData(BaseModel):
     actual_install_date: str | None = None
 
 
-class ElectricalLoadData(BaseModel):
-    power_kva_normal: float
-    power_kva_emergency: float | None = None
-    power_kva_max: float | None = None
-
 
 class EquipmentCreate(BaseModel):
     part_number: str
@@ -80,7 +75,6 @@ class EquipmentCreate(BaseModel):
     equipment_type: str
     supplier_id: str | None = None
     description: str | None = None
-    electrical_load: ElectricalLoadData | None = None
 
 
 class ConfigEquipmentUpdate(BaseModel):
@@ -142,7 +136,6 @@ class EquipmentFullUpdate(BaseModel):
     """Combined update payload: equipment + config_equipment + electrical."""
     equipment: 'EquipmentUpdate | None' = None
     config_equipment: ConfigEquipmentUpdate | None = None
-    electrical_load: ElectricalLoadData | None = None
 
 
 class EquipmentUpdate(BaseModel):
@@ -182,17 +175,11 @@ class EquipmentUpdate(BaseModel):
     # Notes
     notes: str | None = None
     # Legacy (for backward compat with old form)
-    electrical_load: ElectricalLoadData | None = None
 
 
 class _ORMBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-
-class ElectricalLoadResponse(_ORMBase):
-    power_kva_normal: float
-    power_kva_emergency: float | None = None
-    power_kva_max: float | None = None
 
 
 class EquipmentResponse(_ORMBase):
@@ -204,7 +191,6 @@ class EquipmentResponse(_ORMBase):
     supplier_id: UUID | None = None
     supplier_name: str | None = None
     description: str | None = None
-    electrical_load: ElectricalLoadResponse | None = None
     config_data: ConfigEquipmentData | None = None  # populated when queried with config_id
 
     # Identity

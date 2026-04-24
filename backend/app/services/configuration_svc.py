@@ -212,7 +212,6 @@ async def _load_config_equipment(
         select(ConfigEquipmentModel)
         .where(ConfigEquipmentModel.config_id == config_id)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
     )
     result = await db.execute(stmt)

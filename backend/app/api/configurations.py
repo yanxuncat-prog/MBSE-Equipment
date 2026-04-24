@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Equipment, ElectricalLoad
 from app.models.configuration import Configuration, ConfigEquipment as ConfigEquipmentModel
 from app.models.audit_log import AuditLog
 from app.models.user import User
@@ -195,7 +194,7 @@ async def update_config_equipment(
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
+            selectinload(ConfigEquipmentModel.equipment),
         )
         .where(ConfigEquipmentModel.config_id == config_id, ConfigEquipmentModel.lin_number == lin_number)
     )
@@ -210,8 +209,8 @@ async def update_config_equipment(
     # Update equipment (master) fields
     if body.equipment:
         for field, value in body.equipment.model_dump(exclude_unset=True).items():
-            if field == 'electrical_load':
-                continue  # handled separately
+            if field == 'electrical_load' or field == 'weight_balance':
+                continue
             if not hasattr(equip, field):
                 continue
             # Freeze enforcement: reject edits to master identity fields
@@ -237,29 +236,16 @@ async def update_config_equipment(
                 new_values[f"config_equipment.{field}"] = _serialize(value)
                 setattr(ce, field, value)
 
-    # Update electrical_load → write to ConfigEquipment AND legacy ElectricalLoad
+    # Update electrical_load → write to ConfigEquipment
     if body.electrical_load:
         el_data = body.electrical_load.model_dump(exclude_unset=True)
-        # Per-config: power fields on ConfigEquipment
         for el_field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
             if el_field in el_data:
                 old_val = getattr(ce, el_field)
                 if old_val != el_data[el_field]:
-                    old_values[f"electrical_load.{el_field}"] = _serialize(old_val)
-                    new_values[f"electrical_load.{el_field}"] = _serialize(el_data[el_field])
+                    old_values[f"config_equipment.{el_field}"] = _serialize(old_val)
+                    new_values[f"config_equipment.{el_field}"] = _serialize(el_data[el_field])
                     setattr(ce, el_field, el_data[el_field])
-        # Legacy write-through
-        if equip.electrical_load:
-            for field, value in el_data.items():
-                setattr(equip.electrical_load, field, value)
-        else:
-            el = ElectricalLoad(
-                id=str(uuid.uuid4()), equipment_id=equip.id,
-                power_kva_normal=body.electrical_load.power_kva_normal,
-                power_kva_emergency=body.electrical_load.power_kva_emergency,
-                power_kva_max=body.electrical_load.power_kva_max,
-            )
-            db.add(el)
 
     # Audit log: only create if at least one field actually changed
     if old_values:

@@ -97,7 +97,7 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
           )}
 
           {/* Electrical data */}
-          {equipment.electrical_load && (
+          {equipment.config_data && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Separator className="flex-1" />
@@ -105,8 +105,8 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
                 <Separator className="flex-1" />
               </div>
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                <DescriptionItem label="正常功耗">{equipment.electrical_load.power_kva_normal} kVA</DescriptionItem>
-                <DescriptionItem label="应急功耗">{equipment.electrical_load.power_kva_emergency ?? '-'} kVA</DescriptionItem>
+                <DescriptionItem label="正常功耗">{equipment.config_data.power_kva_normal} kVA</DescriptionItem>
+                <DescriptionItem label="应急功耗">{equipment.config_data.power_kva_emergency ?? '-'} kVA</DescriptionItem>
               </div>
             </div>
           )}

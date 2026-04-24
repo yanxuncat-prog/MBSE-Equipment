@@ -11,7 +11,6 @@ router = APIRouter(prefix="/data-governance", tags=["data-governance"])
 TABLE_DISPLAY = {
     "equipment": "设备主表",
     "config_equipment": "构型设备关联",
-    "electrical_loads": "电气负载汇总",
     "electrical_details": "负载电气特性",
     "flight_phases": "飞行阶段定义",
     "load_work_modes": "负载工作模式",
@@ -29,7 +28,6 @@ async def get_tables(
 ):
     tables_to_show = [
         "equipment", "config_equipment",
-        "electrical_loads", "electrical_details", "flight_phases",
         "load_work_modes",
     ]
 
@@ -46,7 +44,6 @@ async def get_tables(
             count_q = text(f"SELECT COUNT(*) FROM {table} WHERE config_id = :cid")
         elif table == "config_equipment":
             count_q = text(f"SELECT COUNT(*) FROM {table} WHERE config_id = :cid")
-        elif table == "electrical_loads":
             count_q = text(
                 f"SELECT COUNT(*) FROM {table} t "
                 "JOIN config_equipment ce ON ce.equipment_id = t.equipment_id "

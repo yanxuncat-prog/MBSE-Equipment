@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Equipment, Configuration, ElectricalLoad
+from app.models import Equipment, Configuration
 from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.models.user import User
 from app.api.deps import get_current_user
@@ -356,14 +356,6 @@ async def import_apply(
 
             # Create electrical_load if any fields (backward compat)
             if el_fields:
-                new_el = ElectricalLoad(
-                    id=str(uuid.uuid4()),
-                    equipment_id=equipment_id,
-                    power_kva_normal=el_fields.get("power_kva_normal", 0.0),
-                    power_kva_emergency=el_fields.get("power_kva_emergency"),
-                    power_kva_max=el_fields.get("power_kva_max"),
-                )
-                db.add(new_el)
                 # Also sync to ConfigEquipment
                 for pf in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
                     if pf in el_fields and el_fields[pf] is not None:
@@ -400,21 +392,8 @@ async def import_apply(
                 elif source == "config_equipment":
                     setattr(ce, field, value)
                 elif source == "electrical_load":
-                    # Backward compat: also sync to ConfigEquipment
                     if field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
                         setattr(ce, field, value)
-                    if equipment.electrical_load is None:
-                        if value is not None:
-                            new_el = ElectricalLoad(
-                                id=str(uuid.uuid4()),
-                                equipment_id=equipment.id,
-                                power_kva_normal=value if field == "power_kva_normal" else 0.0,
-                            )
-                            if field != "power_kva_normal":
-                                setattr(new_el, field, value)
-                            db.add(new_el)
-                    else:
-                        setattr(equipment.electrical_load, field, value)
 
             success_count += 1
         except Exception as e:
