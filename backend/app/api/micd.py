@@ -29,7 +29,7 @@ class MICDCreate(BaseModel):
     bracket_mass_kg: float | None = None
     screw_spec: str | None = None
     wire_bonding_size: str | None = None
-    model_config: str | None = None
+    digital_model_config: str | None = None
     has_tolerance_drawing: bool | None = None
     tolerance_drawing_url: str | None = None
     notes: str | None = None
@@ -46,7 +46,7 @@ class MICDUpdate(BaseModel):
     bracket_mass_kg: float | None = None
     screw_spec: str | None = None
     wire_bonding_size: str | None = None
-    model_config: str | None = None
+    digital_model_config: str | None = None
     has_tolerance_drawing: bool | None = None
     tolerance_drawing_url: str | None = None
     notes: str | None = None
@@ -73,7 +73,7 @@ def _to_dict(r: MICDRecord) -> dict:
         "bracket_mass_kg": r.bracket_mass_kg,
         "screw_spec": r.screw_spec,
         "wire_bonding_size": r.wire_bonding_size,
-        "model_config": r.model_config,
+        "digital_model_config": r.digital_model_config,
         "has_tolerance_drawing": r.has_tolerance_drawing,
         "tolerance_drawing_url": r.tolerance_drawing_url,
         "is_confirmed": r.is_confirmed,
@@ -188,7 +188,7 @@ async def create_micd(
         bracket_mass_kg=body.bracket_mass_kg,
         screw_spec=body.screw_spec,
         wire_bonding_size=body.wire_bonding_size,
-        model_config=body.model_config,
+        digital_model_config=body.digital_model_config,
         has_tolerance_drawing=body.has_tolerance_drawing,
         tolerance_drawing_url=body.tolerance_drawing_url,
         notes=body.notes,

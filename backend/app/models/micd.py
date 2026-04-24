@@ -21,7 +21,7 @@ class MICDRecord(Base):
     bracket_mass_kg: Mapped[float | None] = mapped_column(Float, comment="托架重量(kg)")
     screw_spec: Mapped[str | None] = mapped_column(String(100), comment="螺钉规格")
     wire_bonding_size: Mapped[str | None] = mapped_column(String(100), comment="线搭接接口尺寸")
-    model_config: Mapped[str | None] = mapped_column(String(100), comment="数模采用构型")
+    digital_model_config: Mapped[str | None] = mapped_column(String(100), comment="数模采用构型")
     has_tolerance_drawing: Mapped[bool | None] = mapped_column(Boolean, comment="是否包含公差尺寸工程图")
     tolerance_drawing_url: Mapped[str | None] = mapped_column(String(500), comment="公差尺寸工程图附件路径")
 
