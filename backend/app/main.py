@@ -21,6 +21,9 @@ from app.api.equipment_library import router as equipment_library_router
 from app.api.micd import router as micd_router
 from app.api.do160 import router as do160_router
 from app.api.weight_reduction import router as weight_reduction_router
+from app.api.users import router as users_router
+from app.api.notifications import router as notifications_router
+from app.api.equipment_constraints import router as equipment_constraints_router
 from app.ws.constraint_ws import router as ws_router
 
 app = FastAPI(title="AeroEquip", version="0.1.0")
@@ -53,6 +56,9 @@ app.include_router(equipment_library_router, prefix="/api")
 app.include_router(micd_router, prefix="/api")
 app.include_router(do160_router, prefix="/api")
 app.include_router(weight_reduction_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
+app.include_router(notifications_router, prefix="/api")
+app.include_router(equipment_constraints_router, prefix="/api")
 app.include_router(ws_router)
 
 

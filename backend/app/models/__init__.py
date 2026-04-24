@@ -12,6 +12,8 @@ from app.models.audit_log import AuditLog
 from app.models.electrical_detail import ElectricalDetail, FlightPhase, LoadWorkMode
 from app.models.micd import MICDRecord
 from app.models.do160 import DO160Record
+from app.models.notification import Notification
+from app.models.equipment_constraint import EquipmentConstraint
 
 __all__ = [
     "User", "Program", "Series", "Equipment", "Configuration", "ConfigEquipment",
@@ -19,4 +21,5 @@ __all__ = [
     "Supplier", "ChangeRequest", "AuditLog",
     "ElectricalDetail", "FlightPhase", "LoadWorkMode",
     "MICDRecord", "DO160Record",
+    "Notification", "EquipmentConstraint",
 ]
