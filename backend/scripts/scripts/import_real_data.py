@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import engine, async_session_factory, Base
 from app.models import (
-    User, Program, Series, Configuration, Equipment, ConfigEquipment,
+    User, Program, Configuration, Equipment, ConfigEquipment,
     WeightBalance, ElectricalLoad, Zone, BusDefinition, Supplier,
     AuditLog,
 )
@@ -138,7 +138,7 @@ async def reset_and_init(db: AsyncSession):
 
 
 async def create_base_data(db: AsyncSession) -> dict:
-    """Create users, program, series, zones, buses. Returns lookup dicts."""
+    """Create users, program, zones, buses. Returns lookup dicts."""
     # Users
     admin = User(username="admin", hashed_password=pwd_context.hash("admin123"),
                  display_name="系统管理员", role="admin")
@@ -147,15 +147,10 @@ async def create_base_data(db: AsyncSession) -> dict:
     db.add_all([admin, engineer])
     await db.flush()
 
-    # Program + Series
+    # Program
     program = Program(name="CE-25A", aircraft_type="大型宽体客机",
                       description="CE-25A电动飞机设备管理")
     db.add(program)
-    await db.flush()
-
-    series = Series(program_id=program.id, variant_name="基本型",
-                    description="CE-25A基本型")
-    db.add(series)
     await db.flush()
 
     # Zones (based on real area data)
@@ -173,7 +168,7 @@ async def create_base_data(db: AsyncSession) -> dict:
         ("999", "未知", 0, 1100, 0, 300),
     ]
     for code, name, sf, st, wf, wt in zones_def:
-        z = Zone(series_id=series.id, zone_code=code, name=name,
+        z = Zone(program_id=program.id, zone_code=code, name=name,
                  sta_from=sf, sta_to=st, wl_from=wf, wl_to=wt)
         db.add(z)
         await db.flush()
@@ -190,7 +185,7 @@ async def create_base_data(db: AsyncSession) -> dict:
         ("HOT BAT BUS", "DC", 5.0),
     ]
     for bname, btype, cap in buses_def:
-        b = BusDefinition(series_id=series.id, bus_name=bname,
+        b = BusDefinition(program_id=program.id, bus_name=bname,
                           bus_type=btype, rated_capacity_kva=cap)
         db.add(b)
         await db.flush()
@@ -199,7 +194,7 @@ async def create_base_data(db: AsyncSession) -> dict:
     await db.commit()
     return {
         "admin": admin, "engineer": engineer,
-        "program": program, "series": series,
+        "program": program,
         "zone_map": zone_map, "bus_map": bus_map,
     }
 
@@ -730,7 +725,7 @@ _bonding_data: dict[str, dict] = {}
 
 async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
     """Create configurations and assign equipment via ConfigEquipment with position/bus data."""
-    series = base["series"]
+    program = base["program"]
     admin = base["admin"]
     bus_map = base["bus_map"]
 
@@ -753,7 +748,7 @@ async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
 
     for version, status, desc, sheet_idx in configs_to_create:
         config = Configuration(
-            series_id=series.id,
+            program_id=program.id,
             version=version,
             status=status,
             description=desc,

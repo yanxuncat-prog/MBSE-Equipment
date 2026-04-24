@@ -84,7 +84,7 @@ class Configuration(Base):
     __tablename__ = "configurations"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    series_id: Mapped[str] = mapped_column(ForeignKey("series.id"))
+    program_id: Mapped[str] = mapped_column(ForeignKey("programs.id"))
     version: Mapped[str] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20), default="draft")
     description: Mapped[str | None] = mapped_column(Text)
@@ -93,5 +93,5 @@ class Configuration(Base):
     is_frozen: Mapped[bool] = mapped_column(default=False, comment="基线冻结:令号/DM号/设备名称不可修改")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    series: Mapped["Series"] = relationship(back_populates="configurations")
+    program: Mapped["Program"] = relationship(back_populates="configurations")
     config_equipment_entries: Mapped[list["ConfigEquipment"]] = relationship(cascade="all, delete-orphan")

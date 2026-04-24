@@ -8,11 +8,11 @@ from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.engines import WeightBalanceEngine, ElectricalLoadEngine, ConstraintStatus
 from app.schemas.constraint import ValidationReport, EngineResult
 
-# MVP defaults for CE-25A (will be configurable per series later)
-DEFAULT_MAC_LE_STA = 500.0
-DEFAULT_MAC_LENGTH = 200.0
-DEFAULT_CG_FWD_LIMIT = 20.0
-DEFAULT_CG_AFT_LIMIT = 40.0
+# MVP defaults for CE-25A (will be configurable per program later)
+DEFAULT_MAC_LE_STA = 7000.0    # MAC leading edge at STA 7000mm
+DEFAULT_MAC_LENGTH = 6000.0    # MAC chord length 6000mm
+DEFAULT_CG_FWD_LIMIT = 15.0   # Forward CG limit 15% MAC
+DEFAULT_CG_AFT_LIMIT = 45.0   # Aft CG limit 45% MAC
 DEFAULT_MTOW_KG = 100_000.0
 
 
@@ -24,7 +24,7 @@ async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[d
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
-        .where(ConfigEquipmentModel.config_id == uuid.UUID(config_id))
+        .where(ConfigEquipmentModel.config_id == config_id)
     )
     ce_list = list(result.scalars().unique().all())
 
@@ -67,7 +67,7 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
     """Load equipment by IDs (for hypothetical adds — no config context, so arm defaults to 0)."""
     if not ids:
         return []
-    uuids = [uuid.UUID(i) for i in ids]
+    uuids = [i for i in ids]
     result = await db.execute(
         select(Equipment)
         .where(Equipment.id.in_(uuids))
@@ -105,9 +105,9 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
     return equip_dicts
 
 
-async def _load_bus_definitions(db: AsyncSession, series_id: uuid.UUID) -> list[dict]:
+async def _load_bus_definitions(db: AsyncSession, program_id: str) -> list[dict]:
     result = await db.execute(
-        select(BusDefinition).where(BusDefinition.series_id == series_id)
+        select(BusDefinition).where(BusDefinition.program_id == program_id)
     )
     buses = result.scalars().all()
     return [
@@ -123,8 +123,8 @@ async def validate_config(
     hypothetical_removes: list[str] | None = None,
     phase: str = "normal",
 ) -> ValidationReport:
-    # Load config to get series_id
-    config = await db.get(Configuration, uuid.UUID(config_id))
+    # Load config to get program_id
+    config = await db.get(Configuration, config_id)
     if not config:
         return ValidationReport(config_id=config_id, overall_status="blocked", engines=[
             EngineResult(engine_name="system", status="blocked", summary="构型不存在", details={})
@@ -143,8 +143,8 @@ async def validate_config(
         remove_set = {rid for rid in hypothetical_removes}
         equip_dicts = [e for e in equip_dicts if e["id"] not in remove_set]
 
-    # Load bus definitions for this series
-    bus_defs = await _load_bus_definitions(db, config.series_id)
+    # Load bus definitions for this program
+    bus_defs = await _load_bus_definitions(db, config.program_id)
 
     # Run engines
     wb_engine = WeightBalanceEngine(

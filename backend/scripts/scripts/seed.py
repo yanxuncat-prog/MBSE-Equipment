@@ -38,13 +38,9 @@ async def seed():
         db.add_all([admin, engineer])
         await db.flush()
 
-        # 2. Create program + series
+        # 2. Create program
         program = Program(name="CE-25A", aircraft_type="大型宽体客机", description="CE-25A型飞机设备管理")
         db.add(program)
-        await db.flush()
-
-        series = Series(program_id=program.id, variant_name="基本型", description="CE-25A基本型")
-        db.add(series)
         await db.flush()
 
         # 3. Create zones
@@ -56,7 +52,7 @@ async def seed():
         ]
         zone_map = {}
         for code, name, sf, st, wf, wt in zones_data:
-            z = Zone(series_id=series.id, zone_code=code, name=name, sta_from=sf, sta_to=st, wl_from=wf, wl_to=wt)
+            z = Zone(program_id=program.id, zone_code=code, name=name, sta_from=sf, sta_to=st, wl_from=wf, wl_to=wt)
             db.add(z)
             await db.flush()
             zone_map[code] = str(z.id)
@@ -70,7 +66,7 @@ async def seed():
         ]
         bus_map = {}
         for bname, btype, cap in buses_data:
-            b = BusDefinition(series_id=series.id, bus_name=bname, bus_type=btype, rated_capacity_kva=cap)
+            b = BusDefinition(program_id=program.id, bus_name=bname, bus_type=btype, rated_capacity_kva=cap)
             db.add(b)
             await db.flush()
             bus_map[bname] = str(b.id)
@@ -93,7 +89,7 @@ async def seed():
         all_equip = (await db.execute(select(Equipment))).scalars().all()
 
         config = Configuration(
-            series_id=series.id,
+            program_id=program.id,
             version="V1.0",
             status="baseline",
             description="初始基线构型",
@@ -108,7 +104,7 @@ async def seed():
 
         # Create a draft V1.1 for working
         config_draft = Configuration(
-            series_id=series.id,
+            program_id=program.id,
             version="V1.1-draft",
             status="draft",
             description="工作构型",

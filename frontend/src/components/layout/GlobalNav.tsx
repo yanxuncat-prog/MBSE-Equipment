@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import { Plus, Search, FileDown } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useConfigStore } from '@/store/configStore';
-import { listPrograms, listSeries, listConfigs } from '@/api/configurations';
-import type { Program, Series, Configuration } from '@/types';
+import { listPrograms, listConfigs } from '@/api/configurations';
+import type { Program, Configuration } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -34,9 +34,8 @@ const ATA_OPTIONS = [
 ];
 
 export function GlobalNav() {
-  const { activeProgramId, activeSeriesId, activeConfigId, activeATA, setActiveProgram, setActiveSeries, setActiveConfig, setActiveATA } = useConfigStore();
+  const { activeProgramId, activeConfigId, activeATA, setActiveProgram, setActiveConfig, setActiveATA } = useConfigStore();
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [, setSeriesList] = useState<Series[]>([]);
   const [configs, setConfigs] = useState<Configuration[]>([]);
   const [search, setSearch] = useState('');
   const location = useLocation();
@@ -49,20 +48,11 @@ export function GlobalNav() {
 
   useEffect(() => {
     if (activeProgramId) {
-      listSeries(activeProgramId).then((s) => {
-        setSeriesList(s);
-        if (s.length > 0 && !activeSeriesId) setActiveSeries(s[0].id);
-      }).catch(() => {});
-    }
-  }, [activeProgramId]);
-
-  useEffect(() => {
-    if (activeSeriesId) {
-      listConfigs(activeSeriesId).then((c) => {
+      listConfigs(activeProgramId).then((c) => {
         setConfigs(c);
       }).catch(() => {});
     }
-  }, [activeSeriesId]);
+  }, [activeProgramId]);
 
   useEffect(() => {
     if (programs.length > 0 && !activeProgramId) {

@@ -77,7 +77,7 @@ async def get_dashboard_stats(
     # --- Config count ---
     config = await db.get(Configuration, cid)
     config_count_result = await db.execute(
-        select(func.count(Configuration.id)).where(Configuration.series_id == config.series_id)
+        select(func.count(Configuration.id)).where(Configuration.program_id == config.program_id)
     )
     config_count = config_count_result.scalar() or 0
 

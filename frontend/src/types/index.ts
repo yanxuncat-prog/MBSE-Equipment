@@ -151,16 +151,9 @@ export interface Program {
   description: string | null;
 }
 
-export interface Series {
-  id: string;
-  program_id: string;
-  variant_name: string;
-  description: string | null;
-}
-
 export interface Configuration {
   id: string;
-  series_id: string;
+  program_id: string;
   version: string;
   status: string;
   description: string | null;

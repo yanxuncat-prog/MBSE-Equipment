@@ -47,7 +47,7 @@ const ATA_NAMES: Record<string, string> = {
 };
 
 export function DashboardPage() {
-  const { activeConfigId, activeSeriesId } = useConfigStore();
+  const { activeConfigId, activeProgramId } = useConfigStore();
   const [report, setReport] = useState<ValidationReport | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -75,11 +75,11 @@ export function DashboardPage() {
 
   // Fetch weight reduction with first two configs
   useEffect(() => {
-    if (!activeSeriesId) { setWeightReduction(null); setWeightReductionReady(false); return; }
+    if (!activeProgramId) { setWeightReduction(null); setWeightReductionReady(false); return; }
     let cancelled = false;
     (async () => {
       try {
-        const cfgs = await listConfigs(activeSeriesId);
+        const cfgs = await listConfigs(activeProgramId);
         if (cancelled) return;
         if (cfgs.length < 2) {
           setWeightReduction(null);
@@ -99,7 +99,7 @@ export function DashboardPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [activeSeriesId]);
+  }, [activeProgramId]);
 
   if (!activeConfigId) {
     return <div className="py-20 text-center text-muted-foreground">请先在顶部选择构型</div>;

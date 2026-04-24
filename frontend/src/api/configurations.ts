@@ -1,22 +1,17 @@
 import client from './client';
-import type { Configuration, ConfigDiffResponse, Program, Series } from '../types';
+import type { Configuration, ConfigDiffResponse, Program } from '../types';
 
 export async function listPrograms(): Promise<Program[]> {
   const { data } = await client.get('/programs');
   return data;
 }
 
-export async function listSeries(programId: string): Promise<Series[]> {
-  const { data } = await client.get('/series', { params: { program_id: programId } });
+export async function listConfigs(programId: string): Promise<Configuration[]> {
+  const { data } = await client.get('/configurations', { params: { program_id: programId } });
   return data;
 }
 
-export async function listConfigs(seriesId: string): Promise<Configuration[]> {
-  const { data } = await client.get('/configurations', { params: { series_id: seriesId } });
-  return data;
-}
-
-export async function createConfig(body: { series_id: string; version: string; description?: string }): Promise<Configuration> {
+export async function createConfig(body: { program_id: string; version: string; description?: string }): Promise<Configuration> {
   const { data } = await client.post('/configurations', body);
   return data;
 }

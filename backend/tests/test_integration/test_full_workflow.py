@@ -1,6 +1,6 @@
 """
 Full workflow integration test:
-Program -> Series -> Zones -> Buses -> Config -> Equipment -> Validate -> Clone -> Diff -> Documents
+Program -> Zones -> Buses -> Config -> Equipment -> Validate -> Clone -> Diff -> Documents
 """
 import uuid
 import pytest
@@ -18,25 +18,18 @@ async def test_full_equipment_management_workflow(client: AsyncClient, auth_head
     assert resp.status_code == 201
     program_id = resp.json()["id"]
 
-    # 2. Create Series
-    resp = await client.post("/api/series", json={
-        "program_id": program_id, "variant_name": "基本型",
-    }, headers=auth_headers)
-    assert resp.status_code == 201
-    series_id = resp.json()["id"]
-
-    # 3. Create Zones
-    resp = await client.get(f"/api/zones?series_id={series_id}", headers=auth_headers)
+    # 2. Create Zones (list — should be empty initially)
+    resp = await client.get(f"/api/zones?program_id={program_id}", headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json() == []  # Empty initially
 
-    # 4. Create Bus Definitions (via direct DB in real test, but API for zones/buses is read-only)
+    # 3. Create Bus Definitions (via direct DB in real test, but API for zones/buses is read-only)
     # For integration test, we skip bus creation since it requires direct DB access
     # The constraint engine will handle missing buses gracefully
 
-    # 5. Create Configuration
+    # 4. Create Configuration
     resp = await client.post("/api/configurations", json={
-        "series_id": series_id, "version": "V1.0",
+        "program_id": program_id, "version": "V1.0",
     }, headers=auth_headers)
     assert resp.status_code == 201
     config_id = resp.json()["id"]
@@ -158,7 +151,7 @@ async def test_auth_required_for_all_endpoints(client: AsyncClient):
         ("GET", "/api/equipment"),
         ("POST", "/api/equipment"),
         ("GET", "/api/programs"),
-        ("GET", "/api/configurations?series_id=fake"),
+        ("GET", "/api/configurations?program_id=fake"),
         ("POST", "/api/constraints/validate"),
     ]
     for method, url in endpoints:

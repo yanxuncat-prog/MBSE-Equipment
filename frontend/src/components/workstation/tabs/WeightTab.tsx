@@ -189,7 +189,7 @@ function TreemapTooltip({
 /* WeightTab Component                                                */
 /* ------------------------------------------------------------------ */
 export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onEdit: _onEdit }: Props) {
-  const { activeSeriesId } = useConfigStore();
+  const { activeProgramId } = useConfigStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
   const [tooltip, setTooltip] = useState<{
@@ -206,17 +206,17 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
   const [reductionData, setReductionData] = useState<WeightReductionResult | null>(null);
   const [reductionLoading, setReductionLoading] = useState(false);
 
-  // Load configs when seriesId changes
+  // Load configs when programId changes
   useEffect(() => {
-    if (!activeSeriesId) { setConfigs([]); return; }
-    listConfigs(activeSeriesId).then(cfgs => {
+    if (!activeProgramId) { setConfigs([]); return; }
+    listConfigs(activeProgramId).then(cfgs => {
       setConfigs(cfgs);
       if (cfgs.length >= 2) {
         setBaseConfigId(prev => prev ?? cfgs[0].id);
         setCompareConfigId(prev => prev ?? cfgs[1].id);
       }
     }).catch(() => setConfigs([]));
-  }, [activeSeriesId]);
+  }, [activeProgramId]);
 
   // Fetch reduction data when both configs selected
   useEffect(() => {

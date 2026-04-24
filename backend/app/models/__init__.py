@@ -1,5 +1,5 @@
 from app.models.user import User
-from app.models.program import Program, Series
+from app.models.program import Program
 from app.models.equipment import Equipment
 from app.models.configuration import Configuration, ConfigEquipment
 from app.models.weight_balance import WeightBalance
@@ -17,7 +17,7 @@ from app.models.equipment_constraint import EquipmentConstraint
 from app.models.ai_report import AIReport
 
 __all__ = [
-    "User", "Program", "Series", "Equipment", "Configuration", "ConfigEquipment",
+    "User", "Program", "Equipment", "Configuration", "ConfigEquipment",
     "WeightBalance", "ElectricalLoad", "Zone", "BusDefinition",
     "Supplier", "ChangeRequest", "AuditLog",
     "ElectricalDetail", "FlightPhase", "LoadWorkMode",

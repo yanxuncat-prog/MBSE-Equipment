@@ -34,7 +34,7 @@ def _to_response(data: dict) -> ConfigResponse:
     config = data["config"]
     return ConfigResponse(
         id=str(config.id),
-        series_id=str(config.series_id),
+        program_id=str(config.program_id),
         version=config.version,
         status=config.status,
         description=config.description,
@@ -52,11 +52,11 @@ class CloneBody(BaseModel):
 
 @router.get("/configurations", response_model=list[ConfigResponse])
 async def list_configurations(
-    series_id: str = Query(...),
+    program_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    results = await configuration_svc.list_configs(db, series_id)
+    results = await configuration_svc.list_configs(db, program_id)
     return [_to_response(r) for r in results]
 
 

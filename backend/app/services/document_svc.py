@@ -172,7 +172,7 @@ async def generate_eload_report_pdf(db: AsyncSession, config_id: str, phase: str
     eload_result = next((e for e in report.engines if e.engine_name == "electrical_load"), None)
     bus_details = eload_result.details.get("buses", {}) if eload_result else {}
 
-    bus_result = await db.execute(select(BusDefinition).where(BusDefinition.series_id == config.series_id))
+    bus_result = await db.execute(select(BusDefinition).where(BusDefinition.program_id == config.program_id))
     bus_defs = {str(b.id): b for b in bus_result.scalars().all()}
 
     # Build a lookup: bus_id -> list of equipment items assigned to that bus in this config

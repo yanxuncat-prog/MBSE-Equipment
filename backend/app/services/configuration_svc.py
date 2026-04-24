@@ -10,15 +10,15 @@ from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.schemas.configuration import ConfigCreate, DiffItem, ConfigDiffResponse
 
 
-async def list_configs(db: AsyncSession, series_id: str) -> list[dict]:
-    """Returns all configs for a series with equipment count."""
+async def list_configs(db: AsyncSession, program_id: str) -> list[dict]:
+    """Returns all configs for a program with equipment count."""
     stmt = (
         select(
             Configuration,
             func.count(ConfigEquipmentModel.equipment_id).label("equipment_count"),
         )
         .outerjoin(ConfigEquipmentModel, ConfigEquipmentModel.config_id == Configuration.id)
-        .where(Configuration.series_id == uuid.UUID(series_id))
+        .where(Configuration.program_id == program_id)
         .group_by(Configuration.id)
         .order_by(Configuration.created_at.desc())
     )
@@ -40,7 +40,7 @@ async def get_config(db: AsyncSession, config_id: str) -> dict | None:
             func.count(ConfigEquipmentModel.equipment_id).label("equipment_count"),
         )
         .outerjoin(ConfigEquipmentModel, ConfigEquipmentModel.config_id == Configuration.id)
-        .where(Configuration.id == uuid.UUID(config_id))
+        .where(Configuration.id == config_id)
         .group_by(Configuration.id)
     )
     result = await db.execute(stmt)
@@ -53,10 +53,10 @@ async def get_config(db: AsyncSession, config_id: str) -> dict | None:
 async def create_config(db: AsyncSession, data: ConfigCreate, user_id: str) -> dict:
     """Creates a new draft config."""
     config = Configuration(
-        series_id=uuid.UUID(data.series_id),
+        program_id=data.program_id,
         version=data.version,
         description=data.description,
-        created_by=uuid.UUID(user_id),
+        created_by=user_id,
         status="draft",
     )
     db.add(config)
@@ -69,7 +69,7 @@ async def clone_config(db: AsyncSession, source_id: str, new_version: str, user_
     """Copies all equipment associations (with config-level data) from source to a new draft config."""
     # Load the source config
     source_result = await db.execute(
-        select(Configuration).where(Configuration.id == uuid.UUID(source_id))
+        select(Configuration).where(Configuration.id == source_id)
     )
     source = source_result.scalar_one_or_none()
     if source is None:
@@ -77,10 +77,10 @@ async def clone_config(db: AsyncSession, source_id: str, new_version: str, user_
 
     # Create the new config
     new_config = Configuration(
-        series_id=source.series_id,
+        program_id=source.program_id,
         version=new_version,
         description=f"Cloned from {source.version}",
-        created_by=uuid.UUID(user_id),
+        created_by=user_id,
         status="draft",
     )
     db.add(new_config)
@@ -114,7 +114,7 @@ async def clone_config(db: AsyncSession, source_id: str, new_version: str, user_
 async def lock_baseline(db: AsyncSession, config_id: str) -> dict | None:
     """Sets status to 'baseline', sets locked_at timestamp. Fails if already locked."""
     result = await db.execute(
-        select(Configuration).where(Configuration.id == uuid.UUID(config_id))
+        select(Configuration).where(Configuration.id == config_id)
     )
     config = result.scalar_one_or_none()
     if config is None:
@@ -143,7 +143,7 @@ async def add_equipment_to_config(
 ) -> bool:
     """Adds equipment to config via ConfigEquipment. Fails if config is locked."""
     result = await db.execute(
-        select(Configuration).where(Configuration.id == uuid.UUID(config_id))
+        select(Configuration).where(Configuration.id == config_id)
     )
     config = result.scalar_one_or_none()
     if config is None:
@@ -153,7 +153,7 @@ async def add_equipment_to_config(
 
     # Verify equipment exists
     equip_result = await db.execute(
-        select(Equipment.id).where(Equipment.id == uuid.UUID(equipment_id))
+        select(Equipment.id).where(Equipment.id == equipment_id)
     )
     if equip_result.scalar_one_or_none() is None:
         raise ValueError("Equipment not found")
@@ -161,16 +161,16 @@ async def add_equipment_to_config(
     # Check if already associated
     existing = await db.execute(
         select(ConfigEquipmentModel).where(
-            ConfigEquipmentModel.config_id == uuid.UUID(config_id),
-            ConfigEquipmentModel.equipment_id == uuid.UUID(equipment_id),
+            ConfigEquipmentModel.config_id == config_id,
+            ConfigEquipmentModel.equipment_id == equipment_id,
         )
     )
     if existing.scalar_one_or_none() is not None:
         raise ValueError("Equipment already in this configuration")
 
     ce = ConfigEquipmentModel(
-        config_id=uuid.UUID(config_id),
-        equipment_id=uuid.UUID(equipment_id),
+        config_id=config_id,
+        equipment_id=equipment_id,
     )
     db.add(ce)
     await db.commit()
@@ -182,7 +182,7 @@ async def remove_equipment_from_config(
 ) -> bool:
     """Removes from config. Fails if locked."""
     result = await db.execute(
-        select(Configuration).where(Configuration.id == uuid.UUID(config_id))
+        select(Configuration).where(Configuration.id == config_id)
     )
     config = result.scalar_one_or_none()
     if config is None:
@@ -191,8 +191,8 @@ async def remove_equipment_from_config(
         raise ValueError("Cannot modify a locked configuration")
 
     stmt = delete(ConfigEquipmentModel).where(
-        ConfigEquipmentModel.config_id == uuid.UUID(config_id),
-        ConfigEquipmentModel.equipment_id == uuid.UUID(equipment_id),
+        ConfigEquipmentModel.config_id == config_id,
+        ConfigEquipmentModel.equipment_id == equipment_id,
     )
     result = await db.execute(stmt)
     if result.rowcount == 0:
@@ -226,14 +226,14 @@ async def diff_configs(
     """
     # Load both configs
     config_a_result = await db.execute(
-        select(Configuration).where(Configuration.id == uuid.UUID(config_a_id))
+        select(Configuration).where(Configuration.id == config_a_id)
     )
     config_a = config_a_result.scalar_one_or_none()
     if config_a is None:
         raise ValueError("Configuration A not found")
 
     config_b_result = await db.execute(
-        select(Configuration).where(Configuration.id == uuid.UUID(config_b_id))
+        select(Configuration).where(Configuration.id == config_b_id)
     )
     config_b = config_b_result.scalar_one_or_none()
     if config_b is None:
@@ -243,33 +243,35 @@ async def diff_configs(
     ce_a_list = await _load_config_equipment(db, config_a.id)
     ce_b_list = await _load_config_equipment(db, config_b.id)
 
-    # Create lookup dicts by equipment id
-    ce_a_map = {str(ce.equipment_id): ce for ce in ce_a_list}
-    ce_b_map = {str(ce.equipment_id): ce for ce in ce_b_list}
+    # Create lookup dicts by equipment NAME (same name = same device across configs)
+    ce_a_map = {ce.equipment.name: ce for ce in ce_a_list}
+    ce_b_map = {ce.equipment.name: ce for ce in ce_b_list}
 
-    ids_a = set(ce_a_map.keys())
-    ids_b = set(ce_b_map.keys())
+    names_a = set(ce_a_map.keys())
+    names_b = set(ce_b_map.keys())
 
-    added_ids = ids_b - ids_a
-    removed_ids = ids_a - ids_b
-    common_ids = ids_a & ids_b
+    added_ids = names_b - names_a
+    removed_ids = names_a - names_b
+    common_ids = names_a & names_b
 
     added: list[DiffItem] = []
     removed: list[DiffItem] = []
     modified: list[DiffItem] = []
+    unchanged: list[DiffItem] = []
 
     # Track impact summary values
     net_mass_change = 0.0
     bus_load_changes: dict[str, dict] = {}
 
-    for eid in added_ids:
-        ce = ce_b_map[eid]
+    for name_key in added_ids:
+        ce = ce_b_map[name_key]
         e = ce.equipment
         added.append(
             DiffItem(
-                equipment_id=eid,
+                equipment_id=str(ce.equipment_id),
                 part_number=e.part_number,
                 name=e.name,
+                ata_chapter=e.ata_chapter,
                 change_type="added",
             )
         )
@@ -281,14 +283,15 @@ async def diff_configs(
                 bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
             bus_load_changes[bus_id]["normal_kva_change"] += e.electrical_load.power_kva_normal
 
-    for eid in removed_ids:
-        ce = ce_a_map[eid]
+    for name_key in removed_ids:
+        ce = ce_a_map[name_key]
         e = ce.equipment
         removed.append(
             DiffItem(
-                equipment_id=eid,
+                equipment_id=str(ce.equipment_id),
                 part_number=e.part_number,
                 name=e.name,
+                ata_chapter=e.ata_chapter,
                 change_type="removed",
             )
         )
@@ -300,44 +303,57 @@ async def diff_configs(
                 bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
             bus_load_changes[bus_id]["normal_kva_change"] -= e.electrical_load.power_kva_normal
 
-    for eid in common_ids:
-        ce_a = ce_a_map[eid]
-        ce_b = ce_b_map[eid]
+    for name_key in common_ids:
+        ce_a = ce_a_map[name_key]
+        ce_b = ce_b_map[name_key]
         ea = ce_a.equipment
         eb = ce_b.equipment
         changes: dict = {}
 
-        # Compare weight_balance fields
+        def _is_empty(v):
+            """Check if a value is effectively empty."""
+            if v is None:
+                return True
+            if isinstance(v, str) and v.strip() == "":
+                return True
+            return False
+
+        # Compare equipment-level fields (exclude part_number — import artifact)
+        # Only flag as different when BOTH sides have non-empty values
+        for field in ("lin_number", "dimensions_mm", "is_electrical",
+                       "has_eicd", "power_redundancy", "power_voltage", "power_watts",
+                       "do160_temp_design_level", "do160_temp_qual_level",
+                       "first_flight_onboard", "phase2_onboard"):
+            val_a = getattr(ea, field, None)
+            val_b = getattr(eb, field, None)
+            if _is_empty(val_a) and _is_empty(val_b):
+                continue
+            if _is_empty(val_a) or _is_empty(val_b):
+                continue  # one side empty — data completeness issue, not a real diff
+            if val_a != val_b:
+                changes[field] = {"from": val_a, "to": val_b}
+
+        # Compare weight_balance fields — only when both have data
         wb_a = ea.weight_balance
         wb_b = eb.weight_balance
         if wb_a and wb_b:
-            if wb_a.mass_kg != wb_b.mass_kg:
-                changes["weight_balance.mass_kg"] = {
-                    "from": wb_a.mass_kg,
-                    "to": wb_b.mass_kg,
+            if abs(wb_a.mass_kg - wb_b.mass_kg) > 0.001:
+                changes["mass_kg"] = {
+                    "from": round(wb_a.mass_kg, 4),
+                    "to": round(wb_b.mass_kg, 4),
                 }
             net_mass_change += (wb_b.mass_kg - wb_a.mass_kg)
-        elif wb_b and not wb_a:
-            changes["weight_balance"] = {"from": None, "to": "added"}
-            net_mass_change += wb_b.mass_kg
-        elif wb_a and not wb_b:
-            changes["weight_balance"] = {"from": "present", "to": None}
-            net_mass_change -= wb_a.mass_kg
 
-        # Compare config-level attributes (sta, zone, bus)
-        for field in ("sta", "wl", "bl", "rack_position"):
+        # Compare config-level attributes — only when both have data
+        for field in ("install_method", "bonding_type", "bonding_method"):
             val_a = getattr(ce_a, field)
             val_b = getattr(ce_b, field)
+            if _is_empty(val_a) or _is_empty(val_b):
+                continue
             if val_a != val_b:
-                changes[f"config.{field}"] = {"from": val_a, "to": val_b}
+                changes[field] = {"from": val_a, "to": val_b}
 
-        # Compare bus assignment (config-level)
-        bus_a = str(ce_a.bus_id) if ce_a.bus_id else None
-        bus_b = str(ce_b.bus_id) if ce_b.bus_id else None
-        if bus_a != bus_b:
-            changes["config.bus_id"] = {"from": bus_a, "to": bus_b}
-
-        # Compare zone assignment (config-level)
+        # Skip sta/wl/bl/zone/bus comparison — position data comparison not meaningful here
         zone_a = str(ce_a.zone_id) if ce_a.zone_id else None
         zone_b = str(ce_b.zone_id) if ce_b.zone_id else None
         if zone_a != zone_b:
@@ -380,11 +396,22 @@ async def diff_configs(
         if changes:
             modified.append(
                 DiffItem(
-                    equipment_id=eid,
+                    equipment_id=str(ce_b.equipment_id),
                     part_number=eb.part_number,
                     name=eb.name,
+                    ata_chapter=eb.ata_chapter,
                     change_type="modified",
                     changes=changes,
+                )
+            )
+        else:
+            unchanged.append(
+                DiffItem(
+                    equipment_id=str(ce_b.equipment_id),
+                    part_number=eb.part_number,
+                    name=eb.name,
+                    ata_chapter=eb.ata_chapter,
+                    change_type="unchanged",
                 )
             )
 
@@ -393,6 +420,8 @@ async def diff_configs(
         "equipment_added": len(added),
         "equipment_removed": len(removed),
         "equipment_modified": len(modified),
+        "equipment_common": len(common_ids),
+        "equipment_unchanged": len(common_ids) - len(modified),
         "bus_load_changes": bus_load_changes,
     }
 
@@ -404,5 +433,6 @@ async def diff_configs(
         added=added,
         removed=removed,
         modified=modified,
+        unchanged=unchanged,
         impact_summary=impact_summary,
     )

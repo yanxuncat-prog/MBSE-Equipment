@@ -1,7 +1,6 @@
 import uuid
 
 from sqlalchemy import String, Float, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -10,8 +9,8 @@ from app.database import Base
 class Zone(Base):
     __tablename__ = "zones"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    series_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("series.id"))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    program_id: Mapped[str] = mapped_column(ForeignKey("programs.id"))
     zone_code: Mapped[str] = mapped_column(String(20), index=True)
     name: Mapped[str] = mapped_column(String(100))
     sta_from: Mapped[float] = mapped_column(Float)

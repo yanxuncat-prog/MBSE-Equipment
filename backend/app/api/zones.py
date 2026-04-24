@@ -13,12 +13,12 @@ router = APIRouter(prefix="/zones", tags=["zones"])
 
 @router.get("")
 async def list_zones(
-    series_id: str = Query(...),
+    program_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Zone).where(Zone.series_id == uuid.UUID(series_id)).order_by(Zone.zone_code)
+        select(Zone).where(Zone.program_id == program_id).order_by(Zone.zone_code)
     )
     zones = result.scalars().all()
     return [

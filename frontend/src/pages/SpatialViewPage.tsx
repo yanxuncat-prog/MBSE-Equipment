@@ -8,7 +8,7 @@ import type { Equipment, Zone } from '@/types';
 import client from '@/api/client';
 
 export function SpatialViewPage() {
-  const { activeConfigId, activeSeriesId } = useConfigStore();
+  const { activeConfigId, activeProgramId } = useConfigStore();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -26,12 +26,12 @@ export function SpatialViewPage() {
   }, [activeConfigId]);
 
   const fetchZones = useCallback(async () => {
-    if (!activeSeriesId) return;
+    if (!activeProgramId) return;
     try {
-      const { data } = await client.get('/zones', { params: { series_id: activeSeriesId } });
+      const { data } = await client.get('/zones', { params: { program_id: activeProgramId } });
       setZones(data);
     } catch { /* zones API may not exist yet, silent fail */ }
-  }, [activeSeriesId]);
+  }, [activeProgramId]);
 
   useEffect(() => { fetchEquipment(); }, [fetchEquipment]);
   useEffect(() => { fetchZones(); }, [fetchZones]);

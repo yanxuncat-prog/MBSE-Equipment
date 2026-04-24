@@ -13,28 +13,28 @@ import { Badge } from '@/components/ui/badge';
 import { ConfigDiff } from '../components/configuration/ConfigDiff';
 
 export function ConfigPage() {
-  const { activeSeriesId, activeConfigId } = useConfigStore();
+  const { activeProgramId, activeConfigId } = useConfigStore();
   const [configs, setConfigs] = useState<Configuration[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
   const [newVersion, setNewVersion] = useState('');
 
   const fetchConfigs = useCallback(async () => {
-    if (!activeSeriesId) return;
+    if (!activeProgramId) return;
     try {
-      const data = await listConfigs(activeSeriesId);
+      const data = await listConfigs(activeProgramId);
       setConfigs(data);
     } catch {
       toast.error('加载构型列表失败');
     }
-  }, [activeSeriesId]);
+  }, [activeProgramId]);
 
   useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
 
   const handleCreate = async () => {
-    if (!activeSeriesId || !newVersion) return;
+    if (!activeProgramId || !newVersion) return;
     try {
-      const config = await createConfig({ series_id: activeSeriesId, version: newVersion });
+      const config = await createConfig({ program_id: activeProgramId, version: newVersion });
       toast.success(`构型 ${config.version} 创建成功`);
       setCreateOpen(false);
       setNewVersion('');

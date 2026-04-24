@@ -6,7 +6,7 @@ from typing import Any
 
 
 class ConfigCreate(BaseModel):
-    series_id: str
+    program_id: str
     version: str
     description: str | None = None
 
@@ -15,7 +15,7 @@ class ConfigResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    series_id: UUID
+    program_id: UUID
     version: str
     status: str
     description: str | None = None
