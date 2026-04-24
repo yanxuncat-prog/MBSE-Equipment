@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Eye, GitBranch, HelpCircle, LayoutDashboard,
-  GripVertical, Database, ShoppingCart, PanelLeftClose, PanelLeft,
-  Plane, LogOut, Settings, Sun, Moon, Check,
+  Eye, GitBranch, LayoutDashboard, Database,
+  GripVertical, ShoppingCart, PanelLeftClose, PanelLeft,
+  Plane, LogOut, Settings, Sun, Moon, Check, ChevronDown,
+  Weight, Zap, Thermometer, MapPin, Cable,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GlobalNav } from './GlobalNav';
@@ -13,26 +14,40 @@ import {
   Tooltip, TooltipTrigger, TooltipContent,
 } from '@/components/ui/tooltip';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { useThemeStore, type ThemeMode } from '@/store/themeStore';
+import { useThemeStore } from '@/store/themeStore';
 
-interface MenuItem {
+interface SubMenuItem {
   key: string;
   icon: React.ReactNode;
   label: string;
 }
 
+interface MenuItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  children?: SubMenuItem[];
+}
+
 const DEFAULT_MENU: MenuItem[] = [
-  { key: '/guide', icon: <HelpCircle className="size-4" />, label: '使用指南' },
-  { key: '/equipment-def', icon: <Database className="size-4" />, label: '设备定义' },
-  { key: '/workstation', icon: <Eye className="size-4" />, label: '构型查看' },
+  { key: '/equipment-library', icon: <Database className="size-4" />, label: '设备库' },
+  {
+    key: '/workstation', icon: <Eye className="size-4" />, label: '构型查看',
+    children: [
+      { key: '/workstation?tab=weight', icon: <Weight className="size-3.5" />, label: '重量分析' },
+      { key: '/workstation?tab=elec-details', icon: <Zap className="size-3.5" />, label: '电负载分析' },
+      { key: '/workstation?tab=do160', icon: <Thermometer className="size-3.5" />, label: '环境综合' },
+      { key: '/workstation?tab=layout', icon: <MapPin className="size-3.5" />, label: '设备布置' },
+      { key: '/workstation?tab=ewis', icon: <Cable className="size-3.5" />, label: 'EWIS' },
+    ],
+  },
   { key: '/config', icon: <GitBranch className="size-4" />, label: '构型管理' },
   { key: '/dashboard', icon: <LayoutDashboard className="size-4" />, label: '管理看板' },
   { key: '/procurement', icon: <ShoppingCart className="size-4" />, label: '采购进度' },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  '/guide': '使用指南',
-  '/equipment-def': '设备定义',
+  '/equipment-library': '设备库',
   '/workstation': '构型查看',
   '/config': '构型管理',
   '/dashboard': '管理看板',
@@ -66,6 +81,7 @@ export function AppLayout() {
   const location = useLocation();
   const [menuItems, setMenuItems] = useState<MenuItem[]>(loadMenuOrder);
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragNodeRef = useRef<HTMLDivElement | null>(null);
@@ -136,7 +152,7 @@ export function AppLayout() {
               <span className="truncate text-sm font-semibold text-sidebar-foreground leading-tight">
                 AeroEquip
               </span>
-              <span className="truncate text-[10px] text-muted-foreground leading-tight">
+              <span className="truncate text-xs text-muted-foreground leading-tight">
                 设备管理平台
               </span>
             </div>
@@ -147,37 +163,75 @@ export function AppLayout() {
         <nav className="flex-1 overflow-y-auto px-2 py-3">
           <div className="space-y-0.5">
             {menuItems.map((item, index) => {
-              const isActive = location.pathname === item.key;
+              const isActive = location.pathname === item.key.split('?')[0];
+              const hasChildren = item.children && item.children.length > 0;
+              const isExpanded = expandedKey === item.key;
               const isDragging = dragIndex === index;
               const isOver = overIndex === index && dragIndex !== index;
 
+              const handleClick = () => {
+                if (hasChildren) {
+                  setExpandedKey(isExpanded ? null : item.key);
+                  navigate(item.key);
+                } else {
+                  navigate(item.key);
+                }
+              };
+
               const navItem = (
-                <div
-                  key={item.key}
-                  draggable
-                  onDragStart={(e) => handleDragStart(index, e)}
-                  onDragOver={(e) => handleDragOver(index, e)}
-                  onDrop={() => handleDrop(index)}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => navigate(item.key)}
-                  className={cn(
-                    "group relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150 select-none",
-                    isActive
-                      ? "bg-primary/10 text-primary font-medium shadow-sm shadow-primary/5"
-                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isDragging && "opacity-40",
-                    isOver && dragIndex !== null && dragIndex > index && "border-t-2 border-primary",
-                    isOver && dragIndex !== null && dragIndex < index && "border-b-2 border-primary",
-                    collapsed && "justify-center px-2"
-                  )}
-                >
-                  {!collapsed && (
-                    <GripVertical className="size-3 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-grab" />
-                  )}
-                  <span className={cn("shrink-0", isActive && "text-primary")}>{item.icon}</span>
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                <div key={item.key}>
+                  <div
+                    draggable
+                    onDragStart={(e) => handleDragStart(index, e)}
+                    onDragOver={(e) => handleDragOver(index, e)}
+                    onDrop={() => handleDrop(index)}
+                    onDragEnd={handleDragEnd}
+                    onClick={handleClick}
+                    className={cn(
+                      "group relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150 select-none",
+                      isActive
+                        ? "bg-primary/10 text-primary font-medium shadow-sm shadow-primary/5"
+                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isDragging && "opacity-40",
+                      isOver && dragIndex !== null && dragIndex > index && "border-t-2 border-primary",
+                      isOver && dragIndex !== null && dragIndex < index && "border-b-2 border-primary",
+                      collapsed && "justify-center px-2"
+                    )}
+                  >
+                    {!collapsed && (
+                      <GripVertical className="size-3 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-grab" />
+                    )}
+                    <span className={cn("shrink-0", isActive && "text-primary")}>{item.icon}</span>
+                    {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                    {!collapsed && hasChildren && (
+                      <ChevronDown className={cn("size-3.5 text-muted-foreground/50 transition-transform duration-200", isExpanded && "rotate-180")} />
+                    )}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                    )}
+                  </div>
+                  {/* Sub-menu */}
+                  {!collapsed && hasChildren && isExpanded && (
+                    <div className="ml-5 mt-0.5 space-y-0.5 border-l border-border/50 pl-2.5">
+                      {item.children!.map(sub => {
+                        const subActive = location.pathname + location.search === sub.key;
+                        return (
+                          <div
+                            key={sub.key}
+                            onClick={(e) => { e.stopPropagation(); navigate(sub.key); }}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] transition-colors",
+                              subActive
+                                ? "text-primary font-medium bg-primary/5"
+                                : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                            )}
+                          >
+                            <span className="shrink-0">{sub.icon}</span>
+                            <span className="truncate">{sub.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               );
@@ -253,7 +307,7 @@ export function AppLayout() {
             {!collapsed && (
               <div className="flex flex-1 flex-col overflow-hidden">
                 <span className="truncate text-xs font-medium text-sidebar-foreground">Admin</span>
-                <span className="truncate text-[10px] text-muted-foreground">管理员</span>
+                <span className="truncate text-xs text-muted-foreground">管理员</span>
               </div>
             )}
             {!collapsed && (
@@ -281,12 +335,9 @@ export function AppLayout() {
       {/* Main area */}
       <div className="flex flex-1 flex-col transition-all duration-200 ease-in-out" style={{ marginLeft: sidebarWidth }}>
         {/* Header */}
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border bg-background/80 px-6 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-4 overflow-hidden border-b border-border bg-background/80 px-6 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
           {pageTitle && (
-            <>
-              <h1 className="text-sm font-medium text-foreground">{pageTitle}</h1>
-              <Separator orientation="vertical" className="h-4" />
-            </>
+            <h1 className="shrink-0 text-sm font-medium text-foreground whitespace-nowrap">{pageTitle}</h1>
           )}
           <GlobalNav />
         </header>
@@ -327,7 +378,7 @@ function ThemeOption({ icon, label, description, active, onClick }: {
       </div>
       <div className="flex-1">
         <div className="text-sm font-medium">{label}</div>
-        <div className="text-[11px] text-muted-foreground">{description}</div>
+        <div className="text-xs text-muted-foreground">{description}</div>
       </div>
       {active && <Check className="size-4 text-primary shrink-0" />}
     </button>
