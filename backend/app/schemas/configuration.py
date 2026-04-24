@@ -21,6 +21,7 @@ class ConfigResponse(BaseModel):
     description: str | None = None
     created_by: UUID | None = None
     locked_at: datetime | None = None
+    is_frozen: bool = False
     created_at: datetime
     equipment_count: int = 0
 
@@ -29,6 +30,7 @@ class DiffItem(BaseModel):
     equipment_id: str
     part_number: str
     name: str
+    ata_chapter: str = ""
     change_type: str
     changes: dict[str, Any] | None = None
 
@@ -41,4 +43,5 @@ class ConfigDiffResponse(BaseModel):
     added: list[DiffItem]
     removed: list[DiffItem]
     modified: list[DiffItem]
+    unchanged: list[DiffItem]
     impact_summary: dict[str, Any]

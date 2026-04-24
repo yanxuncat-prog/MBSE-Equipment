@@ -15,6 +15,29 @@ class ConfigEquipmentData(BaseModel):
     bus_name: str | None = None
     notes: str | None = None
     install_method: str | None = None
+
+    # Display name override
+    config_name: str | None = None
+
+    # Per-config weight & CG
+    mass_kg: float | None = None
+    cg_x: float | None = None
+    cg_y: float | None = None
+    cg_z: float | None = None
+    inertia_ix: float | None = None
+    inertia_iy: float | None = None
+    inertia_iz: float | None = None
+    inertia_ixy: float | None = None
+    inertia_ixz: float | None = None
+    inertia_iyz: float | None = None
+    weight_target_kg: float | None = None
+    overweight_risk: str | None = None
+
+    # Per-config electrical
+    power_kva_normal: float | None = None
+    power_kva_emergency: float | None = None
+    power_kva_max: float | None = None
+
     bonding_method: str | None = None
     bonding_type: str | None = None
     bonding_resistance: str | None = None
@@ -51,6 +74,54 @@ class EquipmentCreate(BaseModel):
     electrical_load: ElectricalLoadData | None = None
 
 
+class ConfigEquipmentUpdate(BaseModel):
+    """Update config-specific fields (STA/BL/WL, bonding, procurement, weight/CG/electrical)."""
+    sta: float | None = None
+    wl: float | None = None
+    bl: float | None = None
+    rack_position: str | None = None
+    install_method: str | None = None
+
+    # Display name override
+    config_name: str | None = None
+
+    # Per-config weight & CG
+    mass_kg: float | None = None
+    cg_x: float | None = None
+    cg_y: float | None = None
+    cg_z: float | None = None
+    inertia_ix: float | None = None
+    inertia_iy: float | None = None
+    inertia_iz: float | None = None
+    inertia_ixy: float | None = None
+    inertia_ixz: float | None = None
+    inertia_iyz: float | None = None
+    weight_target_kg: float | None = None
+    overweight_risk: str | None = None
+
+    # Per-config electrical
+    power_kva_normal: float | None = None
+    power_kva_emergency: float | None = None
+    power_kva_max: float | None = None
+
+    bonding_method: str | None = None
+    bonding_type: str | None = None
+    bonding_resistance: str | None = None
+    bonding_position: str | None = None
+    in_pace_drawing: bool | None = None
+    layout_adjustment: str | None = None
+    use_batch0_device: bool | None = None
+    notes: str | None = None
+
+
+class EquipmentFullUpdate(BaseModel):
+    """Combined update payload: equipment + config_equipment + weight + electrical."""
+    equipment: 'EquipmentUpdate | None' = None
+    config_equipment: ConfigEquipmentUpdate | None = None
+    weight_balance: WeightBalanceData | None = None
+    electrical_load: ElectricalLoadData | None = None
+
+
 class EquipmentUpdate(BaseModel):
     name: str | None = None
     ata_chapter: str | None = None
@@ -58,6 +129,48 @@ class EquipmentUpdate(BaseModel):
     supplier_id: str | None = None
     status: str | None = None
     description: str | None = None
+    # Identity
+    name_en: str | None = None
+    abbreviation_en: str | None = None
+    internal_number: str | None = None
+    lin_number: str | None = None
+    supplier_part_number: str | None = None
+    # Safety & Classification
+    dal: str | None = None
+    equipment_level: str | None = None
+    is_optional: bool | None = None
+    is_electrical: bool | None = None
+    is_primary_electrical: bool | None = None
+    has_eicd: bool | None = None
+    has_special_wiring: bool | None = None
+    # Physical
+    dimensions_mm: str | None = None
+    is_metal_shell: bool | None = None
+    connector_count: int | None = None
+    # Electrical
+    voltage_range: str | None = None
+    power_redundancy: str | None = None
+    power_voltage: str | None = None
+    power_watts: str | None = None
+    shell_grounding_method: str | None = None
+    # Assignment
+    responsible_person: str | None = None
+    config_category: str | None = None
+    # DO-160
+    do160_temp_design_level: str | None = None
+    do160_temp_qual_level: str | None = None
+    do160_temp_qual_range: str | None = None
+    do160_temp_compliance: str | None = None
+    normal_operating_temp: str | None = None
+    short_term_temp: str | None = None
+    ground_storage_temp: str | None = None
+    operating_altitude: str | None = None
+    qual_report_number: str | None = None
+    first_flight_onboard: bool | None = None
+    phase2_onboard: bool | None = None
+    # Notes
+    notes: str | None = None
+    # Legacy (for backward compat with old form)
     weight_balance: WeightBalanceData | None = None
     electrical_load: ElectricalLoadData | None = None
 
