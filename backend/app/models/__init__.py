@@ -2,7 +2,6 @@ from app.models.user import User
 from app.models.program import Program
 from app.models.equipment import Equipment
 from app.models.configuration import Configuration, ConfigEquipment
-from app.models.weight_balance import WeightBalance
 from app.models.electrical_load import ElectricalLoad
 from app.models.zone import Zone
 from app.models.bus import BusDefinition
@@ -18,7 +17,7 @@ from app.models.ai_report import AIReport
 
 __all__ = [
     "User", "Program", "Equipment", "Configuration", "ConfigEquipment",
-    "WeightBalance", "ElectricalLoad", "Zone", "BusDefinition",
+    "ElectricalLoad", "Zone", "BusDefinition",
     "Supplier", "ChangeRequest", "AuditLog",
     "ElectricalDetail", "FlightPhase", "LoadWorkMode",
     "MICDRecord", "DO160Record",

@@ -61,5 +61,4 @@ class Equipment(Base):
 
     # --- Relationships ---
     supplier: Mapped["Supplier | None"] = relationship(back_populates="equipment_list")
-    weight_balance: Mapped["WeightBalance | None"] = relationship(back_populates="equipment", uselist=False, cascade="all, delete-orphan")
     electrical_load: Mapped["ElectricalLoad | None"] = relationship(back_populates="equipment", uselist=False, cascade="all, delete-orphan")

@@ -106,12 +106,12 @@ export function LayoutTab({ equipment, onSelect, onEdit: _onEdit }: Props) {
   }, [onSelect]);
 
   /* ── KPIs ── */
-  const totalWeight = useMemo(() => positioned.reduce((s, e) => s + (e.weight_balance?.mass_kg ?? 0), 0), [positioned]);
+  const totalWeight = useMemo(() => positioned.reduce((s, e) => s + (e.config_data?.mass_kg ?? 0), 0), [positioned]);
   const zoneStats = useMemo(() => ZONES.map(z => ({
     ...z,
     count: positioned.filter(e => e.config_data!.sta! >= z.min && e.config_data!.sta! < z.max).length,
     weight: positioned.filter(e => e.config_data!.sta! >= z.min && e.config_data!.sta! < z.max)
-      .reduce((s, e) => s + (e.weight_balance?.mass_kg ?? 0), 0),
+      .reduce((s, e) => s + (e.config_data?.mass_kg ?? 0), 0),
   })), [positioned]);
 
   /* ── ATA legend ── */
@@ -221,7 +221,7 @@ export function LayoutTab({ equipment, onSelect, onEdit: _onEdit }: Props) {
                   const x = mapCoord(e.config_data!.sta!, SIDE.xMin, SIDE.xMax, 30, 970);
                   const y = mapCoord(-(e.config_data?.wl ?? 0), SIDE.yMin, SIDE.yMax, 40, 260);
                   return <Marker key={e.id} x={x} y={y} ata={e.ata_chapter} name={e.name} pn={e.part_number}
-                    mass={e.weight_balance?.mass_kg ?? 0.5} selected={e.id === selectedId}
+                    mass={e.config_data?.mass_kg ?? 0.5} selected={e.id === selectedId}
                     onClick={() => handleClick(e)} onHover={setTooltip} />;
                 })}
               </svg>
@@ -242,7 +242,7 @@ export function LayoutTab({ equipment, onSelect, onEdit: _onEdit }: Props) {
                   const x = mapCoord(e.config_data!.sta!, TOP.xMin, TOP.xMax, 30, 970);
                   const y = mapCoord(-(e.config_data?.bl ?? 0), TOP.yMin, TOP.yMax, 10, 190);
                   return <Marker key={e.id} x={x} y={y} ata={e.ata_chapter} name={e.name} pn={e.part_number}
-                    mass={e.weight_balance?.mass_kg ?? 0.5} selected={e.id === selectedId}
+                    mass={e.config_data?.mass_kg ?? 0.5} selected={e.id === selectedId}
                     onClick={() => handleClick(e)} onHover={setTooltip} />;
                 })}
               </svg>
@@ -272,7 +272,7 @@ export function LayoutTab({ equipment, onSelect, onEdit: _onEdit }: Props) {
                   const cx = 200 + (bl / 3500) * 110;
                   const cy = 160 - (wl / 12000) * 90;
                   return <Marker key={e.id} x={cx} y={cy} ata={e.ata_chapter} name={e.name} pn={e.part_number}
-                    mass={e.weight_balance?.mass_kg ?? 0.5} selected={e.id === selectedId}
+                    mass={e.config_data?.mass_kg ?? 0.5} selected={e.id === selectedId}
                     onClick={() => handleClick(e)} onHover={setTooltip} />;
                 })}
                 <text x={200} y={300} textAnchor="middle" fill="var(--muted-foreground)" fontSize={10}>
@@ -298,7 +298,7 @@ export function LayoutTab({ equipment, onSelect, onEdit: _onEdit }: Props) {
         {(() => {
           const leftCount = positioned.filter(e => (e.config_data?.bl ?? 0) < -200).length;
           const rightCount = positioned.filter(e => (e.config_data?.bl ?? 0) > 200).length;
-          const rearWeight = positioned.filter(e => (e.config_data?.sta ?? 0) >= 10000 && (e.config_data?.sta ?? 0) < 15000).reduce((s, e) => s + (e.weight_balance?.mass_kg ?? 0), 0);
+          const rearWeight = positioned.filter(e => (e.config_data?.sta ?? 0) >= 10000 && (e.config_data?.sta ?? 0) < 15000).reduce((s, e) => s + (e.config_data?.mass_kg ?? 0), 0);
           const rearPct = totalWeight > 0 ? (rearWeight / totalWeight * 100).toFixed(0) : '0';
           const rearDevices = positioned.filter(e => (e.config_data?.sta ?? 0) >= 10000 && (e.config_data?.sta ?? 0) < 15000).length;
           const rearDevPct = positioned.length > 0 ? (rearDevices / positioned.length * 100).toFixed(0) : '0';

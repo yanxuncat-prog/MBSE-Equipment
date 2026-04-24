@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Equipment, Configuration, WeightBalance, ElectricalLoad
+from app.models import Equipment, Configuration, ElectricalLoad
 from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.models.user import User
 from app.api.deps import get_current_user
@@ -73,9 +73,6 @@ def _get_current_value(source: str, field: str, equipment: Equipment,
         return getattr(equipment, field, None)
     elif source == "config_equipment":
         return getattr(config_equip, field, None)
-    elif source == "weight_balance":
-        wb = equipment.weight_balance
-        return getattr(wb, field, None) if wb else None
     elif source == "electrical_load":
         el = equipment.electrical_load
         return getattr(el, field, None) if el else None
@@ -183,7 +180,6 @@ async def import_preview(
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
@@ -300,7 +296,6 @@ async def import_apply(
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
@@ -320,7 +315,6 @@ async def import_apply(
             name = row["name"]
             equip_fields: dict[str, Any] = {}
             ce_fields: dict[str, Any] = {}
-            wb_fields: dict[str, Any] = {}
             el_fields: dict[str, Any] = {}
 
             for key, field_info in row["fields"].items():
@@ -333,8 +327,6 @@ async def import_apply(
                     equip_fields[field] = value
                 elif source == "config_equipment":
                     ce_fields[field] = value
-                elif source == "weight_balance":
-                    wb_fields[field] = value
                 elif source == "electrical_load":
                     el_fields[field] = value
 
@@ -361,18 +353,6 @@ async def import_apply(
                 **ce_fields,
             )
             db.add(new_ce)
-
-            # Create weight_balance if any fields (backward compat)
-            if wb_fields:
-                new_wb = WeightBalance(
-                    id=str(uuid.uuid4()),
-                    equipment_id=equipment_id,
-                    mass_kg=wb_fields.get("mass_kg", 0.0),
-                )
-                db.add(new_wb)
-                # Also sync to ConfigEquipment
-                if "mass_kg" in wb_fields:
-                    new_ce.mass_kg = wb_fields["mass_kg"]
 
             # Create electrical_load if any fields (backward compat)
             if el_fields:
@@ -419,20 +399,6 @@ async def import_apply(
                     setattr(equipment, field, value)
                 elif source == "config_equipment":
                     setattr(ce, field, value)
-                elif source == "weight_balance":
-                    # Backward compat: also sync to ConfigEquipment
-                    if field == "mass_kg":
-                        ce.mass_kg = value
-                    if equipment.weight_balance is None:
-                        if value is not None:
-                            new_wb = WeightBalance(
-                                id=str(uuid.uuid4()),
-                                equipment_id=equipment.id,
-                                mass_kg=value if field == "mass_kg" else 0.0,
-                            )
-                            db.add(new_wb)
-                    else:
-                        setattr(equipment.weight_balance, field, value)
                 elif source == "electrical_load":
                     # Backward compat: also sync to ConfigEquipment
                     if field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):

@@ -18,8 +18,8 @@ function EquipmentVisualPreview({ equipment, allEquipment }: { equipment: Equipm
 
   // Compute contextual metrics
   const metrics = useMemo(() => {
-    const weights = allEquipment.map(eq => (eq.config_data?.mass_kg ?? eq.weight_balance?.mass_kg) ?? 0).filter(w => w > 0).sort((a, b) => a - b);
-    const myWeight = (e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0;
+    const weights = allEquipment.map(eq => (eq.config_data?.mass_kg) ?? 0).filter(w => w > 0).sort((a, b) => a - b);
+    const myWeight = (e.config_data?.mass_kg) ?? 0;
     const weightRank = myWeight > 0 ? weights.filter(w => w <= myWeight).length / weights.length : 0;
 
     // Power share within same voltage group
@@ -31,7 +31,7 @@ function EquipmentVisualPreview({ equipment, allEquipment }: { equipment: Equipm
     const powerShare = sameVoltageTotal > 0 ? myPower / sameVoltageTotal : 0;
 
     // Data completeness per dimension (for radar)
-    const weightFields = [e.config_data?.mass_kg ?? e.weight_balance?.mass_kg, e.dimensions_mm];
+    const weightFields = [e.config_data?.mass_kg, e.dimensions_mm];
     const layoutFields = [e.config_data?.sta, e.config_data?.bl, e.config_data?.wl, e.config_data?.install_method];
     const elecFields = [e.power_voltage, e.electrical_load?.power_kva_normal, e.power_redundancy, e.is_electrical];
     const envFields: any[] = [];  // DO-160 fields moved to do160_records

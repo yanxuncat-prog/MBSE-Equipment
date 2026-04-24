@@ -103,7 +103,7 @@ export function EquipmentTable({ configId, search, onEdit, onSelect }: Props) {
       render: (_: any, r: Equipment) => <span className="font-mono text-xs text-muted-foreground">{r.config_data?.lin_number || '-'}</span> },
     { title: '重量', key: 'mass', width: 80, align: 'right' as const,
       render: (_: any, r: Equipment) => {
-        const w = r.config_data?.mass_kg ?? r.weight_balance?.mass_kg;
+        const w = r.config_data?.mass_kg;
         if (w == null) return <span className="text-muted-foreground/40">-</span>;
         return <span className="tabular-nums font-medium">{w.toFixed(1)}</span>;
       } },

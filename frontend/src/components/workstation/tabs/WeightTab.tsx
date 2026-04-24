@@ -269,12 +269,12 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
 
   /* ---- KPI calculations ---- */
   const totalWeight = useMemo(
-    () => equipment.reduce((sum, e) => sum + ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0), 0),
+    () => equipment.reduce((sum, e) => sum + ((e.config_data?.mass_kg) ?? 0), 0),
     [equipment],
   );
 
   const withWeightCount = useMemo(
-    () => equipment.filter((e) => (e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) != null).length,
+    () => equipment.filter((e) => (e.config_data?.mass_kg) != null).length,
     [equipment],
   );
 
@@ -283,10 +283,10 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
   const heaviest = useMemo(() => {
     let best: Equipment | null = null;
     for (const e of equipment) {
-      const w = e.config_data?.mass_kg ?? e.weight_balance?.mass_kg;
+      const w = e.config_data?.mass_kg;
       if (
         w != null &&
-        (best == null || w > ((best.config_data?.mass_kg ?? best.weight_balance?.mass_kg) ?? 0))
+        (best == null || w > ((best.config_data?.mass_kg) ?? 0))
       ) {
         best = e;
       }
@@ -308,7 +308,7 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
         });
       }
       const group = map.get(ata)!;
-      const w = (e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0;
+      const w = (e.config_data?.mass_kg) ?? 0;
       group.totalWeight += w;
       if (w > 0) {
         group.devices.push({ name: e.name, weight: w });
@@ -447,7 +447,7 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
             {heaviest ? (
               <>
                 <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
-                  {((heaviest.config_data?.mass_kg ?? heaviest.weight_balance?.mass_kg) ?? 0).toFixed(2)}{' '}
+                  {((heaviest.config_data?.mass_kg) ?? 0).toFixed(2)}{' '}
                   <span className="text-sm font-normal text-muted-foreground">kg</span>
                 </p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{heaviest.name}</p>
@@ -466,9 +466,9 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
           const top3Weight = sorted.slice(0, 3).reduce((s, g) => s + g.totalWeight, 0);
           const top3Pct = totalWeight > 0 ? (top3Weight / totalWeight * 100).toFixed(0) : '0';
           const top3Names = sorted.slice(0, 3).map(g => `${g.ataName} ${g.totalWeight.toFixed(0)}kg`).join(' + ');
-          const lightCount = equipment.filter(e => ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) > 0 && ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) < 1).length;
+          const lightCount = equipment.filter(e => ((e.config_data?.mass_kg) ?? 0) > 0 && ((e.config_data?.mass_kg) ?? 0) < 1).length;
           const lightPct = withWeightCount > 0 ? (lightCount / withWeightCount * 100).toFixed(0) : '0';
-          const lightWeightPct = totalWeight > 0 ? (equipment.filter(e => ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) > 0 && ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0) < 1).reduce((s, e) => s + ((e.config_data?.mass_kg ?? e.weight_balance?.mass_kg) ?? 0), 0) / totalWeight * 100).toFixed(1) : '0';
+          const lightWeightPct = totalWeight > 0 ? (equipment.filter(e => ((e.config_data?.mass_kg) ?? 0) > 0 && ((e.config_data?.mass_kg) ?? 0) < 1).reduce((s, e) => s + ((e.config_data?.mass_kg) ?? 0), 0) / totalWeight * 100).toFixed(1) : '0';
           return (
             <>
               <p className="text-xs"><span className="font-semibold text-chart-1">前 3 个 ATA 系统贡献 {top3Pct}% 重量</span> — {top3Names}</p>

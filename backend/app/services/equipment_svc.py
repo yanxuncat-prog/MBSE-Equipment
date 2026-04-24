@@ -3,7 +3,7 @@ from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, WeightBalance, ElectricalLoad, AuditLog, ConfigEquipment
+from app.models import Equipment, ElectricalLoad, AuditLog, ConfigEquipment
 from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.schemas.equipment import EquipmentCreate, EquipmentUpdate, ConfigEquipmentData, EquipmentResponse
 
@@ -20,7 +20,6 @@ async def list_equipment(
     query = (
         select(Equipment)
         .options(
-            selectinload(Equipment.weight_balance),
             selectinload(Equipment.electrical_load),
             selectinload(Equipment.supplier),
         )
@@ -35,7 +34,6 @@ async def list_equipment(
             query
             .join(ce_alias, ce_alias.equipment_id == Equipment.id)
             .options(
-                selectinload(Equipment.weight_balance),
                 selectinload(Equipment.electrical_load),
                 selectinload(Equipment.supplier),
             )
@@ -265,7 +263,6 @@ async def get_equipment(db: AsyncSession, equipment_id: str) -> Equipment | None
     result = await db.execute(
         select(Equipment)
         .options(
-            selectinload(Equipment.weight_balance),
             selectinload(Equipment.electrical_load),
             selectinload(Equipment.supplier),
         )
@@ -286,13 +283,6 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
     db.add(equip)
     await db.flush()
 
-    if data.weight_balance:
-        wb = WeightBalance(
-            equipment_id=equip.id,
-            mass_kg=data.weight_balance.mass_kg,
-        )
-        db.add(wb)
-
     if data.electrical_load:
         el = ElectricalLoad(
             equipment_id=equip.id,
@@ -311,7 +301,7 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
     )
     db.add(audit)
     await db.commit()
-    await db.refresh(equip, ["weight_balance", "electrical_load"])
+    await db.refresh(equip, ["electrical_load"])
     return equip
 
 
@@ -321,20 +311,12 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
         return None
 
     old_values = {}
-    update_fields = data.model_dump(exclude_unset=True, exclude={"weight_balance", "electrical_load"})
+    update_fields = data.model_dump(exclude_unset=True, exclude={"electrical_load"})
     for field, value in update_fields.items():
         old_values[field] = getattr(equip, field)
         if field == "supplier_id" and value:
             value = value
         setattr(equip, field, value)
-
-    if data.weight_balance is not None:
-        if equip.weight_balance:
-            for k, v in data.weight_balance.model_dump().items():
-                setattr(equip.weight_balance, k, v)
-        else:
-            wb = WeightBalance(equipment_id=equip.id, **data.weight_balance.model_dump())
-            db.add(wb)
 
     if data.electrical_load is not None:
         if equip.electrical_load:
@@ -351,7 +333,7 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
     )
     db.add(audit)
     await db.commit()
-    await db.refresh(equip, ["weight_balance", "electrical_load"])
+    await db.refresh(equip, ["electrical_load"])
     return equip
 
 

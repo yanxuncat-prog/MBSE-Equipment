@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import engine, async_session_factory, Base
 from app.models import (
     User, Program, Configuration, Equipment, ConfigEquipment,
-    WeightBalance, ElectricalLoad, Zone, BusDefinition, Supplier,
+    ElectricalLoad, Zone, BusDefinition, Supplier,
     AuditLog,
 )
 from passlib.context import CryptContext
@@ -272,18 +272,6 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 # Supplement LIN号 if missing
                 if raw_lin and not existing.lin_number:
                     existing.lin_number = raw_lin
-                weight = row[cols["weight"]]
-                if weight is not None and isinstance(weight, (int, float)):
-                    # Check if existing has no weight -- supplement it
-                    from sqlalchemy import select as sel
-                    wb_check = await db.execute(sel(WeightBalance).where(WeightBalance.equipment_id == existing.id))
-                    if wb_check.scalar_one_or_none() is None:
-                        try:
-                            wb_new = WeightBalance(equipment_id=existing.id, mass_kg=float(weight))
-                            db.add(wb_new)
-                            await db.flush()
-                        except Exception:
-                            pass
                 # Supplement equipment-level fields from second sheet if not set
                 if dims and not existing.dimensions_mm:
                     existing.dimensions_mm = dims
@@ -356,19 +344,6 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 "bl": random.uniform(-30, 30),
                 "rack_position": rack_pos if rack_pos else None,
             }
-
-            # Weight (skip #N/A, strings, etc.)
-            if weight is not None and isinstance(weight, (int, float)):
-                try:
-                    mass = float(weight)
-                    if mass > 0:
-                        wb_obj = WeightBalance(
-                            equipment_id=equip.id,
-                            mass_kg=mass,
-                        )
-                        db.add(wb_obj)
-                except (ValueError, TypeError):
-                    pass
 
             equip_by_number[part_number] = equip
             success += 1
@@ -835,7 +810,6 @@ async def main():
     # Final stats
     async with async_session_factory() as db:
         equip_count = (await db.execute(select(Equipment))).scalars().all()
-        wb_count = (await db.execute(select(WeightBalance))).scalars().all()
         ce_count = (await db.execute(select(ConfigEquipment))).scalars().all()
         sup_count = (await db.execute(select(Supplier))).scalars().all()
         config_count = (await db.execute(select(Configuration))).scalars().all()
@@ -850,7 +824,6 @@ async def main():
     print("Import Complete!")
     print(f"  设备: {len(equip_count)}")
     print(f"  构型设备关联: {len(ce_count)}")
-    print(f"  重量数据: {len(wb_count)}")
     print(f"  供应商: {len(sup_count)}")
     print(f"  区域: {len(zone_count)}")
     print(f"  构型: {len(config_count)}")

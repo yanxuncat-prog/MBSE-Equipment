@@ -95,8 +95,8 @@ export function EquipmentMarker3D({ equipment, selected, onClick }: Props) {
           }}>
             <div style={{ fontWeight: 600, color }}>{equipment.part_number}</div>
             <div>{equipment.name}</div>
-            {equipment.weight_balance && (
-              <div style={{ color: '#aaa' }}>{equipment.weight_balance.mass_kg.toFixed(1)} kg</div>
+            {equipment.config_data?.mass_kg != null && (
+              <div style={{ color: '#aaa' }}>{equipment.config_data.mass_kg.toFixed(1)} kg</div>
             )}
           </div>
         </Html>

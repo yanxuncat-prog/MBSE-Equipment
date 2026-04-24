@@ -35,7 +35,6 @@ async def _load_config_equipment(db: AsyncSession, config_id: str) -> tuple[Conf
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.supplier),
             selectinload(ConfigEquipmentModel.zone),
@@ -62,6 +61,7 @@ async def _load_config_equipment(db: AsyncSession, config_id: str) -> tuple[Conf
             "bus_name": ce.bus.bus_name if ce.bus else None,
             "install_method": ce.install_method,
             "layout_adjustment": ce.layout_adjustment,
+            "mass_kg": ce.mass_kg,
             "cg_x": ce.cg_x,
             "cg_y": ce.cg_y,
             "cg_z": ce.cg_z,
@@ -77,10 +77,11 @@ async def generate_equipment_list_pdf(db: AsyncSession, config_id: str) -> bytes
     total_mass = 0.0
     for item in items:
         e = item["equipment"]
+        mass = item.get("mass_kg")
         row = {
             "part_number": e.part_number, "name": e.name, "equipment_type": e.equipment_type,
             "status": e.status,
-            "mass_kg": f"{e.weight_balance.mass_kg:.1f}" if e.weight_balance else None,
+            "mass_kg": f"{mass:.1f}" if mass else None,
             "zone_code": item["zone_code"],
             "sta": f"{item['sta']:.0f}" if item["sta"] is not None else None,
             "bus_name": item["bus_name"],
@@ -88,8 +89,8 @@ async def generate_equipment_list_pdf(db: AsyncSession, config_id: str) -> bytes
         }
         ata = e.ata_chapter.split("-")[0] if "-" in e.ata_chapter else e.ata_chapter
         grouped[ata].append(row)
-        if e.weight_balance:
-            total_mass += e.weight_balance.mass_kg
+        if mass:
+            total_mass += mass
 
     template = jinja_env.get_template("equipment_list.html")
     html_str = template.render(
@@ -115,7 +116,7 @@ async def generate_equipment_list_xlsx(db: AsyncSession, config_id: str) -> byte
         e = item["equipment"]
         ws.append([
             e.part_number, e.name, e.ata_chapter, e.equipment_type,
-            e.weight_balance.mass_kg if e.weight_balance else None,
+            item.get("mass_kg"),
             item["zone_code"],
             item["sta"],
             item["bus_name"],
@@ -139,13 +140,14 @@ async def generate_weight_report_pdf(db: AsyncSession, config_id: str) -> bytes:
     sorted_items = sorted(items, key=lambda x: x["equipment"].ata_chapter)
     for item in sorted_items:
         e = item["equipment"]
-        if e.weight_balance:
+        mass = item.get("mass_kg")
+        if mass:
             arm_sta = item["sta"] if item["sta"] is not None else 0.0
             equipment_rows.append({
                 "part_number": e.part_number, "name": e.name, "ata_chapter": e.ata_chapter,
-                "mass_kg": f"{e.weight_balance.mass_kg:.1f}",
+                "mass_kg": f"{mass:.1f}",
                 "arm_sta": f"{arm_sta:.0f}",
-                "moment": f"{e.weight_balance.mass_kg * arm_sta:.0f}",
+                "moment": f"{mass * arm_sta:.0f}",
             })
 
     status = wb_engine_result.status if wb_engine_result else "pass"
@@ -325,14 +327,14 @@ async def generate_installation_report_docx(db: AsyncSession, config_id: str) ->
     sorted_items = sorted(items, key=lambda x: (x["equipment"].ata_chapter, x["equipment"].part_number))
     for idx, item in enumerate(sorted_items, 1):
         e = item["equipment"]
-        wb_mass = e.weight_balance.mass_kg if e.weight_balance else None
+        mass = item.get("mass_kg")
 
         row = summary_table.add_row()
         _set_cell_text(row.cells[0], str(idx), size=9)
         _set_cell_text(row.cells[1], e.name, size=9, align=WD_ALIGN_PARAGRAPH.LEFT)
         _set_cell_text(row.cells[2], e.part_number, size=9)
         _set_cell_text(row.cells[3], e.ata_chapter, size=9)
-        _set_cell_text(row.cells[4], f"{wb_mass:.1f}" if wb_mass else "-", size=9)
+        _set_cell_text(row.cells[4], f"{mass:.1f}" if mass else "-", size=9)
         _set_cell_text(row.cells[5], f"{item['sta']:.0f}" if item["sta"] is not None else "-", size=9)
         _set_cell_text(row.cells[6], item.get("install_method") or "-", size=9, align=WD_ALIGN_PARAGRAPH.LEFT)
 
@@ -343,7 +345,6 @@ async def generate_installation_report_docx(db: AsyncSession, config_id: str) ->
 
     for idx, item in enumerate(sorted_items, 1):
         e = item["equipment"]
-        wb = e.weight_balance
 
         doc.add_heading(f"{idx}. {e.name}", level=2)
 
@@ -369,7 +370,7 @@ async def generate_installation_report_docx(db: AsyncSession, config_id: str) ->
         wt_table.columns[0].width = Cm(5)
         wt_table.columns[1].width = Cm(11)
 
-        mass_val = wb.mass_kg if wb else None
+        mass_val = item.get("mass_kg")
         _add_info_row(wt_table, "重量(kg)", f"{mass_val:.1f}" if mass_val else "-")
         cg_x = item.get("cg_x")
         cg_y = item.get("cg_y")
@@ -437,7 +438,7 @@ async def generate_equipment_list_docx(db: AsyncSession, config_id: str) -> byte
         _set_cell_text(row.cells[2], e.name, size=8, align=WD_ALIGN_PARAGRAPH.LEFT)
         _set_cell_text(row.cells[3], e.ata_chapter, size=8)
         _set_cell_text(row.cells[4], e.equipment_type, size=8)
-        _set_cell_text(row.cells[5], f"{e.weight_balance.mass_kg:.1f}" if e.weight_balance else "-", size=8)
+        _set_cell_text(row.cells[5], f"{item.get('mass_kg'):.1f}" if item.get("mass_kg") else "-", size=8)
         _set_cell_text(row.cells[6], item["zone_code"] or "-", size=8)
         _set_cell_text(row.cells[7], f"{item['sta']:.0f}" if item["sta"] is not None else "-", size=8)
         _set_cell_text(row.cells[8], item["bus_name"] or "-", size=8)

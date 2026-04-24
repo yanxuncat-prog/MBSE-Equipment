@@ -2,7 +2,7 @@ import uuid
 from openpyxl import load_workbook
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Equipment, WeightBalance, ElectricalLoad
+from app.models import Equipment, ElectricalLoad
 
 
 COLUMN_MAP = {
@@ -37,9 +37,9 @@ async def import_from_excel(
 ) -> dict:
     """Import equipment from Excel file. Returns summary with success_count, error_rows.
 
-    NOTE: This creates Equipment + WeightBalance + ElectricalLoad records only.
-    Config-level attributes (zone, STA/WL/BL, bus assignment) should be set via
-    ConfigEquipment when adding equipment to a configuration.
+    NOTE: This creates Equipment + ElectricalLoad records only.
+    Weight (mass_kg) and config-level attributes (zone, STA/WL/BL, bus assignment)
+    should be set via ConfigEquipment when adding equipment to a configuration.
     """
     wb = load_workbook(file_path, read_only=True)
     ws = wb.active
@@ -90,15 +90,6 @@ async def import_from_excel(
             )
             db.add(equip)
             await db.flush()
-
-            # Weight Balance (no arm fields -- those come from ConfigEquipment.sta)
-            mass = val("mass_kg")
-            if mass is not None:
-                wb_obj = WeightBalance(
-                    equipment_id=equip.id,
-                    mass_kg=float(mass),
-                )
-                db.add(wb_obj)
 
             # Electrical Load (no bus_id -- that comes from ConfigEquipment.bus_id)
             power = val("power_kva_normal")

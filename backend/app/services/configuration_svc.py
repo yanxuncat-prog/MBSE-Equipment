@@ -207,12 +207,11 @@ async def remove_equipment_from_config(
 async def _load_config_equipment(
     db: AsyncSession, config_id: uuid.UUID
 ) -> list[ConfigEquipmentModel]:
-    """Load all ConfigEquipment entries for a config with equipment, weight_balance, and electrical_load."""
+    """Load all ConfigEquipment entries for a config with equipment and electrical_load."""
     stmt = (
         select(ConfigEquipmentModel)
         .where(ConfigEquipmentModel.config_id == config_id)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
     )
@@ -278,8 +277,8 @@ async def diff_configs(
                 change_type="added",
             )
         )
-        if e.weight_balance:
-            net_mass_change += e.weight_balance.mass_kg
+        if ce.mass_kg:
+            net_mass_change += ce.mass_kg
         if e.electrical_load and ce.bus_id:
             bus_id = str(ce.bus_id)
             if bus_id not in bus_load_changes:
@@ -298,8 +297,8 @@ async def diff_configs(
                 change_type="removed",
             )
         )
-        if e.weight_balance:
-            net_mass_change -= e.weight_balance.mass_kg
+        if ce.mass_kg:
+            net_mass_change -= ce.mass_kg
         if e.electrical_load and ce.bus_id:
             bus_id = str(ce.bus_id)
             if bus_id not in bus_load_changes:
@@ -335,16 +334,20 @@ async def diff_configs(
             if val_a != val_b:
                 changes[field] = {"from": val_a, "to": val_b}
 
-        # Compare weight_balance fields — only when both have data
-        wb_a = ea.weight_balance
-        wb_b = eb.weight_balance
-        if wb_a and wb_b:
-            if abs(wb_a.mass_kg - wb_b.mass_kg) > 0.001:
+        # Compare mass_kg from config_equipment
+        mass_a = ce_a.mass_kg
+        mass_b = ce_b.mass_kg
+        if mass_a is not None and mass_b is not None:
+            if abs(mass_a - mass_b) > 0.001:
                 changes["mass_kg"] = {
-                    "from": round(wb_a.mass_kg, 4),
-                    "to": round(wb_b.mass_kg, 4),
+                    "from": round(mass_a, 4),
+                    "to": round(mass_b, 4),
                 }
-            net_mass_change += (wb_b.mass_kg - wb_a.mass_kg)
+            net_mass_change += (mass_b - mass_a)
+        elif mass_b is not None:
+            net_mass_change += mass_b
+        elif mass_a is not None:
+            net_mass_change -= mass_a
 
         # Compare config-level attributes — only when both have data
         for field in ("install_method",):

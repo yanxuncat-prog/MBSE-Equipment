@@ -63,10 +63,6 @@ export interface ConfigEquipmentData {
   actual_install_date: string | null;
 }
 
-export interface WeightBalance {
-  mass_kg: number;
-}
-
 export interface ElectricalLoad {
   power_kva_normal: number;
   power_kva_emergency: number | null;
@@ -82,7 +78,6 @@ export interface Equipment {
   supplier_id: string | null;
   supplier_name: string | null;
   description: string | null;
-  weight_balance: WeightBalance | null;
   electrical_load: ElectricalLoad | null;
   config_data: ConfigEquipmentData | null;
 

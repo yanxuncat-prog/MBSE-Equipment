@@ -31,7 +31,7 @@ interface FieldDef {
   label: string;
   type: 'text' | 'number' | 'boolean' | 'select' | 'textarea';
   options?: { value: string; label: string }[];
-  target: 'equipment' | 'config_equipment' | 'weight_balance' | 'electrical_load';
+  target: 'equipment' | 'config_equipment' | 'electrical_load';
 }
 
 const BOOL_OPTS = [
@@ -81,7 +81,7 @@ const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
   {
     key: 'weight', label: '重量/位置',
     fields: [
-      { key: 'mass_kg', label: '重量 (kg)', type: 'number', target: 'weight_balance' },
+      { key: 'mass_kg', label: '重量 (kg)', type: 'number', target: 'config_equipment' },
       { key: 'sta', label: 'STA (mm)', type: 'number', target: 'config_equipment' },
       { key: 'bl', label: 'BL (mm)', type: 'number', target: 'config_equipment' },
       { key: 'wl', label: 'WL (mm)', type: 'number', target: 'config_equipment' },
@@ -132,7 +132,6 @@ const PRESETS: { label: string; groups: string[] }[] = [
 /* ── Helpers ── */
 function getFieldValue(equip: Equipment | null, field: FieldDef): string {
   if (!equip) return '';
-  if (field.target === 'weight_balance') return String(equip.weight_balance?.mass_kg ?? '');
   if (field.target === 'electrical_load') return String((equip.electrical_load as any)?.[field.key] ?? '');
   if (field.target === 'config_equipment') return String((equip.config_data as any)?.[field.key] ?? '');
   const v = (equip as any)[field.key];
@@ -182,7 +181,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
         // Use the new combined update API
         const eqFields: Record<string, any> = {};
         const ceFields: Record<string, any> = {};
-        let wbData: any = null;
         let elData: any = null;
 
         for (const group of visibleGroups) {
@@ -197,9 +195,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
 
             if (field.target === 'equipment') eqFields[field.key] = parsed;
             else if (field.target === 'config_equipment') ceFields[field.key] = parsed;
-            else if (field.target === 'weight_balance') {
-              if (parsed != null) wbData = { mass_kg: parsed };
-            }
             else if (field.target === 'electrical_load') {
               if (!elData) elData = {};
               if (parsed != null) elData[field.key] = parsed;
@@ -215,7 +210,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
         await client.patch(url, {
           equipment: Object.keys(eqFields).length > 0 ? eqFields : undefined,
           config_equipment: Object.keys(ceFields).length > 0 ? ceFields : undefined,
-          weight_balance: wbData,
           electrical_load: elData,
         });
         onSave({}, reason);
@@ -228,7 +222,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
           equipment_type: form.equipment_type || 'LRU',
           description: form.description,
         };
-        if (form.mass_kg) body.weight_balance = { mass_kg: parseFloat(form.mass_kg) };
         if (form.power_kva_normal) body.electrical_load = { power_kva_normal: parseFloat(form.power_kva_normal) };
         onSave(body);
       }

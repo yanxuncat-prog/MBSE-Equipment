@@ -21,7 +21,6 @@ async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[d
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
@@ -33,11 +32,11 @@ async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[d
         equip = ce.equipment
         d = {"id": str(equip.id), "part_number": equip.part_number, "name": equip.name}
 
-        if equip.weight_balance:
+        if ce.mass_kg is not None:
             # Use config_equipment.sta as the moment arm; fall back to 0 if None
             arm_sta = ce.sta if ce.sta is not None else 0.0
             d["weight_balance"] = {
-                "mass_kg": equip.weight_balance.mass_kg,
+                "mass_kg": ce.mass_kg,
                 "arm_sta": arm_sta,
                 "arm_bl": ce.bl if ce.bl is not None else 0.0,
                 "arm_wl": ce.wl if ce.wl is not None else 0.0,
@@ -72,7 +71,6 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
         select(Equipment)
         .where(Equipment.id.in_(uuids))
         .options(
-            selectinload(Equipment.weight_balance),
             selectinload(Equipment.electrical_load),
         )
     )
@@ -81,15 +79,8 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
     equip_dicts = []
     for equip in equipment_list:
         d = {"id": str(equip.id), "part_number": equip.part_number, "name": equip.name}
-        if equip.weight_balance:
-            d["weight_balance"] = {
-                "mass_kg": equip.weight_balance.mass_kg,
-                "arm_sta": 0.0,
-                "arm_bl": 0.0,
-                "arm_wl": 0.0,
-            }
-        else:
-            d["weight_balance"] = None
+        # No config context — no mass_kg available for hypothetical adds
+        d["weight_balance"] = None
         if equip.electrical_load:
             d["electrical_load"] = {
                 "bus_id": "",

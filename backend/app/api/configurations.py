@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Equipment, WeightBalance, ElectricalLoad
+from app.models import Equipment, ElectricalLoad
 from app.models.configuration import Configuration, ConfigEquipment as ConfigEquipmentModel
 from app.models.audit_log import AuditLog
 from app.models.user import User
@@ -195,7 +195,6 @@ async def update_config_equipment(
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
         .where(ConfigEquipmentModel.config_id == config_id, ConfigEquipmentModel.lin_number == lin_number)
@@ -211,7 +210,7 @@ async def update_config_equipment(
     # Update equipment (master) fields
     if body.equipment:
         for field, value in body.equipment.model_dump(exclude_unset=True).items():
-            if field in ('weight_balance', 'electrical_load'):
+            if field == 'electrical_load':
                 continue  # handled separately
             if not hasattr(equip, field):
                 continue
@@ -237,23 +236,6 @@ async def update_config_equipment(
                 old_values[f"config_equipment.{field}"] = _serialize(old_val)
                 new_values[f"config_equipment.{field}"] = _serialize(value)
                 setattr(ce, field, value)
-
-    # Update weight_balance → write to ConfigEquipment AND legacy WeightBalance
-    if body.weight_balance:
-        wb_data = body.weight_balance.model_dump(exclude_unset=True)
-        # Per-config: mass_kg on ConfigEquipment
-        if "mass_kg" in wb_data:
-            old_val = ce.mass_kg
-            if old_val != wb_data["mass_kg"]:
-                old_values["weight_balance.mass_kg"] = _serialize(old_val)
-                new_values["weight_balance.mass_kg"] = _serialize(wb_data["mass_kg"])
-                ce.mass_kg = wb_data["mass_kg"]
-        # Legacy write-through
-        if equip.weight_balance:
-            equip.weight_balance.mass_kg = body.weight_balance.mass_kg
-        else:
-            wb = WeightBalance(id=str(uuid.uuid4()), equipment_id=equip.id, mass_kg=body.weight_balance.mass_kg)
-            db.add(wb)
 
     # Update electrical_load → write to ConfigEquipment AND legacy ElectricalLoad
     if body.electrical_load:

@@ -114,7 +114,7 @@ export function EquipmentDefPage() {
     { title: 'DAL', dataIndex: 'dal', key: 'dal', width: 50,
       render: (v: string | null) => v || '-' },
     { title: '重量(kg)', key: 'mass', width: 80, align: 'right',
-      render: (_: any, r: Equipment) => r.weight_balance?.mass_kg?.toFixed(1) || '-' },
+      render: (_: any, r: Equipment) => r.config_data?.mass_kg?.toFixed(1) || '-' },
     { title: '尺寸(mm)', dataIndex: 'dimensions_mm', key: 'dims', width: 120,
       render: (v: string | null) => v || '-' },
     { title: '连接器数', dataIndex: 'connector_count', key: 'conn', width: 75, align: 'right',
@@ -226,12 +226,12 @@ export function EquipmentDefPage() {
                 <DescItem label="供应商" span>{detailEquip.supplier_name || '-'}</DescItem>
               </dl>
 
-              {detailEquip.weight_balance && (
+              {detailEquip.config_data?.mass_kg != null && (
                 <>
                   <Separator />
                   <h4 className="text-sm font-medium text-muted-foreground">重量</h4>
                   <dl className="grid grid-cols-[auto_1fr] border-t border-l text-left">
-                    <DescItem label="重量">{detailEquip.weight_balance.mass_kg} kg</DescItem>
+                    <DescItem label="重量">{detailEquip.config_data.mass_kg} kg</DescItem>
                   </dl>
                 </>
               )}

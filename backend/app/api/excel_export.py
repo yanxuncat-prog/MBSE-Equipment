@@ -96,8 +96,6 @@ async def export_equipment(
                 val = getattr(e, field, None)
             elif source == "config_equipment":
                 val = getattr(ce, field, None)
-            elif source == "weight_balance":
-                val = getattr(e.weight_balance, field, None) if e.weight_balance else None
             elif source == "electrical_load":
                 val = getattr(e.electrical_load, field, None) if e.electrical_load else None
             else:

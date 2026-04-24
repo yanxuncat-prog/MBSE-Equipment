@@ -83,7 +83,7 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
           )}
 
           {/* Weight data */}
-          {equipment.weight_balance && (
+          {equipment.config_data?.mass_kg != null && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Separator className="flex-1" />
@@ -91,7 +91,7 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
                 <Separator className="flex-1" />
               </div>
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                <DescriptionItem label="重量">{equipment.weight_balance.mass_kg} kg</DescriptionItem>
+                <DescriptionItem label="重量">{equipment.config_data.mass_kg} kg</DescriptionItem>
               </div>
             </div>
           )}

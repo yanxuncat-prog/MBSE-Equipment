@@ -69,7 +69,7 @@ function EquipMarker({ equipment, position, selected, onClick, size }: {
             style={{ borderColor: color }}>
             <div className="font-semibold" style={{ color }}>{equipment.part_number}</div>
             <div>{equipment.name}</div>
-            {equipment.weight_balance && <div className="text-muted-foreground">{equipment.weight_balance.mass_kg.toFixed(1)} kg</div>}
+            {equipment.config_data?.mass_kg != null && <div className="text-muted-foreground">{equipment.config_data.mass_kg.toFixed(1)} kg</div>}
           </div>
         </Html>
       )}
