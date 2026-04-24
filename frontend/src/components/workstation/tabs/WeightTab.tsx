@@ -1,6 +1,13 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Equipment, ValidationReport } from '../../../types';
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from '@/components/ui/select';
+import { Loader2, TrendingDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { listConfigs } from '@/api/configurations';
+import { computeWeightReduction } from '@/api/weight-reduction';
+import { useConfigStore } from '@/store/configStore';
+import type { Equipment, ValidationReport, Configuration, WeightReductionResult } from '../../../types';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -182,6 +189,7 @@ function TreemapTooltip({
 /* WeightTab Component                                                */
 /* ------------------------------------------------------------------ */
 export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onEdit: _onEdit }: Props) {
+  const { activeSeriesId } = useConfigStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
   const [tooltip, setTooltip] = useState<{
@@ -190,6 +198,60 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
     name: string;
     weight: number;
   } | null>(null);
+
+  /* ---- Weight reduction state ---- */
+  const [configs, setConfigs] = useState<Configuration[]>([]);
+  const [baseConfigId, setBaseConfigId] = useState<string | null>(null);
+  const [compareConfigId, setCompareConfigId] = useState<string | null>(null);
+  const [reductionData, setReductionData] = useState<WeightReductionResult | null>(null);
+  const [reductionLoading, setReductionLoading] = useState(false);
+
+  // Load configs when seriesId changes
+  useEffect(() => {
+    if (!activeSeriesId) { setConfigs([]); return; }
+    listConfigs(activeSeriesId).then(cfgs => {
+      setConfigs(cfgs);
+      if (cfgs.length >= 2) {
+        setBaseConfigId(prev => prev ?? cfgs[0].id);
+        setCompareConfigId(prev => prev ?? cfgs[1].id);
+      }
+    }).catch(() => setConfigs([]));
+  }, [activeSeriesId]);
+
+  // Fetch reduction data when both configs selected
+  useEffect(() => {
+    if (!baseConfigId || !compareConfigId || baseConfigId === compareConfigId) {
+      setReductionData(null);
+      return;
+    }
+    setReductionLoading(true);
+    computeWeightReduction(baseConfigId, compareConfigId)
+      .then(setReductionData)
+      .catch(() => setReductionData(null))
+      .finally(() => setReductionLoading(false));
+  }, [baseConfigId, compareConfigId]);
+
+  // ATA grouped reduction for bar chart
+  const ataReduction = useMemo(() => {
+    if (!reductionData) return [];
+    const map = new Map<string, number>();
+    for (const item of reductionData.items) {
+      const ata = item.ata_chapter || '未知';
+      map.set(ata, (map.get(ata) || 0) + (item.diff_kg ?? 0));
+    }
+    return Array.from(map.entries())
+      .map(([ata, diff]) => ({ ata, diff }))
+      .sort((a, b) => b.diff - a.diff);
+  }, [reductionData]);
+
+  // Top 10 reducers
+  const top10Reducers = useMemo(() => {
+    if (!reductionData) return [];
+    return [...reductionData.items]
+      .filter(i => i.diff_kg != null)
+      .sort((a, b) => (b.diff_kg ?? 0) - (a.diff_kg ?? 0))
+      .slice(0, 10);
+  }, [reductionData]);
 
   // Responsive container width
   useEffect(() => {
@@ -550,6 +612,198 @@ export function WeightTab({ equipment, report: _report, onSelect: _onSelect, onE
           </div>
         </CardContent>
       </Card>
+
+      {/* ---- Weight Reduction Analysis Section ---- */}
+      <div className="border-t pt-6 mt-2">
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <TrendingDown className="size-4" />
+            减重分析
+          </h3>
+          {baseConfigId && compareConfigId && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              对比构型: {configs.find(c => c.id === baseConfigId)?.version || '-'} vs {configs.find(c => c.id === compareConfigId)?.version || '-'}
+            </p>
+          )}
+        </div>
+
+        {/* Config selectors */}
+        <div className="flex gap-4 mb-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground shrink-0">基准构型</span>
+            <Select value={baseConfigId ?? undefined} onValueChange={v => setBaseConfigId(v)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="选择基准构型" />
+              </SelectTrigger>
+              <SelectContent>
+                {configs.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.version}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground shrink-0">对比构型</span>
+            <Select value={compareConfigId ?? undefined} onValueChange={v => setCompareConfigId(v)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="选择对比构型" />
+              </SelectTrigger>
+              <SelectContent>
+                {configs.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.version}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {reductionLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {!reductionLoading && reductionData && (
+          <>
+            {/* KPI row */}
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">基准总重</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                    {reductionData.total_base_mass_kg.toFixed(2)}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">kg</span>
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">对比总重</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                    {reductionData.total_compare_mass_kg.toFixed(2)}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">kg</span>
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">总减重</p>
+                  <p className={`mt-1 text-2xl font-bold tabular-nums ${reductionData.total_reduction_kg > 0 ? 'text-status-ok' : reductionData.total_reduction_kg < 0 ? 'text-status-danger' : 'text-foreground'}`}>
+                    {reductionData.total_reduction_kg > 0 ? '+' : ''}{reductionData.total_reduction_kg.toFixed(2)}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">kg</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    共对比 {reductionData.matched_count} 台设备
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* ATA bar chart + Top 10 table */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* ATA Reduction Bar Chart */}
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-foreground mb-3">按 ATA 章节减重分布</p>
+                  {ataReduction.length > 0 ? (() => {
+                    const maxAbs = Math.max(...ataReduction.map(d => Math.abs(d.diff)), 0.1);
+                    return (
+                      <div className="space-y-1.5">
+                        {ataReduction.map(item => {
+                          const pct = (Math.abs(item.diff) / maxAbs) * 100;
+                          const isPositive = item.diff > 0;
+                          return (
+                            <div key={item.ata} className="flex items-center">
+                              <span className="w-16 shrink-0 text-right text-xs text-muted-foreground mr-2">
+                                ATA-{item.ata}
+                              </span>
+                              <div className="flex-1 h-4 rounded bg-muted overflow-hidden">
+                                <div
+                                  className="h-full rounded"
+                                  style={{
+                                    width: `${pct}%`,
+                                    backgroundColor: isPositive ? 'var(--status-ok)' : 'var(--status-danger)',
+                                    minWidth: Math.abs(item.diff) > 0 ? 4 : 0,
+                                  }}
+                                />
+                              </div>
+                              <span className={`w-20 shrink-0 ml-2 text-right text-xs tabular-nums font-medium ${isPositive ? 'text-status-ok' : 'text-status-danger'}`}>
+                                {isPositive ? '+' : ''}{item.diff.toFixed(1)} kg
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })() : (
+                    <span className="text-xs text-muted-foreground">暂无数据</span>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Top 10 Reducers Table */}
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-foreground mb-3">减重 Top 10</p>
+                  {top10Reducers.length > 0 ? (
+                    <div className="overflow-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-border text-muted-foreground">
+                            <th className="text-left py-1.5 pr-2 font-medium">名称</th>
+                            <th className="text-left py-1.5 pr-2 font-medium w-12">ATA</th>
+                            <th className="text-right py-1.5 pr-2 font-medium w-16">基准</th>
+                            <th className="text-right py-1.5 pr-2 font-medium w-16">对比</th>
+                            <th className="text-right py-1.5 pr-2 font-medium w-16">减重</th>
+                            <th className="text-right py-1.5 font-medium w-14">减重%</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {top10Reducers.map((item, i) => {
+                            const diffKg = item.diff_kg ?? 0;
+                            const baseMass = item.base_mass_kg ?? 0;
+                            const pct = baseMass > 0 ? ((diffKg / baseMass) * 100) : 0;
+                            const isPositive = diffKg > 0;
+                            return (
+                              <tr key={i} className="border-b border-border/50 last:border-b-0">
+                                <td className="py-1.5 pr-2 truncate max-w-[140px]">{item.name}</td>
+                                <td className="py-1.5 pr-2 text-muted-foreground">{item.ata_chapter}</td>
+                                <td className="py-1.5 pr-2 text-right tabular-nums">{baseMass.toFixed(1)}</td>
+                                <td className="py-1.5 pr-2 text-right tabular-nums">{(item.compare_mass_kg ?? 0).toFixed(1)}</td>
+                                <td className={`py-1.5 pr-2 text-right tabular-nums font-medium ${isPositive ? 'text-status-ok' : 'text-status-danger'}`}>
+                                  <span className="inline-flex items-center gap-0.5">
+                                    {isPositive ? <ArrowDown className="size-3" /> : <ArrowUp className="size-3" />}
+                                    {Math.abs(diffKg).toFixed(1)}
+                                  </span>
+                                </td>
+                                <td className={`py-1.5 text-right tabular-nums ${isPositive ? 'text-status-ok' : 'text-status-danger'}`}>
+                                  {pct.toFixed(1)}%
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">暂无数据</span>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
+
+        {!reductionLoading && !reductionData && baseConfigId && compareConfigId && baseConfigId !== compareConfigId && (
+          <div className="text-center py-8 text-sm text-muted-foreground">加载减重数据失败或暂无数据</div>
+        )}
+
+        {(!baseConfigId || !compareConfigId || baseConfigId === compareConfigId) && !reductionLoading && (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            {configs.length < 2 ? '需要至少两个构型才能进行减重对比' : '请选择两个不同的构型进行对比'}
+          </div>
+        )}
+      </div>
 
     </div>
   );
