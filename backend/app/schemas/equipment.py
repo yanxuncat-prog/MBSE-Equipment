@@ -48,9 +48,6 @@ class ConfigEquipmentData(BaseModel):
     power_kva_emergency: float | None = None
     power_kva_max: float | None = None
 
-    bonding_method: str | None = None
-    bonding_type: str | None = None
-    bonding_resistance: str | None = None
     bonding_position: str | None = None
     in_pace_drawing: bool | None = None
     layout_adjustment: str | None = None
@@ -131,9 +128,6 @@ class ConfigEquipmentUpdate(BaseModel):
     power_kva_emergency: float | None = None
     power_kva_max: float | None = None
 
-    bonding_method: str | None = None
-    bonding_type: str | None = None
-    bonding_resistance: str | None = None
     bonding_position: str | None = None
     in_pace_drawing: bool | None = None
     layout_adjustment: str | None = None
@@ -187,6 +181,10 @@ class EquipmentUpdate(BaseModel):
     internal_grounding: str | None = None
     shell_grounding_fault_path: str | None = None
     grounding_special_requirements: str | None = None
+    # Bonding
+    bonding_method: str | None = None
+    bonding_type: str | None = None
+    bonding_resistance: str | None = None
     # Notes
     notes: str | None = None
     # Legacy (for backward compat with old form)
@@ -249,6 +247,11 @@ class EquipmentResponse(_ORMBase):
     shell_grounding_method: str | None = None
     shell_grounding_fault_path: str | None = None
     grounding_special_requirements: str | None = None
+
+    # Bonding
+    bonding_method: str | None = None
+    bonding_type: str | None = None
+    bonding_resistance: str | None = None
 
     # Notes
     notes: str | None = None

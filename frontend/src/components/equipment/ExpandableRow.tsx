@@ -116,9 +116,9 @@ export function ExpandableRow({ equipment }: Props) {
           <Field label="供电余度" value={display(e.power_redundancy)} />
           <Field label="电压范围" value={display(e.voltage_range)} />
           <Field label="用电功率" value={display(e.power_watts)} />
-          <Field label="搭接方式" value={display(e.config_data?.bonding_method)} />
-          <Field label="搭接类型" value={display(e.config_data?.bonding_type)} />
-          <Field label="搭接阻值" value={display(e.config_data?.bonding_resistance)} />
+          <Field label="搭接方式" value={display(e.bonding_method)} />
+          <Field label="搭接类型" value={display(e.bonding_type)} />
+          <Field label="搭接阻值" value={display(e.bonding_resistance)} />
           <Field label="是否电设备" value={displayBool(e.is_electrical)} />
           <Field label="一级用电" value={displayBool(e.is_primary_electrical)} />
           <Field label="EICD" value={displayBool(e.has_eicd)} />

@@ -93,7 +93,7 @@ async def get_dashboard_stats(
         has_elec_load = sum(1 for ce in electrical_items if ce.power_kva_normal is not None) if electrical_items else sum(1 for ce in ce_list if ce.power_kva_normal is not None)
         has_eicd = sum(1 for ce in electrical_items if ce.equipment.has_eicd is not None) if electrical_items else sum(1 for ce in ce_list if ce.equipment.has_eicd is not None)
         has_do160 = 0  # DO-160 data now lives in do160_records table
-        has_bonding = sum(1 for ce in (electrical_items or ce_list) if ce.bonding_type and ce.bonding_type.strip())
+        has_bonding = sum(1 for ce in (electrical_items or ce_list) if ce.equipment and ce.equipment.bonding_type and ce.equipment.bonding_type.strip())
         has_install = sum(1 for ce in ce_list if ce.install_method and ce.install_method.strip())
 
         completeness = {

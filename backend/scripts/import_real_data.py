@@ -205,6 +205,7 @@ _equip_install_data: dict[uuid.UUID, dict] = {}  # equipment.id -> {zone_id, sta
 
 # Per-equipment config-specific data from 主清单, keyed by (part_number, sheet_idx)
 _equip_config_data: dict[tuple[str, int], dict] = {}
+_equip_bonding_equip: dict[tuple[str, int], dict] = {}  # bonding fields now on equipment
 
 
 async def import_main_list(db: AsyncSession, base: dict) -> dict:
@@ -256,10 +257,13 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
             # Store config-specific data for later ConfigEquipment creation
             _equip_config_data[(part_number, sheet_idx)] = {
                 "install_method": install_method,
-                "bonding_method": bond_method,
-                "bonding_type": bond_type,
                 "layout_adjustment": layout_adj,
                 "use_batch0_device": use_batch0,
+            }
+            # bonding_method/bonding_type are now equipment-level fields
+            _equip_bonding_equip[(part_number, sheet_idx)] = {
+                "bonding_method": bond_method,
+                "bonding_type": bond_type,
             }
 
             # If already imported, try to supplement missing data
@@ -297,6 +301,10 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                     existing.power_voltage = voltage
                 if power and not existing.power_watts:
                     existing.power_watts = power
+                if bond_method and not existing.bonding_method:
+                    existing.bonding_method = bond_method
+                if bond_type and not existing.bonding_type:
+                    existing.bonding_type = bond_type
                 success += 1
                 continue
 
@@ -323,6 +331,8 @@ async def import_main_list(db: AsyncSession, base: dict) -> dict:
                 power_redundancy=redundancy,
                 power_voltage=voltage,
                 power_watts=power,
+                bonding_method=bond_method,
+                bonding_type=bond_type,
             )
             db.add(equip)
             try:
@@ -714,6 +724,9 @@ async def import_bonding_data(db: AsyncSession, equip_map: dict):
 
         if any(v is not None for v in bonding_info.values()):
             _bonding_data[doors_number] = bonding_info
+            # bonding_resistance is now an equipment-level field
+            if bonding_info.get("bonding_resistance") and not equip.bonding_resistance:
+                equip.bonding_resistance = bonding_info["bonding_resistance"]
             updated += 1
 
     await db.commit()
@@ -791,11 +804,8 @@ async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
                 bus_id=bus_id,
                 # New config-specific fields
                 install_method=cfg_data.get("install_method"),
-                bonding_method=cfg_data.get("bonding_method"),
-                bonding_type=cfg_data.get("bonding_type"),
                 layout_adjustment=cfg_data.get("layout_adjustment"),
                 use_batch0_device=cfg_data.get("use_batch0_device"),
-                bonding_resistance=bonding.get("bonding_resistance"),
                 bonding_position=bonding.get("bonding_position"),
                 in_pace_drawing=bonding.get("in_pace_drawing"),
             )
@@ -834,7 +844,7 @@ async def main():
         # Count how many equipment have temperature data
         temp_count = sum(1 for e in equip_count if e.do160_temp_design_level or e.normal_operating_temp)
         ata_count = sum(1 for e in equip_count if e.name_en or e.dal)
-        bonding_count = sum(1 for c in ce_count if c.bonding_resistance or c.bonding_method)
+        bonding_count = sum(1 for e in equip_count if e.bonding_resistance or e.bonding_method)
 
     print("\n" + "=" * 60)
     print("Import Complete!")

@@ -92,7 +92,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
   const kpis = useMemo(() => {
     const electricalDevices = equipment.filter((e) => e.is_electrical === true);
     const withBondingType = electricalDevices.filter(
-      (e) => e.config_data?.bonding_type && e.config_data.bonding_type.trim() !== '',
+      (e) => e.bonding_type && e.bonding_type.trim() !== '',
     );
     const coverageRate =
       electricalDevices.length > 0
@@ -102,7 +102,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
     // bonding_method distribution
     const methodCounts: Record<string, number> = {};
     for (const e of equipment) {
-      const m = e.config_data?.bonding_method;
+      const m = e.bonding_method;
       if (m && m.trim() !== '') {
         methodCounts[m] = (methodCounts[m] || 0) + 1;
       }
@@ -124,7 +124,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
     const ataMap: Record<string, Record<string, number>> = {};
 
     for (const e of equipment) {
-      const bt = e.config_data?.bonding_type;
+      const bt = e.bonding_type;
       if (!bt || bt.trim() === '') continue;
       const ataLabel = ataSystemName(e.description);
 
@@ -189,7 +189,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
     });
 
     for (const e of equipment) {
-      const m = e.config_data?.bonding_method;
+      const m = e.bonding_method;
       if (m && m.trim() !== '') {
         items.push({ method: m, color: colorAssign[m] || MUTED_COLOR });
       }
@@ -204,14 +204,13 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
   const tableData = useMemo(() => {
     return equipment.filter((e) => {
       const cd = e.config_data;
-      if (!cd) return false;
       return (
-        (cd.bonding_type && cd.bonding_type.trim() !== '') ||
-        (cd.bonding_method && cd.bonding_method.trim() !== '') ||
-        (cd.install_method && cd.install_method.trim() !== '') ||
-        (cd.bonding_resistance && cd.bonding_resistance.trim() !== '') ||
-        (cd.bonding_position && cd.bonding_position.trim() !== '') ||
-        cd.in_pace_drawing != null
+        (e.bonding_type && e.bonding_type.trim() !== '') ||
+        (e.bonding_method && e.bonding_method.trim() !== '') ||
+        (cd?.install_method && cd.install_method.trim() !== '') ||
+        (e.bonding_resistance && e.bonding_resistance.trim() !== '') ||
+        (cd?.bonding_position && cd.bonding_position.trim() !== '') ||
+        cd?.in_pace_drawing != null
       );
     });
   }, [equipment]);
@@ -229,7 +228,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
       key: 'bonding_type',
       width: 110,
       render: (_, r) => {
-        const v = r.config_data?.bonding_type;
+        const v = r.bonding_type;
         if (!v) return <span className="text-muted-foreground/50">-</span>;
         return <Badge variant="secondary">{v}</Badge>;
       },
@@ -239,7 +238,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
       key: 'bonding_method',
       width: 100,
       render: (_, r) => {
-        const v = r.config_data?.bonding_method;
+        const v = r.bonding_method;
         if (!v) return <span className="text-muted-foreground/50">-</span>;
         return <Badge variant="outline">{v}</Badge>;
       },
@@ -254,7 +253,7 @@ export function BondingTab({ equipment, onSelect, onEdit }: Props) {
       title: '搭接阻值',
       key: 'bonding_resistance',
       width: 90,
-      render: (_, r) => r.config_data?.bonding_resistance || <span className="text-muted-foreground/50">-</span>,
+      render: (_, r) => r.bonding_resistance || <span className="text-muted-foreground/50">-</span>,
     },
     {
       title: '搭接位置',

@@ -51,6 +51,11 @@ class Equipment(Base):
     shell_grounding_fault_path: Mapped[str | None] = mapped_column(String(200), comment="壳体接地是否故障电流路径")
     grounding_special_requirements: Mapped[str | None] = mapped_column(Text, comment="其他接地特殊要求")
 
+    # --- Bonding ---
+    bonding_method: Mapped[str | None] = mapped_column(String(50), comment="电搭接方式")
+    bonding_type: Mapped[str | None] = mapped_column(String(100), comment="电搭接类型")
+    bonding_resistance: Mapped[str | None] = mapped_column(String(50), comment="电搭接阻值要求(mΩ)")
+
     # --- Notes ---
     notes: Mapped[str | None] = mapped_column(Text, comment="备注")
 

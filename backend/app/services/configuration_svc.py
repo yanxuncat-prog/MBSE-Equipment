@@ -324,7 +324,8 @@ async def diff_configs(
         # Compare equipment-level fields (exclude part_number — import artifact)
         # Only flag as different when BOTH sides have non-empty values
         for field in ("dimensions_mm", "is_electrical",
-                       "has_eicd", "power_redundancy", "power_voltage", "power_watts"):
+                       "has_eicd", "power_redundancy", "power_voltage", "power_watts",
+                       "bonding_method", "bonding_type", "bonding_resistance"):
             val_a = getattr(ea, field, None)
             val_b = getattr(eb, field, None)
             if _is_empty(val_a) and _is_empty(val_b):
@@ -346,7 +347,7 @@ async def diff_configs(
             net_mass_change += (wb_b.mass_kg - wb_a.mass_kg)
 
         # Compare config-level attributes — only when both have data
-        for field in ("install_method", "bonding_type", "bonding_method"):
+        for field in ("install_method",):
             val_a = getattr(ce_a, field)
             val_b = getattr(ce_b, field)
             if _is_empty(val_a) or _is_empty(val_b):

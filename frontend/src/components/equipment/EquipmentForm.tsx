@@ -102,11 +102,11 @@ const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
   {
     key: 'bonding', label: '搭接/安装',
     fields: [
-      { key: 'bonding_method', label: '搭接方式', type: 'select', target: 'config_equipment', options: [
+      { key: 'bonding_method', label: '搭接方式', type: 'select', target: 'equipment', options: [
         { value: '__none__', label: '未设置' }, { value: '面搭接', label: '面搭接' }, { value: '线搭接', label: '线搭接' },
       ]},
-      { key: 'bonding_type', label: '搭接类型', type: 'text', target: 'config_equipment' },
-      { key: 'bonding_resistance', label: '搭接阻值 (mΩ)', type: 'text', target: 'config_equipment' },
+      { key: 'bonding_type', label: '搭接类型', type: 'text', target: 'equipment' },
+      { key: 'bonding_resistance', label: '搭接阻值 (mΩ)', type: 'text', target: 'equipment' },
       { key: 'bonding_position', label: '搭接位置', type: 'text', target: 'config_equipment' },
       { key: 'install_method', label: '安装方式', type: 'text', target: 'config_equipment' },
       { key: 'in_pace_drawing', label: 'PACE图纸', type: 'boolean', target: 'config_equipment' },

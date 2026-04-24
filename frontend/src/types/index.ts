@@ -44,9 +44,6 @@ export interface ConfigEquipmentData {
   power_kva_max: number | null;
 
   install_method: string | null;
-  bonding_method: string | null;
-  bonding_type: string | null;
-  bonding_resistance: string | null;
   bonding_position: string | null;
   in_pace_drawing: boolean | null;
   layout_adjustment: string | null;
@@ -117,6 +114,11 @@ export interface Equipment {
   shell_grounding_method: string | null;
   shell_grounding_fault_path: string | null;
   grounding_special_requirements: string | null;
+
+  // Bonding
+  bonding_method: string | null;
+  bonding_type: string | null;
+  bonding_resistance: string | null;
 
   // Notes
   notes: string | null;

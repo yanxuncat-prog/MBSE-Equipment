@@ -48,9 +48,6 @@ async def list_equipment(
                 ce_alias.bus_id,
                 ce_alias.notes,
                 ce_alias.install_method,
-                ce_alias.bonding_method,
-                ce_alias.bonding_type,
-                ce_alias.bonding_resistance,
                 ce_alias.bonding_position,
                 ce_alias.in_pace_drawing,
                 ce_alias.layout_adjustment,
@@ -145,48 +142,45 @@ async def list_equipment(
             ce_bus_id = row[6]
             ce_notes = row[7]
             ce_install_method = row[8]
-            ce_bonding_method = row[9]
-            ce_bonding_type = row[10]
-            ce_bonding_resistance = row[11]
-            ce_bonding_position = row[12]
-            ce_in_pace_drawing = row[13]
-            ce_layout_adjustment = row[14]
-            ce_use_batch0_device = row[15]
-            ce_procurement_status = row[16]
-            ce_procurement_location = row[17]
-            ce_planned_delivery_date = row[18]
-            ce_estimated_delivery_date = row[19]
-            ce_procurement_notes = row[20]
-            ce_config_name = row[21]
-            ce_mass_kg = row[22]
-            ce_cg_x = row[23]
-            ce_cg_y = row[24]
-            ce_cg_z = row[25]
-            ce_inertia_ix = row[26]
-            ce_inertia_iy = row[27]
-            ce_inertia_iz = row[28]
-            ce_inertia_ixy = row[29]
-            ce_inertia_ixz = row[30]
-            ce_inertia_iyz = row[31]
-            ce_weight_target_kg = row[32]
-            ce_overweight_risk = row[33]
-            ce_power_kva_normal = row[34]
-            ce_power_kva_emergency = row[35]
-            ce_power_kva_max = row[36]
-            ce_actual_arrival_date = row[37]
-            ce_micd_confirmed = row[38]
-            ce_structure_ready = row[39]
-            ce_installation_ready = row[40]
-            ce_planned_install_date = row[41]
-            ce_actual_install_date = row[42]
+            ce_bonding_position = row[9]
+            ce_in_pace_drawing = row[10]
+            ce_layout_adjustment = row[11]
+            ce_use_batch0_device = row[12]
+            ce_procurement_status = row[13]
+            ce_procurement_location = row[14]
+            ce_planned_delivery_date = row[15]
+            ce_estimated_delivery_date = row[16]
+            ce_procurement_notes = row[17]
+            ce_config_name = row[18]
+            ce_mass_kg = row[19]
+            ce_cg_x = row[20]
+            ce_cg_y = row[21]
+            ce_cg_z = row[22]
+            ce_inertia_ix = row[23]
+            ce_inertia_iy = row[24]
+            ce_inertia_iz = row[25]
+            ce_inertia_ixy = row[26]
+            ce_inertia_ixz = row[27]
+            ce_inertia_iyz = row[28]
+            ce_weight_target_kg = row[29]
+            ce_overweight_risk = row[30]
+            ce_power_kva_normal = row[31]
+            ce_power_kva_emergency = row[32]
+            ce_power_kva_max = row[33]
+            ce_actual_arrival_date = row[34]
+            ce_micd_confirmed = row[35]
+            ce_structure_ready = row[36]
+            ce_installation_ready = row[37]
+            ce_planned_install_date = row[38]
+            ce_actual_install_date = row[39]
             # 7 moved fields
-            ce_equipment_status = row[43]
-            ce_responsible_person = row[44]
-            ce_has_special_wiring = row[45]
-            ce_equipment_level = row[46]
-            ce_is_optional = row[47]
-            ce_internal_number = row[48]
-            ce_lin_number = row[49]
+            ce_equipment_status = row[40]
+            ce_responsible_person = row[41]
+            ce_has_special_wiring = row[42]
+            ce_equipment_level = row[43]
+            ce_is_optional = row[44]
+            ce_internal_number = row[45]
+            ce_lin_number = row[46]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -228,9 +222,6 @@ async def list_equipment(
                 power_kva_normal=ce_power_kva_normal,
                 power_kva_emergency=ce_power_kva_emergency,
                 power_kva_max=ce_power_kva_max,
-                bonding_method=ce_bonding_method,
-                bonding_type=ce_bonding_type,
-                bonding_resistance=ce_bonding_resistance,
                 bonding_position=ce_bonding_position,
                 in_pace_drawing=ce_in_pace_drawing,
                 layout_adjustment=ce_layout_adjustment,

@@ -180,10 +180,11 @@ EQUIPMENT_FIELDS = {
     "supplier_part_number", "dal", "dimensions_mm",
     "voltage_range", "power_redundancy", "power_voltage", "power_watts",
     "shell_grounding_method",
+    "bonding_method", "bonding_type", "bonding_resistance",
 }
 CONFIG_EQUIPMENT_FIELDS = {
     "mass_kg", "power_kva_normal", "power_kva_emergency", "power_kva_max",
-    "install_method", "bonding_method", "bonding_type", "bonding_resistance",
+    "install_method",
 }
 
 

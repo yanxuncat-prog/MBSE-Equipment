@@ -60,9 +60,6 @@ class ConfigEquipment(Base):
 
     # Bonding/grounding (config-specific because installation method varies)
     install_method: Mapped[str | None] = mapped_column(String(200), comment="安装方式")
-    bonding_method: Mapped[str | None] = mapped_column(String(50), comment="电搭接方式")
-    bonding_type: Mapped[str | None] = mapped_column(String(100), comment="电搭接类型")
-    bonding_resistance: Mapped[str | None] = mapped_column(String(50), comment="电搭接阻值要求(mΩ)")
     bonding_position: Mapped[str | None] = mapped_column(String(200), comment="搭接位置(结构零件号)")
     in_pace_drawing: Mapped[bool | None] = mapped_column(comment="是否已在PACE图纸中体现")
     layout_adjustment: Mapped[str | None] = mapped_column(String(500), comment="总体布置调整需求")

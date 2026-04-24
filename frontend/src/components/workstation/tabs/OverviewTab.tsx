@@ -86,7 +86,7 @@ function EquipmentVisualPreview({ equipment, allEquipment }: { equipment: Equipm
 
   // Status dots
   const statuses = [
-    { label: '搭接', value: e.config_data?.bonding_type || null, color: e.config_data?.bonding_type ? 'bg-chart-1' : 'bg-muted' },
+    { label: '搭接', value: e.bonding_type || null, color: e.bonding_type ? 'bg-chart-1' : 'bg-muted' },
     { label: 'EICD', value: e.has_eicd, color: e.has_eicd === true ? 'bg-status-ok' : e.has_eicd === false ? 'bg-status-danger' : 'bg-muted' },
     { label: '选装', value: e.config_data?.is_optional, color: e.config_data?.is_optional === true ? 'bg-status-warn' : e.config_data?.is_optional === false ? 'bg-status-ok' : 'bg-muted' },
   ];
