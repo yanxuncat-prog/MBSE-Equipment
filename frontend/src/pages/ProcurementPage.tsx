@@ -16,6 +16,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter,
 } from '@/components/ui/sheet';
 import { Pencil, Loader2 } from 'lucide-react';
+import { ChinaMap } from '../components/procurement/ChinaMap';
 import { useConfigStore } from '../store/configStore';
 import { listEquipment } from '../api/equipment';
 import client from '../api/client';
@@ -23,18 +24,77 @@ import type { Equipment } from '../types';
 
 /* ───── Status definitions ───── */
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  inquiry:    { label: '询价',   color: '#5AC8FA' },
-  contracted: { label: '合同',   color: '#007AFF' },
-  producing:  { label: '生产中', color: '#FF9500' },
-  inspecting: { label: '检验',   color: '#AF52DE' },
-  shipping:   { label: '在途',   color: '#34C759' },
-  delivered:  { label: '已到货', color: '#52C41A' },
+  inquiry:    { label: '询价',   color: 'var(--chart-1)' },
+  contracted: { label: '合同',   color: 'var(--primary)' },
+  producing:  { label: '生产中', color: 'var(--chart-3)' },
+  inspecting: { label: '检验',   color: 'var(--chart-5)' },
+  shipping:   { label: '在途',   color: 'var(--status-ok)' },
+  delivered:  { label: '已到货', color: 'var(--status-ok)' },
 };
 
-const NOT_STARTED_COLOR = '#8E8E93';
-const OVERDUE_COLOR = '#FF3B30';
+const NOT_STARTED_COLOR = 'var(--muted-foreground)';
+const OVERDUE_COLOR = 'var(--status-danger)';
 
 const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([value, { label }]) => ({ value, label }));
+
+/* ───── Lifecycle Steps ───── */
+const LIFECYCLE_STEPS = [
+  { key: 'procurement', label: '采购' },
+  { key: 'arrival', label: '到货' },
+  { key: 'micd', label: 'MICD' },
+  { key: 'structure', label: '开口' },
+  { key: 'installation', label: '安装要求' },
+  { key: 'ready', label: '装机就绪' },
+  { key: 'planned', label: '计划上机' },
+  { key: 'installed', label: '已上机' },
+] as const;
+
+function getLifecycleSteps(e: Equipment): boolean[] {
+  const cd = e.config_data;
+  const hasProcurement = cd?.procurement_status != null;
+  const hasArrival = cd?.actual_arrival_date != null;
+  const hasMicd = cd?.micd_confirmed === true;
+  const hasStructure = cd?.structure_ready === true;
+  const hasInstallation = cd?.installation_ready === true;
+  const allReady = hasProcurement && hasArrival && hasMicd && hasStructure && hasInstallation;
+  const hasPlanned = cd?.planned_install_date != null;
+  const hasInstalled = cd?.actual_install_date != null;
+  return [hasProcurement, hasArrival, hasMicd, hasStructure, hasInstallation, allReady, hasPlanned, hasInstalled];
+}
+
+function LifecycleProgress({ steps }: { steps: boolean[] }) {
+  const totalWidth = 140;
+  const dotR = 3;
+  const gap = totalWidth / (steps.length - 1);
+  return (
+    <svg width={totalWidth + dotR * 2 + 2} height={14} viewBox={`0 0 ${totalWidth + dotR * 2 + 2} 14`} role="img" aria-label="生命周期进度">
+      <title>生命周期进度</title>
+      {/* Lines */}
+      {steps.map((_, i) => {
+        if (i === 0) return null;
+        const x1 = 1 + dotR + (i - 1) * gap;
+        const x2 = 1 + dotR + i * gap;
+        const completed = steps[i - 1] && steps[i];
+        return (
+          <line key={`l-${i}`} x1={x1} y1={7} x2={x2} y2={7}
+            stroke={completed ? 'var(--status-ok)' : 'var(--muted-foreground)'}
+            strokeWidth={1.5}
+            strokeOpacity={completed ? 1 : 0.3}
+          />
+        );
+      })}
+      {/* Dots */}
+      {steps.map((done, i) => (
+        <circle key={`d-${i}`} cx={1 + dotR + i * gap} cy={7} r={dotR}
+          fill={done ? 'var(--status-ok)' : 'transparent'}
+          stroke={done ? 'var(--status-ok)' : 'var(--muted-foreground)'}
+          strokeWidth={1.5}
+          strokeOpacity={done ? 1 : 0.4}
+        />
+      ))}
+    </svg>
+  );
+}
 
 const LOCATION_OPTIONS = ['北京', '上海', '成都', '西安', '沈阳', '大场', '其他'];
 
@@ -59,7 +119,7 @@ function getStatusColor(status: string | null | undefined): string {
 
 /* ───── Simple Donut (city distribution) ───── */
 function SimpleDonut({ data, total }: { data: { name: string; count: number }[]; total: number }) {
-  const COLORS = ['#5ac8fa', '#34c759', '#ff9500', '#ff6b6b', '#af52de', '#007aff', '#ffcc00', '#636366'];
+  const COLORS = ['var(--chart-1)', 'var(--status-ok)', 'var(--chart-3)', 'var(--status-danger)', 'var(--chart-5)', 'var(--primary)', 'var(--status-warn)', 'var(--muted-foreground)'];
   const radius = 50;
   const cx = 65, cy = 65;
   const circumference = 2 * Math.PI * radius;
@@ -74,9 +134,10 @@ function SimpleDonut({ data, total }: { data: { name: string; count: number }[];
 
   return (
     <div className="flex items-center gap-3">
-      <svg width={130} height={130} viewBox="0 0 130 130">
+      <svg width={130} height={130} viewBox="0 0 130 130" role="img" aria-label="采购物流状态环形图">
+        <title>采购物流状态环形图</title>
         {total === 0 ? (
-          <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#f0f0f0" strokeWidth={16} />
+          <circle cx={cx} cy={cy} r={radius} fill="none" stroke="var(--muted)" strokeWidth={16} />
         ) : (
           segments.map((s, i) => (
             <circle key={i} cx={cx} cy={cy} r={radius} fill="none"
@@ -87,14 +148,14 @@ function SimpleDonut({ data, total }: { data: { name: string; count: number }[];
             />
           ))
         )}
-        <text x={cx} y={cy - 2} textAnchor="middle" fill="#333" fontSize={16} fontWeight="bold">{total}</text>
-        <text x={cx} y={cy + 12} textAnchor="middle" fill="#999" fontSize={9}>台</text>
+        <text x={cx} y={cy - 2} textAnchor="middle" fill="var(--foreground)" fontSize={16} fontWeight="bold">{total}</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--muted-foreground)" fontSize={9}>台</text>
       </svg>
       <div>
         {segments.map((s, i) => (
           <div key={i} className="flex items-center gap-1 mb-0.5">
             <div className="w-[7px] h-[7px] rounded-sm shrink-0" style={{ background: s.color }} />
-            <span className="text-[11px] text-muted-foreground">{s.name} ({s.count})</span>
+            <span className="text-xs text-muted-foreground">{s.name} ({s.count})</span>
           </div>
         ))}
       </div>
@@ -105,12 +166,12 @@ function SimpleDonut({ data, total }: { data: { name: string; count: number }[];
 /* ───── Horizontal Bar (supplier delivered count) ───── */
 function HorizontalBar({ data }: { data: { name: string; count: number }[] }) {
   const max = Math.max(...data.map(d => d.count), 1);
-  const COLORS = ['#52C41A', '#34C759', '#5ac8fa', '#007aff', '#af52de', '#ff9500'];
+  const COLORS = ['var(--status-ok)', 'var(--status-ok)', 'var(--chart-1)', 'var(--primary)', 'var(--chart-5)', 'var(--chart-3)'];
   return (
     <div>
       {data.map((item, i) => (
         <div key={item.name} className="flex items-center mb-1.5">
-          <span className="w-20 text-[11px] text-right mr-2 text-muted-foreground truncate">
+          <span className="w-20 text-xs text-right mr-2 text-muted-foreground truncate">
             {item.name || '-'}
           </span>
           <div className="flex-1 h-3.5 bg-muted rounded-sm overflow-hidden">
@@ -123,7 +184,7 @@ function HorizontalBar({ data }: { data: { name: string; count: number }[] }) {
               }}
             />
           </div>
-          <span className="w-[30px] text-[11px] ml-1.5 text-foreground font-semibold">{item.count}</span>
+          <span className="w-[30px] text-xs ml-1.5 text-foreground font-semibold">{item.count}</span>
         </div>
       ))}
       {data.length === 0 && <span className="text-xs text-muted-foreground">暂无数据</span>}
@@ -160,6 +221,12 @@ export function ProcurementPage() {
   const [formPlannedDate, setFormPlannedDate] = useState<string>('');
   const [formEstimatedDate, setFormEstimatedDate] = useState<string>('');
   const [formNotes, setFormNotes] = useState('');
+  const [formActualArrival, setFormActualArrival] = useState('');
+  const [formMicdConfirmed, setFormMicdConfirmed] = useState(false);
+  const [formStructureReady, setFormStructureReady] = useState(false);
+  const [formInstallationReady, setFormInstallationReady] = useState(false);
+  const [formPlannedInstall, setFormPlannedInstall] = useState('');
+  const [formActualInstall, setFormActualInstall] = useState('');
   const [saving, setSaving] = useState(false);
 
   /* ── Load data ── */
@@ -188,13 +255,15 @@ export function ProcurementPage() {
 
   /* Status summary counts */
   const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { _all: 0, _not_started: 0, _overdue: 0 };
+    const counts: Record<string, number> = { _all: 0, _not_started: 0, _overdue: 0, _arrived: 0, _installed: 0 };
     Object.keys(STATUS_MAP).forEach(k => { counts[k] = 0; });
     enriched.forEach(e => {
       counts._all++;
       if (!e._status) { counts._not_started++; }
       else { counts[e._status] = (counts[e._status] || 0) + 1; }
       if (e._overdueDays > 0) counts._overdue++;
+      if (e.config_data?.actual_arrival_date) counts._arrived++;
+      if (e.config_data?.actual_install_date) counts._installed++;
     });
     return counts;
   }, [enriched]);
@@ -206,6 +275,10 @@ export function ProcurementPage() {
       list = list.filter(e => !e._status);
     } else if (filterStatus === '_overdue') {
       list = list.filter(e => e._overdueDays > 0);
+    } else if (filterStatus === '_arrived') {
+      list = list.filter(e => e.config_data?.actual_arrival_date != null);
+    } else if (filterStatus === '_installed') {
+      list = list.filter(e => e.config_data?.actual_install_date != null);
     } else if (filterStatus) {
       list = list.filter(e => e._status === filterStatus);
     }
@@ -263,6 +336,20 @@ export function ProcurementPage() {
     return Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 8);
   }, [enriched]);
 
+  /* Equipment grouped by city for the map */
+  const equipmentByCity = useMemo(() => {
+    const map: Record<string, { count: number; ataBreakdown: Record<string, number> }> = {};
+    enriched.forEach(e => {
+      const loc = e._location;
+      if (!loc) return;
+      if (!map[loc]) map[loc] = { count: 0, ataBreakdown: {} };
+      map[loc].count++;
+      const ata = e.ata_chapter?.slice(0, 2) || '00';
+      map[loc].ataBreakdown[ata] = (map[loc].ataBreakdown[ata] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, data]) => ({ name, ...data }));
+  }, [enriched]);
+
   /* ── Open edit drawer ── */
   const openEdit = (item: Equipment) => {
     setEditingItem(item);
@@ -272,6 +359,12 @@ export function ProcurementPage() {
     setFormPlannedDate(cd?.planned_delivery_date ?? '');
     setFormEstimatedDate(cd?.estimated_delivery_date ?? '');
     setFormNotes(cd?.procurement_notes ?? '');
+    setFormActualArrival(cd?.actual_arrival_date ?? '');
+    setFormMicdConfirmed(cd?.micd_confirmed === true);
+    setFormStructureReady(cd?.structure_ready === true);
+    setFormInstallationReady(cd?.installation_ready === true);
+    setFormPlannedInstall(cd?.planned_install_date ?? '');
+    setFormActualInstall(cd?.actual_install_date ?? '');
     setDrawerOpen(true);
   };
 
@@ -285,6 +378,12 @@ export function ProcurementPage() {
         planned_delivery_date: formPlannedDate || null,
         estimated_delivery_date: formEstimatedDate || null,
         procurement_notes: formNotes || null,
+        actual_arrival_date: formActualArrival || null,
+        micd_confirmed: formMicdConfirmed,
+        structure_ready: formStructureReady,
+        installation_ready: formInstallationReady,
+        planned_install_date: formPlannedInstall || null,
+        actual_install_date: formActualInstall || null,
       });
       toast.success('保存成功');
       setDrawerOpen(false);
@@ -343,7 +442,7 @@ export function ProcurementPage() {
               {getStatusLabel(st)}
             </span>
             {overdue > 0 && (
-              <span className="text-[11px] font-semibold" style={{ color: OVERDUE_COLOR }}>
+              <span className="text-xs font-semibold" style={{ color: OVERDUE_COLOR }}>
                 逾期{overdue}天
               </span>
             )}
@@ -368,6 +467,65 @@ export function ProcurementPage() {
       key: 'estimated',
       width: 110,
       render: (_: any, record: EnrichedEquipment) => record.config_data?.estimated_delivery_date || '-',
+    },
+    {
+      title: '实际到货',
+      key: 'actual_arrival',
+      width: 100,
+      render: (_: any, record: EnrichedEquipment) => record.config_data?.actual_arrival_date || '-',
+    },
+    {
+      title: 'MICD确认',
+      key: 'micd_confirmed',
+      width: 80,
+      render: (_: any, record: EnrichedEquipment) => {
+        const v = record.config_data?.micd_confirmed;
+        if (v === true) return <span className="text-status-ok font-bold">&#x2713;</span>;
+        if (v === false) return <span className="text-status-danger font-bold">&#x2717;</span>;
+        return '-';
+      },
+    },
+    {
+      title: '结构开口',
+      key: 'structure_ready',
+      width: 80,
+      render: (_: any, record: EnrichedEquipment) => {
+        const v = record.config_data?.structure_ready;
+        if (v === true) return <span className="text-status-ok font-bold">&#x2713;</span>;
+        if (v === false) return <span className="text-status-danger font-bold">&#x2717;</span>;
+        return '-';
+      },
+    },
+    {
+      title: '安装要求',
+      key: 'installation_ready',
+      width: 80,
+      render: (_: any, record: EnrichedEquipment) => {
+        const v = record.config_data?.installation_ready;
+        if (v === true) return <span className="text-status-ok font-bold">&#x2713;</span>;
+        if (v === false) return <span className="text-status-danger font-bold">&#x2717;</span>;
+        return '-';
+      },
+    },
+    {
+      title: '计划上机',
+      key: 'planned_install',
+      width: 100,
+      render: (_: any, record: EnrichedEquipment) => record.config_data?.planned_install_date || '-',
+    },
+    {
+      title: '实际上机',
+      key: 'actual_install',
+      width: 100,
+      render: (_: any, record: EnrichedEquipment) => record.config_data?.actual_install_date || '-',
+    },
+    {
+      title: '生命周期',
+      key: 'lifecycle',
+      width: 160,
+      render: (_: any, record: EnrichedEquipment) => (
+        <LifecycleProgress steps={getLifecycleSteps(record)} />
+      ),
     },
     {
       title: '逾期天数',
@@ -397,6 +555,14 @@ export function ProcurementPage() {
     <div className="flex gap-4">
       {/* ── Main area ── */}
       <div className="flex-1 min-w-0">
+        {/* Empty data notice */}
+        {statusCounts._all === 0 || !equipment.length ? (
+          <div className="rounded-lg border border-status-warn/20 bg-status-warn/5 px-5 py-4 mb-4">
+            <p className="text-sm font-medium text-status-warn">尚未录入采购进度数据</p>
+            <p className="text-xs text-muted-foreground mt-1">当前构型 0 台设备有采购状态，请通过 Excel 导入采购数据或在设备编辑中逐条填写</p>
+          </div>
+        ) : null}
+
         {/* Status summary bar */}
         <div className="flex flex-wrap gap-2 mb-4">
           <button
@@ -458,6 +624,36 @@ export function ProcurementPage() {
           >
             逾期 <b>{statusCounts._overdue}</b>
           </button>
+          <button
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md border px-3 py-1 text-[13px] cursor-pointer transition-colors',
+              filterStatus === '_arrived' ? 'text-white' : 'bg-background'
+            )}
+            style={{
+              borderColor: 'var(--chart-3)',
+              ...(filterStatus === '_arrived'
+                ? { backgroundColor: 'var(--chart-3)', color: '#fff' }
+                : { color: 'var(--chart-3)' }),
+            }}
+            onClick={() => setFilterStatus(filterStatus === '_arrived' ? null : '_arrived')}
+          >
+            已到货 <b>{statusCounts._arrived}</b>
+          </button>
+          <button
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md border px-3 py-1 text-[13px] cursor-pointer transition-colors',
+              filterStatus === '_installed' ? 'text-white' : 'bg-background'
+            )}
+            style={{
+              borderColor: 'var(--chart-5)',
+              ...(filterStatus === '_installed'
+                ? { backgroundColor: 'var(--chart-5)', color: '#fff' }
+                : { color: 'var(--chart-5)' }),
+            }}
+            onClick={() => setFilterStatus(filterStatus === '_installed' ? null : '_installed')}
+          >
+            已上机 <b>{statusCounts._installed}</b>
+          </button>
         </div>
 
         {/* Filter bar */}
@@ -472,6 +668,8 @@ export function ProcurementPage() {
                 <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
               ))}
               <SelectItem value="_overdue">逾期</SelectItem>
+              <SelectItem value="_arrived">已到货</SelectItem>
+              <SelectItem value="_installed">已上机</SelectItem>
             </SelectContent>
           </Select>
 
@@ -526,6 +724,8 @@ export function ProcurementPage() {
 
       {/* ── Right panel ── */}
       <div className="w-[280px] shrink-0 space-y-3">
+        <ChinaMap equipmentByCity={equipmentByCity} />
+
         <Card size="sm">
           <CardHeader>
             <CardTitle>城市分布</CardTitle>
@@ -548,9 +748,9 @@ export function ProcurementPage() {
                   <div key={e.id} className="flex justify-between items-center py-1 border-b border-border/50 last:border-b-0">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs block truncate">{e.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{e.supplier_name || '-'}</span>
+                      <span className="text-xs text-muted-foreground">{e.supplier_name || '-'}</span>
                     </div>
-                    <Badge variant="destructive" className="text-[10px] ml-2 shrink-0">
+                    <Badge variant="destructive" className="text-xs ml-2 shrink-0">
                       {e._overdueDays}天
                     </Badge>
                   </div>
@@ -627,6 +827,59 @@ export function ProcurementPage() {
                 onChange={(e) => setFormNotes(e.target.value)}
                 rows={4}
                 placeholder="采购备注"
+              />
+            </div>
+
+            {/* Physical asset lifecycle fields */}
+            <div className="border-t pt-4 mt-2">
+              <p className="text-sm font-semibold mb-3 text-foreground">实物资产生命周期</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">实际到货日期</label>
+              <Input
+                type="date"
+                value={formActualArrival}
+                onChange={(e) => setFormActualArrival(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="micd_confirmed"
+                checked={formMicdConfirmed}
+                onCheckedChange={(checked) => setFormMicdConfirmed(checked === true)}
+              />
+              <label htmlFor="micd_confirmed" className="text-sm font-medium cursor-pointer">MICD 确认</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="structure_ready"
+                checked={formStructureReady}
+                onCheckedChange={(checked) => setFormStructureReady(checked === true)}
+              />
+              <label htmlFor="structure_ready" className="text-sm font-medium cursor-pointer">结构开口就绪</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="installation_ready"
+                checked={formInstallationReady}
+                onCheckedChange={(checked) => setFormInstallationReady(checked === true)}
+              />
+              <label htmlFor="installation_ready" className="text-sm font-medium cursor-pointer">安装要求就绪</label>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">计划上机日期</label>
+              <Input
+                type="date"
+                value={formPlannedInstall}
+                onChange={(e) => setFormPlannedInstall(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">实际上机日期</label>
+              <Input
+                type="date"
+                value={formActualInstall}
+                onChange={(e) => setFormActualInstall(e.target.value)}
               />
             </div>
           </div>
