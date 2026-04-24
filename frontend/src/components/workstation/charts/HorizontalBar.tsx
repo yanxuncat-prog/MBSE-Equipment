@@ -11,14 +11,14 @@ export function HorizontalBar({ items, title }: Props) {
       {title && <div className="mb-2 text-xs font-semibold">{title}</div>}
       {items.map((item, i) => (
         <div key={item.label} className="mb-1 flex items-center">
-          <span className="mr-1.5 w-[60px] text-right text-[10px] text-muted-foreground">{item.label}</span>
+          <span className="mr-1.5 w-[60px] text-right text-xs text-muted-foreground">{item.label}</span>
           <div className="h-3.5 flex-1 overflow-hidden rounded bg-muted">
             <div
               className="h-full rounded"
               style={{ width: `${(item.value / max) * 100}%`, background: COLORS[i % COLORS.length], minWidth: item.value > 0 ? 2 : 0 }}
             />
           </div>
-          <span className="ml-1.5 w-[50px] text-[10px] text-muted-foreground">{item.value}{item.suffix || ''}</span>
+          <span className="ml-1.5 w-[50px] text-xs text-muted-foreground">{item.value}{item.suffix || ''}</span>
         </div>
       ))}
     </div>

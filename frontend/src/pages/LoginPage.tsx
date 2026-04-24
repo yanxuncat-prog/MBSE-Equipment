@@ -33,7 +33,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-primary p-12 text-primary-foreground">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-primary p-12 text-primary-foreground dark:bg-gradient-to-br dark:from-[oklch(0.22_0.04_280)] dark:to-[oklch(0.16_0.02_260)] dark:text-[oklch(0.90_0.005_260)]">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary-foreground/15 backdrop-blur-sm">
             <Plane className="size-5" />
@@ -45,12 +45,12 @@ export function LoginPage() {
           <h1 className="text-3xl font-bold leading-tight tracking-tight">
             航空设备<br />管理平台
           </h1>
-          <p className="text-sm leading-relaxed text-primary-foreground/70 max-w-sm">
+          <p className="text-sm leading-relaxed text-primary-foreground/70 dark:text-[oklch(0.70_0.01_260)] max-w-sm">
             面向航空制造的设备构型管理系统，覆盖重量平衡、电气负载、DO-160 鉴定、EWIS 布线等全生命周期管理。
           </p>
         </div>
 
-        <p className="text-xs text-primary-foreground/40">
+        <p className="text-xs text-primary-foreground/40 dark:text-[oklch(0.55_0.01_260)]">
           AeroEquip v0.1.0
         </p>
       </div>

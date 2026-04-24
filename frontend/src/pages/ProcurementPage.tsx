@@ -38,16 +38,7 @@ const OVERDUE_COLOR = 'var(--status-danger)';
 const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([value, { label }]) => ({ value, label }));
 
 /* ───── Lifecycle Steps ───── */
-const LIFECYCLE_STEPS = [
-  { key: 'procurement', label: '采购' },
-  { key: 'arrival', label: '到货' },
-  { key: 'micd', label: 'MICD' },
-  { key: 'structure', label: '开口' },
-  { key: 'installation', label: '安装要求' },
-  { key: 'ready', label: '装机就绪' },
-  { key: 'planned', label: '计划上机' },
-  { key: 'installed', label: '已上机' },
-] as const;
+// Steps: 采购 → 到货 → MICD → 开口 → 安装要求 → 装机就绪 → 计划上机 → 已上机
 
 function getLifecycleSteps(e: Equipment): boolean[] {
   const cd = e.config_data;

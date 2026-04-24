@@ -65,7 +65,7 @@ function EquipMarker({ equipment, position, selected, onClick, size }: {
       </mesh>
       {(hovered || selected) && (
         <Html position={[0, 0, r * 3]} center style={{ pointerEvents: 'none' }}>
-          <div className="rounded-md border bg-popover/95 px-2 py-1.5 text-[10px] text-popover-foreground whitespace-nowrap"
+          <div className="rounded-md border bg-popover/95 px-2 py-1.5 text-xs text-popover-foreground whitespace-nowrap"
             style={{ borderColor: color }}>
             <div className="font-semibold" style={{ color }}>{equipment.part_number}</div>
             <div>{equipment.name}</div>
@@ -110,18 +110,18 @@ export function AircraftScene3D({ equipment, zones: _zones, selectedId, onSelect
           />
           <Label htmlFor="show-equipment" className="text-xs cursor-pointer">设备标记</Label>
         </div>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {positioned.length} 台 | 左键旋转 · 滚轮缩放 · 右键平移
         </span>
       </div>
 
       {/* Model info */}
-      <div className="absolute top-2 right-2 z-10 rounded bg-black/75 px-2 py-1 text-[9px] text-neutral-400">
+      <div className="absolute top-2 right-2 z-10 rounded bg-black/75 px-2 py-1 text-xs text-neutral-400">
         CE-25A 完整模型 · 19.6m × 6.3m
       </div>
 
       {/* ATA legend */}
-      <div className="absolute bottom-2 left-2 z-10 flex flex-wrap gap-1.5 rounded-md bg-background/95 px-2 py-1.5 text-[9px] max-w-[450px]">
+      <div className="absolute bottom-2 left-2 z-10 flex flex-wrap gap-1.5 rounded-md bg-background/95 px-2 py-1.5 text-xs max-w-[450px]">
         {[
           ['23', '通信', '#34c759'], ['24', '电源', '#ff9500'], ['26', '防火', '#af52de'],
           ['27', '飞控', '#007aff'], ['31', '指示', '#30b0c7'], ['34', '导航', '#ff6b6b'],

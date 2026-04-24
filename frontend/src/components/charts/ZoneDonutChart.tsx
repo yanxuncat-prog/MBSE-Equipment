@@ -1,11 +1,9 @@
-
-
-const COLORS = ['#5ac8fa', '#34c759', '#ff9500', '#ff6b6b', '#af52de', '#007aff', '#ffcc00', '#636366'];
-
 interface Props {
   data: { zone: string; count: number }[];
   total: number;
 }
+
+const CHART_VARS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'];
 
 export function ZoneDonutChart({ data, total }: Props) {
   const radius = 60;
@@ -16,30 +14,31 @@ export function ZoneDonutChart({ data, total }: Props) {
   const segments = data.map((item, i) => {
     const pct = item.count / total;
     const dash = pct * circumference;
-    const seg = { ...item, dash, offset, color: COLORS[i % COLORS.length], pct };
+    const seg = { ...item, dash, offset, color: CHART_VARS[i % CHART_VARS.length], pct };
     offset += dash;
     return seg;
   });
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <svg width={160} height={160} viewBox="0 0 160 160">
+    <div className="flex items-center gap-4">
+      <svg width={160} height={160} viewBox="0 0 160 160" role="img" aria-label="区域分布环形图">
+        <title>区域分布环形图</title>
         {segments.map((s, i) => (
           <circle key={i} cx={cx} cy={cy} r={radius} fill="none"
-            stroke={s.color} strokeWidth={20}
+            stroke={s.color} strokeWidth={18}
             strokeDasharray={`${s.dash} ${circumference}`}
             strokeDashoffset={-s.offset}
             transform={`rotate(-90, ${cx}, ${cy})`}
           />
         ))}
-        <text x={cx} y={cy - 4} textAnchor="middle" fill="#333" fontSize={20} fontWeight="bold">{total}</text>
-        <text x={cx} y={cy + 12} textAnchor="middle" fill="#999" fontSize={10}>台设备</text>
+        <text x={cx} y={cy - 4} textAnchor="middle" fill="var(--foreground)" fontSize={20} fontWeight="600">{total}</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--muted-foreground)" fontSize={10}>台设备</text>
       </svg>
-      <div>
+      <div className="space-y-1">
         {segments.map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: s.color, flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: '#666' }}>{s.zone} ({(s.pct * 100).toFixed(0)}%)</span>
+          <div key={i} className="flex items-center gap-1.5">
+            <div className="size-2 shrink-0 rounded-sm" style={{ backgroundColor: s.color }} />
+            <span className="text-xs text-muted-foreground">{s.zone} ({(s.pct * 100).toFixed(0)}%)</span>
           </div>
         ))}
       </div>

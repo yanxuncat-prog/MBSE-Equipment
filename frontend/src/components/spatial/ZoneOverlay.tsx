@@ -26,7 +26,7 @@ export function ZoneOverlay({ zone, view }: Props) {
   return (
     <g>
       <rect x={x} y={y} width={width} height={Math.abs(height)} fill={color} stroke="none" />
-      <text x={x + 5} y={y + 14} fontSize={10} fill="#999" fontFamily="monospace">
+      <text x={x + 5} y={y + 14} fontSize={10} fill="var(--muted-foreground)" fontFamily="monospace">
         Zone {zone.zone_code}
       </text>
     </g>

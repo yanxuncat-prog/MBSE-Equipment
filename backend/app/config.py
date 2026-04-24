@@ -1,10 +1,11 @@
+import os
 from pydantic_settings import BaseSettings
+
+_base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://aeroequip:devpassword@localhost:5432/aeroequip"
-    DATABASE_URL_SYNC: str = "postgresql://aeroequip:devpassword@localhost:5432/aeroequip"
-    REDIS_URL: str = "redis://localhost:6379/0"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{os.path.join(_base_dir, 'data', 'aeroequip.db')}"
     SECRET_KEY: str = "dev-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 

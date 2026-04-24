@@ -47,8 +47,8 @@ async def update_procurement(
 ):
     result = await db.execute(
         select(ConfigEquipment).where(
-            ConfigEquipment.config_id == uuid.UUID(config_id),
-            ConfigEquipment.equipment_id == uuid.UUID(equip_id),
+            ConfigEquipment.config_id == config_id,
+            ConfigEquipment.equipment_id == equip_id,
         )
     )
     ce = result.scalar_one_or_none()
@@ -77,8 +77,8 @@ async def batch_update_procurement(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    cid = uuid.UUID(config_id)
-    eids = [uuid.UUID(eid) for eid in body.equipment_ids]
+    cid = config_id
+    eids = [eid for eid in body.equipment_ids]
     result = await db.execute(
         select(ConfigEquipment).where(
             ConfigEquipment.config_id == cid,

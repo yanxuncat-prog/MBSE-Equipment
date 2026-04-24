@@ -48,12 +48,12 @@ export function EquipmentMarker({ equipment, view, selected, onClick }: Props) {
           <animate attributeName="opacity" values="0.5;0.2;0.5" dur="1.5s" repeatCount="indefinite" />
         </circle>
       )}
-      <circle cx={cx} cy={cy} r={r} fill={color} stroke="#fff" strokeWidth={1.5} />
+      <circle cx={cx} cy={cy} r={r} fill={color} stroke="var(--primary-foreground)" strokeWidth={1.5} />
       {hovered && (
         <g>
           <rect x={cx + 10} y={cy - 24} width={Math.max(equipment.part_number.length, equipment.name.length) * 7 + 12} height={32} rx={4} fill="rgba(0,0,0,0.85)" />
           <text x={cx + 16} y={cy - 10} fontSize={10} fill="#fff" fontFamily="monospace">{equipment.part_number}</text>
-          <text x={cx + 16} y={cy + 2} fontSize={9} fill="#ccc">{equipment.name}</text>
+          <text x={cx + 16} y={cy + 2} fontSize={9} fill="var(--muted)">{equipment.name}</text>
         </g>
       )}
     </g>

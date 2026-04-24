@@ -16,21 +16,22 @@ interface Props {
   equipment: Equipment[];
   report?: ValidationReport | null;
   onSelect: (equip: Equipment) => void;
+  onEdit?: (equip: Equipment) => void;
 }
 
 /* ------------------------------------------------------------------ */
 /* Color helpers                                                       */
 /* ------------------------------------------------------------------ */
 function busColor(pct: number): string {
-  if (pct > 100) return '#FF3B30';
-  if (pct > 85) return '#FF9500';
-  return '#34C759';
+  if (pct > 100) return 'var(--status-danger)';
+  if (pct > 85) return 'var(--status-warn)';
+  return 'var(--status-ok)';
 }
 
 function busColorBg(pct: number): string {
-  if (pct > 100) return 'rgba(255,59,48,0.12)';
-  if (pct > 85) return 'rgba(255,149,0,0.12)';
-  return 'rgba(52,199,89,0.10)';
+  if (pct > 100) return 'color-mix(in srgb, var(--status-danger) 12%, transparent)';
+  if (pct > 85) return 'color-mix(in srgb, var(--status-warn) 12%, transparent)';
+  return 'color-mix(in srgb, var(--status-ok) 10%, transparent)';
 }
 
 /* ------------------------------------------------------------------ */
@@ -84,7 +85,7 @@ function busBadgeClasses(pct: number): string {
 /* ------------------------------------------------------------------ */
 /* ElectricalTab Component                                             */
 /* ------------------------------------------------------------------ */
-export function ElectricalTab({ equipment, report, onSelect }: Props) {
+export function ElectricalTab({ equipment, report, onSelect, onEdit }: Props) {
   const [hoveredBus, setHoveredBus] = useState<string | null>(null);
   const [activePhase, setActivePhase] = useState<string>('巡航');
 
@@ -134,12 +135,12 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
     nodes.push({
       id: 'src-gen', label: '发电机', column: 'source',
       x: COL_SOURCE, y: 30, w: NODE_W, h: Math.max(sourceHeight, 40),
-      color: '#1E40AF', value: genCapacity,
+      color: 'var(--chart-1)', value: genCapacity,
     });
     nodes.push({
       id: 'src-bat', label: '电池', column: 'source',
       x: COL_SOURCE, y: 30 + sourceHeight + sourceGap, w: NODE_W, h: Math.max(sourceHeight, 40),
-      color: '#7C3AED', value: batCapacity,
+      color: 'var(--chart-2)', value: batCapacity,
     });
 
     // --- Bus nodes (middle) ---
@@ -190,7 +191,7 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
         const node: SankeyNode = {
           id: `eq-${eq.id}`, label: eq.name, column: 'equipment',
           x: COL_EQUIP, y: equipY, w: NODE_W - 4, h,
-          color: busNodeMap[b.bus_name]?.color ?? '#999',
+          color: busNodeMap[b.bus_name]?.color ?? 'var(--muted-foreground)',
           value: power,
         };
         nodes.push(node);
@@ -216,7 +217,7 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
         const moreNode: SankeyNode = {
           id: `more-${b.bus_name}`, label: `+${eqs.length - 8} 更多...`, column: 'equipment',
           x: COL_EQUIP, y: equipY, w: NODE_W - 4, h: 12,
-          color: '#d1d1d6', value: 0,
+          color: 'var(--muted)', value: 0,
         };
         nodes.push(moreNode);
         equipY += 16;
@@ -356,9 +357,9 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
           <StatsCard
             label="最高负荷"
             value={`${maxLoadRatio.toFixed(1)}%`}
-            color={maxLoadRatio > 85 ? '#FF9500' : '#34C759'}
+            color={maxLoadRatio > 85 ? 'var(--status-warn)' : 'var(--status-ok)'}
           />
-          <StatsCard label="一级用电设备" value={primaryCount} color="#F59E0B" />
+          <StatsCard label="一级用电设备" value={primaryCount} color="var(--status-warn)" />
         </StatsRow>
 
         {/* Sankey Flow Diagram */}
@@ -386,7 +387,10 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
               height={sankeyData.svgH}
               viewBox={`0 0 ${sankeyData.svgW} ${sankeyData.svgH}`}
               className="block w-full min-h-[300px]"
+              role="img"
+              aria-label="电气系统桑基图"
             >
+              <title>电气系统桑基图</title>
               <defs>
                 {/* Glow filter for highlighted buses */}
                 <filter id="el-glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -455,14 +459,14 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
                       <>
                         <text
                           x={node.x + node.w / 2} y={node.y + node.h / 2 - 4}
-                          textAnchor="middle" fill="#fff" fontSize={10} fontWeight={600}
+                          textAnchor="middle" fill="var(--primary-foreground)" fontSize={10} fontWeight={600}
                           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
                         >
                           {node.label}
                         </text>
                         <text
                           x={node.x + node.w / 2} y={node.y + node.h / 2 + 10}
-                          textAnchor="middle" fill="#fff" fontSize={8} fillOpacity={0.8}
+                          textAnchor="middle" fill="var(--primary-foreground)" fontSize={8} fillOpacity={0.8}
                         >
                           {(node.value ?? 0).toFixed(0)} kVA
                         </text>
@@ -472,7 +476,7 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
                       <>
                         <text
                           x={node.x - 4} y={node.y + node.h / 2 - 4}
-                          textAnchor="end" fill="#333" fontSize={9} fontWeight={600}
+                          textAnchor="end" fill="var(--foreground)" fontSize={9} fontWeight={600}
                         >
                           {node.label}
                         </text>
@@ -487,7 +491,7 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
                     {node.column === 'equipment' && (
                       <text
                         x={node.x + node.w + 6} y={node.y + node.h / 2 + 3}
-                        fill="#666" fontSize={8}
+                        fill="var(--muted-foreground)" fontSize={8}
                         className="pointer-events-auto"
                       >
                         <title>{node.label}: {(node.value ?? 0).toFixed(2)} kVA</title>
@@ -500,9 +504,9 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
               })}
 
               {/* Column headers */}
-              <text x={64} y={14} fill="#999" fontSize={10} fontWeight={600}>电源</text>
-              <text x={334} y={14} fill="#999" fontSize={10} fontWeight={600}>母线</text>
-              <text x={614} y={14} fill="#999" fontSize={10} fontWeight={600}>用电设备</text>
+              <text x={64} y={14} fill="var(--muted-foreground)" fontSize={10} fontWeight={600}>电源</text>
+              <text x={334} y={14} fill="var(--muted-foreground)" fontSize={10} fontWeight={600}>母线</text>
+              <text x={614} y={14} fill="var(--muted-foreground)" fontSize={10} fontWeight={600}>用电设备</text>
             </svg>
           </CardContent>
         </Card>
@@ -512,6 +516,7 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
           columns={columns}
           dataSource={equipment}
           onRow={(record) => ({ onClick: () => onSelect(record) })}
+          onEdit={onEdit}
           rowKey="id"
         />
       </div>
@@ -540,14 +545,14 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
                 <Badge
                   key={phase}
                   variant={activePhase === phase ? 'default' : 'outline'}
-                  className={`cursor-pointer text-[11px] ${activePhase === phase ? 'bg-blue-800 hover:bg-blue-700' : ''}`}
+                  className={`cursor-pointer text-xs ${activePhase === phase ? 'bg-blue-800 hover:bg-blue-700' : ''}`}
                   onClick={() => setActivePhase(phase)}
                 >
                   {phase}
                 </Badge>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               当前选中: <strong>{activePhase}</strong> 阶段
             </p>
           </CardContent>
@@ -558,8 +563,8 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
           </CardHeader>
           <CardContent>
             <SimpleDonut segments={[
-              { label: '电设备', value: elecCount, color: '#1E40AF' },
-              { label: '非电设备', value: nonElecCount, color: '#d1d1d6' },
+              { label: '电设备', value: elecCount, color: 'var(--chart-1)' },
+              { label: '非电设备', value: nonElecCount, color: 'var(--muted)' },
             ]} />
           </CardContent>
         </Card>
@@ -570,7 +575,7 @@ export function ElectricalTab({ equipment, report, onSelect }: Props) {
           <CardContent>
             <div className="text-center py-2">
               <div className="text-[28px] font-bold text-amber-500">{primaryCount}</div>
-              <div className="text-[11px] text-muted-foreground">一级用电设备</div>
+              <div className="text-xs text-muted-foreground">一级用电设备</div>
             </div>
           </CardContent>
         </Card>

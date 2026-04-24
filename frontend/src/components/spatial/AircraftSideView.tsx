@@ -17,21 +17,22 @@ const STA_MARKS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1
 
 export function AircraftSideView({ equipment, zones, selectedId, onSelect }: Props) {
   return (
-    <svg viewBox="-20 60 1250 260" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', background: '#fafafa' }}>
+    <svg viewBox="-20 60 1250 260" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', background: '#fafafa' }} role="img" aria-label="飞机侧视图">
+      <title>飞机侧视图</title>
       {/* Zone overlays */}
       {zones.map(z => <ZoneOverlay key={z.id} zone={z} view="side" />)}
 
       {/* Fuselage outline */}
-      <path d={FUSELAGE_PATH} fill="none" stroke="#999" strokeWidth={2} />
+      <path d={FUSELAGE_PATH} fill="none" stroke="var(--muted-foreground)" strokeWidth={2} />
 
       {/* STA ruler */}
       {STA_MARKS.map(sta => (
         <g key={sta}>
-          <line x1={sta} y1={215} x2={sta} y2={225} stroke="#ccc" strokeWidth={0.5} />
-          <text x={sta} y={235} fontSize={8} fill="#999" textAnchor="middle" fontFamily="monospace">{sta}</text>
+          <line x1={sta} y1={215} x2={sta} y2={225} stroke="var(--muted)" strokeWidth={0.5} />
+          <text x={sta} y={235} fontSize={8} fill="var(--muted-foreground)" textAnchor="middle" fontFamily="monospace">{sta}</text>
         </g>
       ))}
-      <line x1={0} y1={220} x2={1200} y2={220} stroke="#ddd" strokeWidth={0.5} />
+      <line x1={0} y1={220} x2={1200} y2={220} stroke="var(--border)" strokeWidth={0.5} />
 
       {/* Equipment markers */}
       {equipment.map(e => (

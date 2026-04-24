@@ -19,11 +19,11 @@ export function ConnectorHistogram({ equipment }: Props) {
       <div className="mb-2 text-xs font-semibold">连接器数分布</div>
       {Object.entries(buckets).map(([label, count], i) => (
         <div key={label} className="mb-1 flex items-center">
-          <span className="mr-1.5 w-8 text-right text-[10px] text-muted-foreground">{label}</span>
+          <span className="mr-1.5 w-8 text-right text-xs text-muted-foreground">{label}</span>
           <div className="h-3.5 flex-1 overflow-hidden rounded bg-muted">
             <div className="h-full rounded" style={{ width: `${(count / max) * 100}%`, background: colors[i % colors.length] }} />
           </div>
-          <span className="ml-1 w-[30px] text-[10px] text-muted-foreground">{count}</span>
+          <span className="ml-1 w-[30px] text-xs text-muted-foreground">{count}</span>
         </div>
       ))}
     </div>

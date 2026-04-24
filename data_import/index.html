@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CE-25A 设备数据库</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Helvetica Neue", sans-serif; background: #f5f5f7; color: #1d1d1f; }
+
+  .header { background: #fff; border-bottom: 1px solid #d2d2d7; padding: 16px 24px; position: sticky; top: 0; z-index: 100; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header .subtitle { font-size: 13px; color: #86868b; margin-top: 2px; }
+
+  .stats-bar { display: flex; gap: 24px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e8e8ed; }
+  .stat { display: flex; flex-direction: column; }
+  .stat .num { font-size: 24px; font-weight: 700; color: #0071e3; }
+  .stat .label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .controls { padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .controls input { padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; width: 300px; outline: none; }
+  .controls input:focus { border-color: #0071e3; box-shadow: 0 0 0 3px rgba(0,113,227,0.15); }
+  .controls select { padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; background: #fff; }
+  .controls button { padding: 8px 16px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; background: #0071e3; color: #fff; font-weight: 500; }
+  .controls button:hover { background: #0077ed; }
+  .controls button.secondary { background: #e8e8ed; color: #1d1d1f; }
+
+  .tab-bar { display: flex; gap: 0; padding: 0 24px; background: #fff; border-bottom: 1px solid #d2d2d7; }
+  .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: #86868b; }
+  .tab:hover { color: #1d1d1f; }
+  .tab.active { color: #0071e3; border-bottom-color: #0071e3; }
+
+  .content { padding: 16px 24px; }
+
+  .table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { position: sticky; top: 0; background: #f5f5f7; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #6e6e73; border-bottom: 1px solid #d2d2d7; white-space: nowrap; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f0f0f5; white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis; }
+  tr:hover td { background: #f0f5ff; }
+  .empty { color: #c7c7cc; font-style: italic; }
+
+  .col-stat { font-size: 10px; color: #86868b; font-weight: 400; display: block; }
+
+  .log-section { margin-top: 16px; }
+  .log-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px; }
+  .log-card .time { font-size: 11px; color: #86868b; }
+  .log-card .source { font-weight: 600; font-size: 14px; }
+  .log-card .detail { font-size: 13px; color: #424245; margin-top: 4px; }
+
+  .empty-state { text-align: center; padding: 80px 24px; color: #86868b; }
+  .empty-state h2 { font-size: 24px; color: #1d1d1f; margin-bottom: 8px; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .badge-yellow { background: #fff8e1; color: #f57f17; }
+  .badge-red { background: #fbe9e7; color: #c62828; }
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+
+  .hidden-col { display: none; }
+  #loading { text-align: center; padding: 40px; color: #86868b; }
+</style>
+</head>
+<body>
+  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <h1>CE-25A 设备数据库</h1>
+      <div class="subtitle">交互式数据导入工具 · SQLite</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span style="font-size:13px; color:#86868b;">构型:</span>
+      <select id="dbConfigSelect" onchange="switchConfig()" style="padding:8px 16px; border:1px solid #d2d2d7; border-radius:8px; font-size:14px; background:#fff; font-weight:600;">
+      </select>
+    </div>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><span class="num" id="totalRows">-</span><span class="label">设备总数</span></div>
+    <div class="stat"><span class="num" id="totalCols">-</span><span class="label">字段数</span></div>
+    <div class="stat"><span class="num" id="totalImports">-</span><span class="label">已导入表</span></div>
+    <div class="stat"><span class="num" id="completeness">-</span><span class="label">数据完整度</span></div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" data-tab="data" onclick="switchTab('data')">设备主表</div>
+    <div class="tab" data-tab="load" onclick="switchTab('load')">负载电气特性</div>
+    <div class="tab" data-tab="mode" onclick="switchTab('mode')">负载工作模式</div>
+    <div class="tab" data-tab="phase" onclick="switchTab('phase')">飞行阶段定义</div>
+    <div class="tab" data-tab="logs" onclick="switchTab('logs')">导入日志</div>
+    <div class="tab" data-tab="columns" onclick="switchTab('columns')">字段统计</div>
+  </div>
+
+  <div class="controls" id="dataControls">
+    <input type="text" id="searchInput" placeholder="搜索设备名称、LIN号、设备编号..." oninput="filterTable()">
+    <select id="systemFilter" onchange="filterTable()">
+      <option value="">全部系统</option>
+    </select>
+    <button class="secondary" onclick="toggleEmptyCols()">显示/隐藏空列</button>
+    <button onclick="loadData()">刷新</button>
+  </div>
+
+  <div class="content">
+    <div id="dataTab">
+      <div id="loading">加载中...</div>
+      <div class="table-wrap" id="tableWrap" style="display:none;">
+        <table id="dataTable"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div id="loadTab" style="display:none;">
+      <div style="padding:0 0 12px 0; display:flex; gap:12px; align-items:center;">
+        <input type="text" id="loadSearch" placeholder="搜索设备名称、负载ID..." oninput="filterLoadTable()" style="padding:8px 12px; border:1px solid #d2d2d7; border-radius:8px; font-size:14px; width:300px;">
+        <select id="voltageFilter" onchange="filterLoadTable()" style="padding:8px 12px; border:1px solid #d2d2d7; border-radius:8px; font-size:14px; background:#fff;">
+          <option value="">全部电压</option>
+        </select>
+        <span id="loadCount" style="font-size:13px; color:#86868b;"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="loadTable"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div id="modeTab" style="display:none;">
+      <div style="padding:0 0 12px 0; display:flex; gap:12px; align-items:center;">
+        <input type="text" id="modeSearch" placeholder="搜索负载ID、设备名称..." oninput="filterGenericTable('mode')" style="padding:8px 12px; border:1px solid #d2d2d7; border-radius:8px; font-size:14px; width:300px;">
+        <span id="modeCount" style="font-size:13px; color:#86868b;"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="modeTable"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div id="phaseTab" style="display:none;">
+      <div class="table-wrap">
+        <table id="phaseTable"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div id="logsTab" style="display:none;">
+      <div class="log-section" id="logList"></div>
+    </div>
+
+    <div id="columnsTab" style="display:none;">
+      <div class="table-wrap">
+        <table id="colTable"><thead><tr><th>字段名</th><th>非空值</th><th>填充率</th><th>来源</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
+<script>
+let DATA = { columns: [], rows: [], total: 0, col_stats: {}, logs: [] };
+let showEmptyCols = false;
+let currentDbConfig = 'X号构型';
+
+function dbParam() {
+  return 'db=' + encodeURIComponent(currentDbConfig);
+}
+
+async function switchConfig() {
+  currentDbConfig = document.getElementById('dbConfigSelect').value;
+  await loadData();
+  // 如果当前在子表tab，也刷新
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab) {
+    const tab = activeTab.dataset.tab;
+    if (tab === 'load') loadLoadData();
+    if (tab === 'mode') loadGenericTable('负载工作模式', 'mode');
+    if (tab === 'phase') loadGenericTable('飞行阶段定义', 'phase');
+  }
+}
+
+async function loadData() {
+  try {
+    const res = await fetch('/api/data?' + dbParam());
+    DATA = await res.json();
+    // 填充构型选择器（首次）
+    const select = document.getElementById('dbConfigSelect');
+    if (DATA.db_configs && select.options.length === 0) {
+      for (const c of DATA.db_configs) {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        if (c === currentDbConfig) opt.selected = true;
+        select.appendChild(opt);
+      }
+    }
+    render();
+  } catch(e) {
+    document.getElementById('loading').textContent = '连接失败，请确认服务器正在运行';
+  }
+}
+
+function render() {
+  document.getElementById('loading').style.display = 'none';
+
+  // Stats
+  document.getElementById('totalRows').textContent = DATA.total;
+  document.getElementById('totalCols').textContent = DATA.columns.length;
+  document.getElementById('totalImports').textContent = DATA.logs.length;
+
+  if (DATA.total > 0 && DATA.columns.length > 1) {
+    const totalCells = DATA.total * (DATA.columns.length - 1); // exclude LIN号
+    let filledCells = 0;
+    for (const col of DATA.columns) {
+      if (col !== 'LIN号') filledCells += (DATA.col_stats[col] || 0);
+    }
+    document.getElementById('completeness').textContent = (filledCells / totalCells * 100).toFixed(1) + '%';
+  } else {
+    document.getElementById('completeness').textContent = '-';
+  }
+
+  renderTable();
+  renderLogs();
+  renderColStats();
+  populateSystemFilter();
+}
+
+function renderTable() {
+  const wrap = document.getElementById('tableWrap');
+  const table = document.getElementById('dataTable');
+
+  if (DATA.total === 0) {
+    wrap.style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('loading').innerHTML = '<div class="empty-state"><h2>数据库为空</h2><p>请在终端中告诉 Claude 要导入哪个表</p></div>';
+    return;
+  }
+
+  wrap.style.display = 'block';
+
+  // Determine which columns to show
+  const visibleCols = DATA.columns.filter(col => {
+    if (showEmptyCols) return true;
+    return (DATA.col_stats[col] || 0) > 0;
+  });
+
+  // Header
+  let thead = '<tr>';
+  thead += '<th style="position:sticky;left:0;z-index:10;background:#f5f5f7">#</th>';
+  for (const col of visibleCols) {
+    const stat = DATA.col_stats[col] || 0;
+    const pct = DATA.total > 0 ? (stat / DATA.total * 100).toFixed(0) : 0;
+    thead += `<th>${col}<span class="col-stat">${stat}/${DATA.total} (${pct}%)</span></th>`;
+  }
+  thead += '</tr>';
+  table.querySelector('thead').innerHTML = thead;
+
+  // Body
+  let tbody = '';
+  for (let i = 0; i < DATA.rows.length; i++) {
+    const row = DATA.rows[i];
+    tbody += `<tr data-idx="${i}">`;
+    tbody += `<td style="position:sticky;left:0;background:#fff;font-size:11px;color:#86868b">${i + 1}</td>`;
+    for (const col of visibleCols) {
+      const val = row[col];
+      if (val === null || val === undefined || val === '') {
+        tbody += '<td class="empty">-</td>';
+      } else {
+        tbody += `<td title="${String(val)}">${String(val)}</td>`;
+      }
+    }
+    tbody += '</tr>';
+  }
+  table.querySelector('tbody').innerHTML = tbody;
+}
+
+function renderLogs() {
+  const list = document.getElementById('logList');
+  if (DATA.logs.length === 0) {
+    list.innerHTML = '<div class="empty-state"><h2>暂无导入记录</h2></div>';
+    return;
+  }
+  let html = '';
+  for (const log of DATA.logs) {
+    html += `<div class="log-card">
+      <span class="time">${log.导入时间}</span>
+      <div class="source">${log.来源表}</div>
+      <div class="detail">新增 <span class="badge badge-green">${log.新增行数}</span> 行，
+      更新 <span class="badge badge-blue">${log.更新行数}</span> 行，
+      跳过 <span class="badge badge-yellow">${log.跳过行数}</span> 行，
+      新增字段 <span class="badge badge-green">${log.新增列数}</span> 个</div>
+      <div class="detail" style="margin-top:4px">${log.备注 || ''}</div>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function renderColStats() {
+  const tbody = document.getElementById('colTable').querySelector('tbody');
+  let html = '';
+  for (const col of DATA.columns) {
+    const stat = DATA.col_stats[col] || 0;
+    const pct = DATA.total > 0 ? (stat / DATA.total * 100) : 0;
+    let badge = 'badge-green';
+    if (pct < 50) badge = 'badge-red';
+    else if (pct < 80) badge = 'badge-yellow';
+
+    // Find source from logs
+    let source = '-';
+    for (const log of DATA.logs) {
+      if (log.备注 && log.备注.includes(col)) { source = log.来源表; break; }
+    }
+
+    html += `<tr>
+      <td><strong>${col}</strong></td>
+      <td>${stat} / ${DATA.total}</td>
+      <td><span class="badge ${badge}">${pct.toFixed(1)}%</span></td>
+      <td>${source}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+function populateSystemFilter() {
+  const select = document.getElementById('systemFilter');
+  const systems = new Set();
+  for (const row of DATA.rows) {
+    if (row['系统章节']) systems.add(row['系统章节']);
+  }
+  let opts = '<option value="">全部系统</option>';
+  for (const s of [...systems].sort()) {
+    opts += `<option value="${s}">${s}</option>`;
+  }
+  select.innerHTML = opts;
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const sys = document.getElementById('systemFilter').value;
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  rows.forEach(tr => {
+    const idx = parseInt(tr.dataset.idx);
+    const row = DATA.rows[idx];
+    if (!row) return;
+
+    let show = true;
+    if (q) {
+      const text = Object.values(row).join(' ').toLowerCase();
+      show = text.includes(q);
+    }
+    if (sys && show) {
+      show = row['系统章节'] === sys;
+    }
+    tr.style.display = show ? '' : 'none';
+  });
+}
+
+function toggleEmptyCols() {
+  showEmptyCols = !showEmptyCols;
+  renderTable();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+  document.getElementById('dataTab').style.display = tab === 'data' ? '' : 'none';
+  document.getElementById('loadTab').style.display = tab === 'load' ? '' : 'none';
+  document.getElementById('modeTab').style.display = tab === 'mode' ? '' : 'none';
+  document.getElementById('phaseTab').style.display = tab === 'phase' ? '' : 'none';
+  document.getElementById('logsTab').style.display = tab === 'logs' ? '' : 'none';
+  document.getElementById('columnsTab').style.display = tab === 'columns' ? '' : 'none';
+  document.getElementById('dataControls').style.display = tab === 'data' ? '' : 'none';
+
+  if (tab === 'load') loadLoadData();
+  if (tab === 'mode') loadGenericTable('负载工作模式', 'mode');
+  if (tab === 'phase') loadGenericTable('飞行阶段定义', 'phase');
+}
+
+// ============================================================
+// 负载电气特性子表
+// ============================================================
+let LOAD_DATA = { columns: [], rows: [], total: 0, col_stats: {} };
+
+async function loadLoadData() {
+  const res = await fetch('/api/data?table=' + encodeURIComponent('负载电气特性') + '&' + dbParam());
+  LOAD_DATA = await res.json();
+  renderLoadTable();
+  populateVoltageFilter();
+}
+
+function populateVoltageFilter() {
+  const select = document.getElementById('voltageFilter');
+  const voltages = new Set();
+  for (const row of LOAD_DATA.rows) {
+    const v = row['正常工作电压等级(V)'];
+    if (v) voltages.add(v);
+  }
+  let opts = '<option value="">全部电压</option>';
+  for (const v of [...voltages].sort()) {
+    opts += `<option value="${v}">${v}V</option>`;
+  }
+  select.innerHTML = opts;
+}
+
+function renderLoadTable() {
+  const table = document.getElementById('loadTable');
+  document.getElementById('loadCount').textContent = `${LOAD_DATA.total} 条记录`;
+
+  const visibleCols = LOAD_DATA.columns.filter(c => (LOAD_DATA.col_stats[c] || 0) > 0);
+
+  let thead = '<tr><th style="position:sticky;left:0;z-index:10;background:#f5f5f7">#</th>';
+  for (const col of visibleCols) {
+    const stat = LOAD_DATA.col_stats[col] || 0;
+    const pct = LOAD_DATA.total > 0 ? (stat / LOAD_DATA.total * 100).toFixed(0) : 0;
+    thead += `<th>${col}<span class="col-stat">${stat}/${LOAD_DATA.total} (${pct}%)</span></th>`;
+  }
+  thead += '</tr>';
+  table.querySelector('thead').innerHTML = thead;
+
+  let tbody = '';
+  for (let i = 0; i < LOAD_DATA.rows.length; i++) {
+    const row = LOAD_DATA.rows[i];
+    tbody += `<tr data-lidx="${i}">`;
+    tbody += `<td style="position:sticky;left:0;background:#fff;font-size:11px;color:#86868b">${i + 1}</td>`;
+    for (const col of visibleCols) {
+      const val = row[col];
+      if (val === null || val === undefined || val === '') {
+        tbody += '<td class="empty">-</td>';
+      } else {
+        tbody += `<td title="${String(val)}">${String(val)}</td>`;
+      }
+    }
+    tbody += '</tr>';
+  }
+  table.querySelector('tbody').innerHTML = tbody;
+}
+
+function filterLoadTable() {
+  const q = document.getElementById('loadSearch').value.toLowerCase();
+  const volt = document.getElementById('voltageFilter').value;
+  document.querySelectorAll('#loadTable tbody tr').forEach(tr => {
+    const idx = parseInt(tr.dataset.lidx);
+    const row = LOAD_DATA.rows[idx];
+    if (!row) return;
+    let show = true;
+    if (q) {
+      const text = Object.values(row).join(' ').toLowerCase();
+      show = text.includes(q);
+    }
+    if (volt && show) {
+      show = row['正常工作电压等级(V)'] === volt;
+    }
+    tr.style.display = show ? '' : 'none';
+  });
+}
+
+// ============================================================
+// 通用子表加载 (负载工作模式、飞行阶段定义)
+// ============================================================
+let GENERIC_DATA = {};
+
+async function loadGenericTable(tableName, tabKey) {
+  const res = await fetch('/api/data?table=' + encodeURIComponent(tableName) + '&' + dbParam());
+  GENERIC_DATA[tabKey] = await res.json();
+  renderGenericTable(tabKey);
+}
+
+function renderGenericTable(tabKey) {
+  const d = GENERIC_DATA[tabKey];
+  const table = document.getElementById(tabKey + 'Table');
+  const countEl = document.getElementById(tabKey + 'Count');
+  if (countEl) countEl.textContent = `${d.total} 条记录`;
+
+  const visibleCols = d.columns.filter(c => (d.col_stats[c] || 0) > 0);
+
+  let thead = '<tr><th style="position:sticky;left:0;z-index:10;background:#f5f5f7">#</th>';
+  for (const col of visibleCols) {
+    const stat = d.col_stats[col] || 0;
+    const pct = d.total > 0 ? (stat / d.total * 100).toFixed(0) : 0;
+    thead += `<th>${col}<span class="col-stat">${stat}/${d.total} (${pct}%)</span></th>`;
+  }
+  thead += '</tr>';
+  table.querySelector('thead').innerHTML = thead;
+
+  let tbody = '';
+  for (let i = 0; i < d.rows.length; i++) {
+    const row = d.rows[i];
+    tbody += `<tr data-gidx="${i}" data-tab="${tabKey}">`;
+    tbody += `<td style="position:sticky;left:0;background:#fff;font-size:11px;color:#86868b">${i+1}</td>`;
+    for (const col of visibleCols) {
+      const val = row[col];
+      if (val === null || val === undefined || val === '') {
+        tbody += '<td class="empty">-</td>';
+      } else {
+        tbody += `<td title="${String(val)}">${String(val)}</td>`;
+      }
+    }
+    tbody += '</tr>';
+  }
+  table.querySelector('tbody').innerHTML = tbody;
+}
+
+function filterGenericTable(tabKey) {
+  const q = document.getElementById(tabKey + 'Search').value.toLowerCase();
+  const d = GENERIC_DATA[tabKey];
+  document.querySelectorAll(`#${tabKey}Table tbody tr`).forEach(tr => {
+    const idx = parseInt(tr.dataset.gidx);
+    const row = d.rows[idx];
+    if (!row) return;
+    const text = Object.values(row).join(' ').toLowerCase();
+    tr.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+// Auto-refresh every 5 seconds
+loadData();
+setInterval(loadData, 5000);
+</script>
+</body>
+</html>
