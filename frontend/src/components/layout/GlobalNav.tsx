@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { toast } from 'sonner';
+import { Plus, Search, FileDown } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useConfigStore } from '@/store/configStore';
 import { listPrograms, listSeries, listConfigs } from '@/api/configurations';
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { NotificationCenter } from './NotificationCenter';
+import { downloadWordReport } from '@/api/documents';
 
 export const workstationActions = {
   onAdd: null as (() => void) | null,
@@ -81,6 +83,23 @@ export function GlobalNav() {
     if (value) setActiveConfig(value);
   };
 
+  const [exporting, setExporting] = useState(false);
+  const handleExportWord = useCallback(async () => {
+    if (!activeConfigId) {
+      toast.error('请先选择构型');
+      return;
+    }
+    setExporting(true);
+    try {
+      await downloadWordReport(activeConfigId);
+      toast.success('Word报告下载成功');
+    } catch {
+      toast.error('导出失败');
+    } finally {
+      setExporting(false);
+    }
+  }, [activeConfigId]);
+
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2 whitespace-nowrap">
       {needsConfig && (
@@ -151,8 +170,20 @@ export function GlobalNav() {
         </div>
       )}
 
-      {/* Spacer + Notification Center */}
+      {/* Spacer + Actions */}
       <div className="flex-1" />
+      {activeConfigId && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="shrink-0"
+          disabled={exporting}
+          onClick={handleExportWord}
+        >
+          <FileDown className="size-3.5" />
+          {exporting ? '导出中...' : '导出Word'}
+        </Button>
+      )}
       <NotificationCenter />
     </div>
   );
