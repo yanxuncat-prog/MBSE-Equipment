@@ -73,7 +73,7 @@ async def export_equipment(
             selectinload(ConfigEquipmentModel.equipment),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
-        .order_by(ConfigEquipmentModel.equipment_id)
+        .order_by(ConfigEquipmentModel.lin_number)
     )
     ce_list = list(result.scalars().unique().all())
 

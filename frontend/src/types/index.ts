@@ -1,6 +1,7 @@
 export type ConstraintStatus = 'pass' | 'warning' | 'blocked';
 
 export interface ConfigEquipmentData {
+  equipment_id: string | null;
   zone_id: string | null;
   zone_name: string | null;
   sta: number | null;

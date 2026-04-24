@@ -187,7 +187,7 @@ async def import_preview(
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
-        .order_by(ConfigEquipmentModel.equipment_id)
+        .order_by(ConfigEquipmentModel.lin_number)
     )
     ce_list = list(result.scalars().unique().all())
 
@@ -351,9 +351,12 @@ async def import_apply(
             )
             db.add(new_equip)
 
-            # Create config_equipment link
+            # Create config_equipment link (lin_number is PK, auto-generate if missing)
+            if "lin_number" not in ce_fields or not ce_fields["lin_number"]:
+                ce_fields["lin_number"] = f"AUTO-{uuid.uuid4().hex[:8].upper()}"
             new_ce = ConfigEquipmentModel(
                 config_id=config_id,
+                lin_number=ce_fields.pop("lin_number"),
                 equipment_id=equipment_id,
                 **ce_fields,
             )

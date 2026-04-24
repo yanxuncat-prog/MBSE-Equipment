@@ -15,7 +15,7 @@ async def list_configs(db: AsyncSession, program_id: str) -> list[dict]:
     stmt = (
         select(
             Configuration,
-            func.count(ConfigEquipmentModel.equipment_id).label("equipment_count"),
+            func.count(ConfigEquipmentModel.lin_number).label("equipment_count"),
         )
         .outerjoin(ConfigEquipmentModel, ConfigEquipmentModel.config_id == Configuration.id)
         .where(Configuration.program_id == program_id)
@@ -37,7 +37,7 @@ async def get_config(db: AsyncSession, config_id: str) -> dict | None:
     stmt = (
         select(
             Configuration,
-            func.count(ConfigEquipmentModel.equipment_id).label("equipment_count"),
+            func.count(ConfigEquipmentModel.lin_number).label("equipment_count"),
         )
         .outerjoin(ConfigEquipmentModel, ConfigEquipmentModel.config_id == Configuration.id)
         .where(Configuration.id == config_id)
@@ -95,6 +95,7 @@ async def clone_config(db: AsyncSession, source_id: str, new_version: str, user_
     for ce in source_entries:
         new_ce = ConfigEquipmentModel(
             config_id=new_config.id,
+            lin_number=ce.lin_number,
             equipment_id=ce.equipment_id,
             zone_id=ce.zone_id,
             sta=ce.sta,
@@ -130,7 +131,7 @@ async def lock_baseline(db: AsyncSession, config_id: str) -> dict | None:
 
     # Get equipment count
     count_result = await db.execute(
-        select(func.count(ConfigEquipmentModel.equipment_id)).where(
+        select(func.count(ConfigEquipmentModel.lin_number)).where(
             ConfigEquipmentModel.config_id == config.id
         )
     )
@@ -139,7 +140,7 @@ async def lock_baseline(db: AsyncSession, config_id: str) -> dict | None:
 
 
 async def add_equipment_to_config(
-    db: AsyncSession, config_id: str, equipment_id: str
+    db: AsyncSession, config_id: str, lin_number: str, equipment_id: str | None = None
 ) -> bool:
     """Adds equipment to config via ConfigEquipment. Fails if config is locked."""
     result = await db.execute(
@@ -151,25 +152,27 @@ async def add_equipment_to_config(
     if config.status != "draft":
         raise ValueError("Cannot modify a locked configuration")
 
-    # Verify equipment exists
-    equip_result = await db.execute(
-        select(Equipment.id).where(Equipment.id == equipment_id)
-    )
-    if equip_result.scalar_one_or_none() is None:
-        raise ValueError("Equipment not found")
+    # Verify equipment exists if provided
+    if equipment_id:
+        equip_result = await db.execute(
+            select(Equipment.id).where(Equipment.id == equipment_id)
+        )
+        if equip_result.scalar_one_or_none() is None:
+            raise ValueError("Equipment not found")
 
-    # Check if already associated
+    # Check if lin_number already used in this config
     existing = await db.execute(
         select(ConfigEquipmentModel).where(
             ConfigEquipmentModel.config_id == config_id,
-            ConfigEquipmentModel.equipment_id == equipment_id,
+            ConfigEquipmentModel.lin_number == lin_number,
         )
     )
     if existing.scalar_one_or_none() is not None:
-        raise ValueError("Equipment already in this configuration")
+        raise ValueError("LIN number already exists in this configuration")
 
     ce = ConfigEquipmentModel(
         config_id=config_id,
+        lin_number=lin_number,
         equipment_id=equipment_id,
     )
     db.add(ce)
@@ -178,7 +181,7 @@ async def add_equipment_to_config(
 
 
 async def remove_equipment_from_config(
-    db: AsyncSession, config_id: str, equipment_id: str
+    db: AsyncSession, config_id: str, lin_number: str
 ) -> bool:
     """Removes from config. Fails if locked."""
     result = await db.execute(
@@ -192,7 +195,7 @@ async def remove_equipment_from_config(
 
     stmt = delete(ConfigEquipmentModel).where(
         ConfigEquipmentModel.config_id == config_id,
-        ConfigEquipmentModel.equipment_id == equipment_id,
+        ConfigEquipmentModel.lin_number == lin_number,
     )
     result = await db.execute(stmt)
     if result.rowcount == 0:

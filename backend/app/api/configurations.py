@@ -140,36 +140,43 @@ async def unfreeze_configuration(
     return _to_response({"config": config, "equipment_count": equipment_count})
 
 
-@router.post("/configurations/{config_id}/equipment/{equipment_id}", status_code=204)
+class AddEquipmentBody(BaseModel):
+    lin_number: str
+    equipment_id: str | None = None
+
+
+@router.post("/configurations/{config_id}/equipment", status_code=204)
 async def add_equipment(
     config_id: str,
-    equipment_id: str,
+    body: AddEquipmentBody,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     try:
-        await configuration_svc.add_equipment_to_config(db, config_id, equipment_id)
+        await configuration_svc.add_equipment_to_config(
+            db, config_id, body.lin_number, body.equipment_id
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/configurations/{config_id}/equipment/{equipment_id}", status_code=204)
+@router.delete("/configurations/{config_id}/equipment/{lin_number}", status_code=204)
 async def remove_equipment(
     config_id: str,
-    equipment_id: str,
+    lin_number: str,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     try:
-        await configuration_svc.remove_equipment_from_config(db, config_id, equipment_id)
+        await configuration_svc.remove_equipment_from_config(db, config_id, lin_number)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.patch("/configurations/{config_id}/equipment/{equipment_id}")
+@router.patch("/configurations/{config_id}/equipment/{lin_number}")
 async def update_config_equipment(
     config_id: str,
-    equipment_id: str,
+    lin_number: str,
     body: EquipmentFullUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -184,14 +191,14 @@ async def update_config_equipment(
     if not config:
         raise HTTPException(status_code=404, detail="构型不存在")
 
-    # Load config_equipment record
+    # Load config_equipment record by (config_id, lin_number)
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
         )
-        .where(ConfigEquipmentModel.config_id == config_id, ConfigEquipmentModel.equipment_id == equipment_id)
+        .where(ConfigEquipmentModel.config_id == config_id, ConfigEquipmentModel.lin_number == lin_number)
     )
     ce = result.scalar_one_or_none()
     if not ce:
@@ -277,7 +284,7 @@ async def update_config_equipment(
         audit = AuditLog(
             id=str(uuid.uuid4()),
             entity_type="config_equipment",
-            entity_id=f"{config_id}:{equipment_id}",
+            entity_id=f"{config_id}:{lin_number}",
             action="update",
             old_value=old_values,
             new_value=new_values,

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class ConfigEquipmentData(BaseModel):
     """Config-specific attributes for an equipment item."""
+    equipment_id: str | None = None
     zone_id: UUID | None = None
     zone_name: str | None = None
     sta: float | None = None
@@ -92,6 +93,8 @@ class EquipmentCreate(BaseModel):
 
 class ConfigEquipmentUpdate(BaseModel):
     """Update config-specific fields (STA/BL/WL, bonding, procurement, weight/CG/electrical)."""
+    equipment_id: str | None = None
+
     sta: float | None = None
     wl: float | None = None
     bl: float | None = None
@@ -108,7 +111,6 @@ class ConfigEquipmentUpdate(BaseModel):
     equipment_level: str | None = None
     is_optional: bool | None = None
     internal_number: str | None = None
-    lin_number: str | None = None
 
     # Per-config weight & CG
     mass_kg: float | None = None

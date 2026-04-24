@@ -98,8 +98,8 @@ async def seed():
         db.add(config)
         await db.flush()
 
-        for equip in all_equip:
-            ce = ConfigEquipment(config_id=config.id, equipment_id=equip.id)
+        for idx, equip in enumerate(all_equip, 1):
+            ce = ConfigEquipment(config_id=config.id, lin_number=f"LIN-{idx:04d}", equipment_id=equip.id)
             db.add(ce)
 
         # Create a draft V1.1 for working
@@ -113,8 +113,8 @@ async def seed():
         db.add(config_draft)
         await db.flush()
 
-        for equip in all_equip:
-            ce = ConfigEquipment(config_id=config_draft.id, equipment_id=equip.id)
+        for idx, equip in enumerate(all_equip, 1):
+            ce = ConfigEquipment(config_id=config_draft.id, lin_number=f"LIN-{idx:04d}", equipment_id=equip.id)
             db.add(ce)
 
         await db.commit()

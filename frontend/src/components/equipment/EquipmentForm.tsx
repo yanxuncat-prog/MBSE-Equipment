@@ -207,9 +207,11 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
           }
         }
 
+        const linNumber = equipment.config_data?.lin_number;
+        if (!linNumber) throw new Error('LIN号缺失，无法保存');
         const url = reason
-          ? `/configurations/${activeConfigId}/equipment/${equipment.id}?reason=${encodeURIComponent(reason)}`
-          : `/configurations/${activeConfigId}/equipment/${equipment.id}`;
+          ? `/configurations/${activeConfigId}/equipment/${encodeURIComponent(linNumber)}?reason=${encodeURIComponent(reason)}`
+          : `/configurations/${activeConfigId}/equipment/${encodeURIComponent(linNumber)}`;
         await client.patch(url, {
           equipment: Object.keys(eqFields).length > 0 ? eqFields : undefined,
           config_equipment: Object.keys(ceFields).length > 0 ? ceFields : undefined,

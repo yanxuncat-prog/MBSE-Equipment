@@ -13,7 +13,8 @@ class ConfigEquipment(Base):
     __tablename__ = "config_equipment"
 
     config_id: Mapped[str] = mapped_column(String(36), ForeignKey("configurations.id"), primary_key=True)
-    equipment_id: Mapped[str] = mapped_column(String(36), ForeignKey("equipment.id"), primary_key=True)
+    lin_number: Mapped[str] = mapped_column(String(50), primary_key=True, comment="LIN号(构型内唯一标识)")
+    equipment_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("equipment.id"), index=True, comment="关联设备库")
 
     # Installation position (config-specific)
     zone_id: Mapped[str | None] = mapped_column(ForeignKey("zones.id"))
@@ -37,7 +38,6 @@ class ConfigEquipment(Base):
     equipment_level: Mapped[str | None] = mapped_column(String(50), comment="设备等级")
     is_optional: Mapped[bool | None] = mapped_column(comment="是否选装设备")
     internal_number: Mapped[str | None] = mapped_column(String(50), comment="内部设备编号")
-    lin_number: Mapped[str | None] = mapped_column(String(50), comment="LIN号")
 
     # --- Per-config weight & CG ---
     mass_kg: Mapped[float | None] = mapped_column(Float, comment="设备实测重量(kg)")
@@ -84,7 +84,7 @@ class ConfigEquipment(Base):
     actual_install_date: Mapped[date | None] = mapped_column(Date, comment="实际上机日期")
 
     # Relationships
-    equipment: Mapped["Equipment"] = relationship()
+    equipment: Mapped["Equipment | None"] = relationship()
     zone: Mapped["Zone | None"] = relationship()
     bus: Mapped["BusDefinition | None"] = relationship()
 

@@ -777,8 +777,11 @@ async def create_configurations(db: AsyncSession, equip_map: dict, base: dict):
             # Get bonding data
             bonding = _bonding_data.get(pn, {})
 
+            # Use LIN number from config data, or auto-generate
+            lin_num = cfg_data.get("lin_number") or f"LIN-{idx + 1:04d}"
             ce = ConfigEquipment(
                 config_id=config.id,
+                lin_number=lin_num,
                 equipment_id=equip.id,
                 zone_id=install.get("zone_id"),
                 sta=install.get("sta"),
