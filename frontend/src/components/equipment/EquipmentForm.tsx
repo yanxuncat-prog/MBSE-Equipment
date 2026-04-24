@@ -6,265 +6,379 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import type { Equipment } from '../../types';
+import { useConfigStore } from '../../store/configStore';
+import client from '../../api/client';
+import { ChangeLogViewer } from './ChangeLogViewer';
 
 interface Props {
   open: boolean;
-  equipment: Equipment | null;  // null = create mode
-  onSave: (values: any) => void;
+  equipment: Equipment | null;
+  onSave: (values: any, reason?: string) => void;
   onCancel: () => void;
 }
 
-interface FormState {
-  part_number: string;
-  name: string;
-  ata_chapter: string;
-  equipment_type: string;
-  status: string;
-  description: string;
-  mass_kg: string;
-  sta: string;
-  wl: string;
-  bl: string;
-  power_kva_normal: string;
+/* ── Field metadata ── */
+interface FieldDef {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'boolean' | 'select' | 'textarea';
+  options?: { value: string; label: string }[];
+  target: 'equipment' | 'config_equipment' | 'weight_balance' | 'electrical_load';
 }
 
-const INITIAL_STATE: FormState = {
-  part_number: '',
-  name: '',
-  ata_chapter: '',
-  equipment_type: 'LRU',
-  status: 'in_development',
-  description: '',
-  mass_kg: '',
-  sta: '',
-  wl: '',
-  bl: '',
-  power_kva_normal: '',
-};
+const BOOL_OPTS = [
+  { value: '__none__', label: '未设置' },
+  { value: 'true', label: '是' },
+  { value: 'false', label: '否' },
+];
+
+/* ── Field groups ── */
+const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
+  {
+    key: 'basic', label: '基本信息',
+    fields: [
+      { key: 'part_number', label: '件号', type: 'text', target: 'equipment' },
+      { key: 'name', label: '名称', type: 'text', target: 'equipment' },
+      { key: 'name_en', label: '英文名称', type: 'text', target: 'equipment' },
+      { key: 'lin_number', label: 'LIN号', type: 'text', target: 'equipment' },
+      { key: 'ata_chapter', label: 'ATA章节', type: 'text', target: 'equipment' },
+      { key: 'equipment_type', label: '类型', type: 'select', target: 'equipment', options: [
+        { value: 'LRU', label: 'LRU' }, { value: 'SRU', label: 'SRU' },
+        { value: 'structural', label: '结构件' }, { value: 'cable', label: '线缆' },
+      ]},
+      { key: 'status', label: '状态', type: 'select', target: 'equipment', options: [
+        { value: 'in_development', label: '在研' }, { value: 'qualifying', label: '鉴定中' },
+        { value: 'approved', label: '已批准' }, { value: 'discontinued', label: '停产' },
+      ]},
+      { key: 'description', label: '描述', type: 'textarea', target: 'equipment' },
+      { key: 'responsible_person', label: '负责人', type: 'text', target: 'equipment' },
+    ],
+  },
+  {
+    key: 'classify', label: '分类属性',
+    fields: [
+      { key: 'is_electrical', label: '是否电设备', type: 'boolean', target: 'equipment' },
+      { key: 'is_primary_electrical', label: '一级用电设备', type: 'boolean', target: 'equipment' },
+      { key: 'has_eicd', label: '是否有EICD', type: 'boolean', target: 'equipment' },
+      { key: 'first_flight_onboard', label: '首飞装机', type: 'boolean', target: 'equipment' },
+      { key: 'phase2_onboard', label: '二阶段装机', type: 'boolean', target: 'equipment' },
+      { key: 'dal', label: 'DAL等级', type: 'select', target: 'equipment', options: [
+        { value: '__none__', label: '未设置' }, { value: 'A', label: 'A' }, { value: 'B', label: 'B' },
+        { value: 'C', label: 'C' }, { value: 'D', label: 'D' }, { value: 'E', label: 'E' },
+      ]},
+      { key: 'is_optional', label: '是否选装', type: 'boolean', target: 'equipment' },
+    ],
+  },
+  {
+    key: 'weight', label: '重量/位置',
+    fields: [
+      { key: 'mass_kg', label: '重量 (kg)', type: 'number', target: 'weight_balance' },
+      { key: 'sta', label: 'STA (mm)', type: 'number', target: 'config_equipment' },
+      { key: 'bl', label: 'BL (mm)', type: 'number', target: 'config_equipment' },
+      { key: 'wl', label: 'WL (mm)', type: 'number', target: 'config_equipment' },
+      { key: 'dimensions_mm', label: '尺寸 (长×高×宽mm)', type: 'text', target: 'equipment' },
+    ],
+  },
+  {
+    key: 'electrical', label: '电气特性',
+    fields: [
+      { key: 'power_kva_normal', label: '正常功耗 (kW)', type: 'number', target: 'electrical_load' },
+      { key: 'power_kva_emergency', label: '应急功耗 (kW)', type: 'number', target: 'electrical_load' },
+      { key: 'power_kva_max', label: '峰值功耗 (kW)', type: 'number', target: 'electrical_load' },
+      { key: 'power_voltage', label: '供电电压', type: 'text', target: 'equipment' },
+      { key: 'power_redundancy', label: '供电余度', type: 'text', target: 'equipment' },
+      { key: 'voltage_range', label: '电压范围 (V)', type: 'text', target: 'equipment' },
+    ],
+  },
+  {
+    key: 'bonding', label: '搭接/安装',
+    fields: [
+      { key: 'bonding_method', label: '搭接方式', type: 'select', target: 'config_equipment', options: [
+        { value: '__none__', label: '未设置' }, { value: '面搭接', label: '面搭接' }, { value: '线搭接', label: '线搭接' },
+      ]},
+      { key: 'bonding_type', label: '搭接类型', type: 'text', target: 'config_equipment' },
+      { key: 'bonding_resistance', label: '搭接阻值 (mΩ)', type: 'text', target: 'config_equipment' },
+      { key: 'bonding_position', label: '搭接位置', type: 'text', target: 'config_equipment' },
+      { key: 'install_method', label: '安装方式', type: 'text', target: 'config_equipment' },
+      { key: 'in_pace_drawing', label: 'PACE图纸', type: 'boolean', target: 'config_equipment' },
+      { key: 'layout_adjustment', label: '布置调整需求', type: 'textarea', target: 'config_equipment' },
+    ],
+  },
+  {
+    key: 'do160', label: 'DO-160',
+    fields: [
+      { key: 'do160_temp_design_level', label: '设计要求等级', type: 'select', target: 'equipment', options: [
+        { value: '__none__', label: '未设置' }, { value: 'A1', label: 'A1' }, { value: 'B2', label: 'B2' },
+      ]},
+      { key: 'do160_temp_qual_level', label: '鉴定等级', type: 'text', target: 'equipment' },
+      { key: 'do160_temp_compliance', label: '鉴定符合情况', type: 'select', target: 'equipment', options: [
+        { value: '__none__', label: '未设置' },
+        { value: '符合', label: '符合' }, { value: '不符合', label: '不符合' }, { value: '待确认', label: '待确认' },
+        { value: '高温符合，低温不符合', label: '高温符合，低温不符合' },
+        { value: '低温符合，高温不符合', label: '低温符合，高温不符合' },
+      ]},
+      { key: 'normal_operating_temp', label: '正常工作温度 (℃)', type: 'text', target: 'equipment' },
+      { key: 'short_term_temp', label: '短时工作温度 (℃)', type: 'text', target: 'equipment' },
+      { key: 'ground_storage_temp', label: '地面停放温度 (℃)', type: 'text', target: 'equipment' },
+      { key: 'operating_altitude', label: '高度 (m)', type: 'text', target: 'equipment' },
+      { key: 'qual_report_number', label: '鉴定报告编号', type: 'text', target: 'equipment' },
+    ],
+  },
+  {
+    key: 'notes', label: '备注',
+    fields: [
+      { key: 'notes', label: '备注', type: 'textarea', target: 'equipment' },
+    ],
+  },
+];
+
+const PRESETS: { label: string; groups: string[] }[] = [
+  { label: '全部', groups: FIELD_GROUPS.map(g => g.key) },
+  { label: '重量', groups: ['weight'] },
+  { label: '搭接', groups: ['bonding'] },
+  { label: 'DO-160', groups: ['do160'] },
+  { label: '电气', groups: ['electrical'] },
+  { label: '基本+分类', groups: ['basic', 'classify'] },
+];
+
+/* ── Helpers ── */
+function getFieldValue(equip: Equipment | null, field: FieldDef): string {
+  if (!equip) return '';
+  if (field.target === 'weight_balance') return String(equip.weight_balance?.mass_kg ?? '');
+  if (field.target === 'electrical_load') return String((equip.electrical_load as any)?.[field.key] ?? '');
+  if (field.target === 'config_equipment') return String((equip.config_data as any)?.[field.key] ?? '');
+  const v = (equip as any)[field.key];
+  if (v === true) return 'true';
+  if (v === false) return 'false';
+  return String(v ?? '');
+}
 
 export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
-  const [form, setForm] = useState<FormState>(INITIAL_STATE);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const { activeConfigId } = useConfigStore();
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set(FIELD_GROUPS.map(g => g.key)));
+  const [step, setStep] = useState<'select' | 'edit'>('select');
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [reason, setReason] = useState('');
 
+  // Init form when opening
   useEffect(() => {
-    if (open) {
-      if (equipment) {
-        setForm({
-          part_number: equipment.part_number || '',
-          name: equipment.name || '',
-          ata_chapter: equipment.ata_chapter || '',
-          equipment_type: equipment.equipment_type || 'LRU',
-          status: equipment.status || 'in_development',
-          description: equipment.description || '',
-          mass_kg: equipment.weight_balance?.mass_kg != null ? String(equipment.weight_balance.mass_kg) : '',
-          sta: equipment.config_data?.sta != null ? String(equipment.config_data.sta) : '',
-          wl: equipment.config_data?.wl != null ? String(equipment.config_data.wl) : '',
-          bl: equipment.config_data?.bl != null ? String(equipment.config_data.bl) : '',
-          power_kva_normal: equipment.electrical_load?.power_kva_normal != null
-            ? String(equipment.electrical_load.power_kva_normal)
-            : '',
-        });
-      } else {
-        setForm(INITIAL_STATE);
-      }
-      setErrors({});
+    if (!open) return;
+    setStep(equipment ? 'select' : 'edit'); // new → skip selection
+    setReason('');
+    if (!equipment) {
+      setSelectedGroups(new Set(['basic']));
+    } else {
+      setSelectedGroups(new Set(FIELD_GROUPS.map(g => g.key)));
     }
+    // Populate form from equipment
+    const f: Record<string, string> = {};
+    for (const group of FIELD_GROUPS) {
+      for (const field of group.fields) {
+        f[field.key] = getFieldValue(equipment, field);
+      }
+    }
+    setForm(f);
   }, [open, equipment]);
 
-  const updateField = useCallback((field: keyof FormState, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setErrors(prev => ({ ...prev, [field]: undefined }));
+  const u = useCallback((key: string, val: string) => {
+    setForm(prev => ({ ...prev, [key]: val }));
   }, []);
 
-  const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof FormState, string>> = {};
-    if (!form.part_number.trim()) newErrors.part_number = '件号为必填项';
-    if (!form.name.trim()) newErrors.name = '名称为必填项';
-    if (!form.ata_chapter.trim()) newErrors.ata_chapter = 'ATA章节为必填项';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const visibleGroups = FIELD_GROUPS.filter(g => selectedGroups.has(g.key));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (equipment && activeConfigId) {
+        // Use the new combined update API
+        const eqFields: Record<string, any> = {};
+        const ceFields: Record<string, any> = {};
+        let wbData: any = null;
+        let elData: any = null;
+
+        for (const group of visibleGroups) {
+          for (const field of group.fields) {
+            const val = form[field.key];
+            if (val === '' || val === undefined) continue;
+
+            let parsed: any = val;
+            if (field.type === 'number') parsed = parseFloat(val) || null;
+            if (field.type === 'boolean') parsed = val === 'true' ? true : val === 'false' ? false : null;
+            if (field.type === 'select' && val === '__none__') parsed = null;
+
+            if (field.target === 'equipment') eqFields[field.key] = parsed;
+            else if (field.target === 'config_equipment') ceFields[field.key] = parsed;
+            else if (field.target === 'weight_balance') {
+              if (parsed != null) wbData = { mass_kg: parsed };
+            }
+            else if (field.target === 'electrical_load') {
+              if (!elData) elData = {};
+              if (parsed != null) elData[field.key] = parsed;
+            }
+          }
+        }
+
+        const url = reason
+          ? `/configurations/${activeConfigId}/equipment/${equipment.id}?reason=${encodeURIComponent(reason)}`
+          : `/configurations/${activeConfigId}/equipment/${equipment.id}`;
+        await client.patch(url, {
+          equipment: Object.keys(eqFields).length > 0 ? eqFields : undefined,
+          config_equipment: Object.keys(ceFields).length > 0 ? ceFields : undefined,
+          weight_balance: wbData,
+          electrical_load: elData,
+        });
+        onSave({}, reason);
+      } else {
+        // Create mode - use legacy API
+        const body: any = {
+          part_number: form.part_number,
+          name: form.name,
+          ata_chapter: form.ata_chapter || '00',
+          equipment_type: form.equipment_type || 'LRU',
+          status: form.status || 'in_development',
+          description: form.description,
+        };
+        if (form.mass_kg) body.weight_balance = { mass_kg: parseFloat(form.mass_kg) };
+        if (form.power_kva_normal) body.electrical_load = { power_kva_normal: parseFloat(form.power_kva_normal) };
+        onSave(body);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleOk = () => {
-    if (!validate()) return;
-
-    const body: any = {
-      part_number: form.part_number,
-      name: form.name,
-      ata_chapter: form.ata_chapter,
-      equipment_type: form.equipment_type || 'LRU',
-      status: form.status || 'in_development',
-      description: form.description || undefined,
-    };
-    if (form.mass_kg) {
-      body.weight_balance = { mass_kg: parseFloat(form.mass_kg) };
-    }
-    if (form.power_kva_normal) {
-      body.electrical_load = { power_kva_normal: parseFloat(form.power_kva_normal) };
-    }
-    onSave(body);
+  const applyPreset = (groups: string[]) => {
+    setSelectedGroups(new Set(groups));
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onCancel(); }}>
-      <DialogContent className="sm:max-w-[640px]">
+    <Dialog open={open} onOpenChange={isOpen => { if (!isOpen) onCancel(); }}>
+      <DialogContent className="sm:max-w-[720px] max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>
-            {equipment ? `编辑设备: ${equipment.part_number}` : '添加设备'}
+          <DialogTitle className="text-base">
+            {equipment ? `编辑: ${equipment.name}` : '添加设备'}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="basic">
-          <TabsList>
-            <TabsTrigger value="basic">基本信息</TabsTrigger>
-            <TabsTrigger value="install">安装位置</TabsTrigger>
-            <TabsTrigger value="weight">重量数据</TabsTrigger>
-            <TabsTrigger value="elec">电气数据</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="basic">
-            <div className="space-y-3 pt-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="part_number">件号 <span className="text-destructive">*</span></Label>
-                <Input
-                  id="part_number"
-                  value={form.part_number}
-                  onChange={(e) => updateField('part_number', e.target.value)}
-                  aria-invalid={!!errors.part_number}
-                />
-                {errors.part_number && <p className="text-xs text-destructive">{errors.part_number}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="name">名称 <span className="text-destructive">*</span></Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                  aria-invalid={!!errors.name}
-                />
-                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="ata_chapter">ATA章节 <span className="text-destructive">*</span></Label>
-                <Input
-                  id="ata_chapter"
-                  value={form.ata_chapter}
-                  onChange={(e) => updateField('ata_chapter', e.target.value)}
-                  placeholder="如: 34-21"
-                  aria-invalid={!!errors.ata_chapter}
-                />
-                {errors.ata_chapter && <p className="text-xs text-destructive">{errors.ata_chapter}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>类型</Label>
-                <Select value={form.equipment_type} onValueChange={(v) => v && updateField('equipment_type', v)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LRU">LRU</SelectItem>
-                    <SelectItem value="SRU">SRU</SelectItem>
-                    <SelectItem value="structural">结构件</SelectItem>
-                    <SelectItem value="cable">线缆</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>状态</Label>
-                <Select value={form.status} onValueChange={(v) => v && updateField('status', v)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="in_development">在研</SelectItem>
-                    <SelectItem value="qualifying">鉴定中</SelectItem>
-                    <SelectItem value="approved">已批准</SelectItem>
-                    <SelectItem value="discontinued">停产</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="description">描述</Label>
-                <Textarea
-                  id="description"
-                  rows={2}
-                  value={form.description}
-                  onChange={(e) => updateField('description', e.target.value)}
-                />
-              </div>
+        {/* Step 1: Field group selection (only for edit mode) */}
+        {step === 'select' && equipment && (
+          <div className="flex-1 space-y-4">
+            <div className="text-sm text-muted-foreground">选择要编辑的字段组：</div>
+            {/* Presets */}
+            <div className="flex flex-wrap gap-1.5">
+              {PRESETS.map(p => (
+                <Button key={p.label} variant="outline" size="sm" className="h-7 text-xs"
+                  onClick={() => applyPreset(p.groups)}>
+                  {p.label}
+                </Button>
+              ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="install">
-            <div className="space-y-3 pt-2">
-              <p className="text-xs text-muted-foreground">
-                安装位置 (STA/WL/BL) 和母线分配为构型级属性，在构型中管理。
-              </p>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="sta">STA (站位)</Label>
-                <Input id="sta" type="number" value={form.sta} disabled />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="wl">WL (水线)</Label>
-                <Input id="wl" type="number" value={form.wl} disabled />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="bl">BL (翼肋线)</Label>
-                <Input id="bl" type="number" value={form.bl} disabled />
-              </div>
+            <Separator />
+            <div className="grid grid-cols-2 gap-2">
+              {FIELD_GROUPS.map(g => (
+                <div key={g.key} className="flex items-center gap-2 rounded-md border px-3 py-2">
+                  <Checkbox
+                    id={`grp-${g.key}`}
+                    checked={selectedGroups.has(g.key)}
+                    onCheckedChange={(checked) => {
+                      const next = new Set(selectedGroups);
+                      checked ? next.add(g.key) : next.delete(g.key);
+                      setSelectedGroups(next);
+                    }}
+                  />
+                  <label htmlFor={`grp-${g.key}`} className="flex-1 cursor-pointer">
+                    <span className="text-sm font-medium">{g.label}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{g.fields.length} 字段</span>
+                  </label>
+                </div>
+              ))}
             </div>
-          </TabsContent>
+            <DialogFooter>
+              <Button variant="outline" onClick={onCancel}>取消</Button>
+              <Button onClick={() => setStep('edit')} disabled={selectedGroups.size === 0}>
+                开始编辑 ({selectedGroups.size} 组)
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
 
-          <TabsContent value="weight">
-            <div className="space-y-3 pt-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="mass_kg">重量 (kg)</Label>
-                <Input
-                  id="mass_kg"
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={form.mass_kg}
-                  onChange={(e) => updateField('mass_kg', e.target.value)}
-                />
+        {/* Step 2: Edit form */}
+        {(step === 'edit' || !equipment) && (
+          <>
+            <Tabs defaultValue={visibleGroups[0]?.key || 'basic'} className="flex-1">
+              <TabsList variant="line" className="flex-wrap">
+                {visibleGroups.map(g => (
+                  <TabsTrigger key={g.key} value={g.key} className="text-xs">{g.label}</TabsTrigger>
+                ))}
+              </TabsList>
+              <div className="h-[360px] overflow-y-auto mt-2">
+                {visibleGroups.map(g => (
+                  <TabsContent key={g.key} value={g.key} className="mt-0">
+                    <div className="grid grid-cols-2 gap-3">
+                      {g.fields.map(field => (
+                        <div key={field.key} className={cn("space-y-1", field.type === 'textarea' && "col-span-2")}>
+                          <Label className="text-xs">{field.label}</Label>
+                          {field.type === 'textarea' ? (
+                            <Textarea rows={2} value={form[field.key] || ''} onChange={e => u(field.key, e.target.value)} className="text-sm" />
+                          ) : field.type === 'boolean' ? (
+                            <Select value={form[field.key] || '__none__'} onValueChange={v => { if (v) u(field.key, v); }}>
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue>{BOOL_OPTS.find(o => o.value === (form[field.key] || '__none__'))?.label}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {BOOL_OPTS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          ) : field.type === 'select' ? (
+                            <Select value={form[field.key] || '__none__'} onValueChange={v => { if (v) u(field.key, v === '__none__' ? '' : v); }}>
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue>{field.options?.find(o => o.value === (form[field.key] || '__none__'))?.label || form[field.key]}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {field.options?.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input value={form[field.key] || ''} onChange={e => u(field.key, e.target.value)}
+                              type={field.type === 'number' ? 'number' : 'text'} className="h-8 text-sm" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                ))}
               </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="elec">
-            <div className="space-y-3 pt-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="power_kva_normal">正常功耗 (kVA)</Label>
-                <Input
-                  id="power_kva_normal"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={form.power_kva_normal}
-                  onChange={(e) => updateField('power_kva_normal', e.target.value)}
-                />
+            </Tabs>
+            {/* Reason field (edit mode only) */}
+            {equipment && (
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">变更原因(可选)</label>
+                <Input placeholder="填写变更原因..." value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 text-sm" />
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>取消</Button>
-          <Button onClick={handleOk}>确定</Button>
-        </DialogFooter>
+            {/* Change log (edit mode only) */}
+            {equipment && activeConfigId && (
+              <ChangeLogViewer entityType="config_equipment" entityId={`${activeConfigId}:${equipment.id}`} />
+            )}
+
+            <DialogFooter>
+              {equipment && <Button variant="ghost" size="sm" onClick={() => setStep('select')}>返回选择</Button>}
+              <div className="flex-1" />
+              <Button variant="outline" onClick={onCancel}>取消</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
