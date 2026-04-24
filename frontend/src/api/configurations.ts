@@ -31,6 +31,16 @@ export async function lockBaseline(id: string): Promise<Configuration> {
   return data;
 }
 
+export async function freezeConfig(id: string): Promise<Configuration> {
+  const { data } = await client.post(`/configurations/${id}/freeze`);
+  return data;
+}
+
+export async function unfreezeConfig(id: string): Promise<Configuration> {
+  const { data } = await client.post(`/configurations/${id}/unfreeze`);
+  return data;
+}
+
 export async function diffConfigs(aId: string, bId: string): Promise<ConfigDiffResponse> {
   const { data } = await client.get(`/configurations/${aId}/diff/${bId}`);
   return data;

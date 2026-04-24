@@ -1,24 +1,22 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Copy, Lock } from 'lucide-react';
+import { Plus, Copy, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useConfigStore } from '../store/configStore';
-import { listConfigs, createConfig, cloneConfig, lockBaseline } from '../api/configurations';
+import { listConfigs, createConfig, cloneConfig, freezeConfig, unfreezeConfig } from '../api/configurations';
 import type { Configuration } from '../types';
-import { ConfigTimeline } from '../components/configuration/ConfigTimeline';
+import { Badge } from '@/components/ui/badge';
 import { ConfigDiff } from '../components/configuration/ConfigDiff';
 
 export function ConfigPage() {
-  const { activeSeriesId, activeConfigId, setActiveConfig } = useConfigStore();
+  const { activeSeriesId, activeConfigId } = useConfigStore();
   const [configs, setConfigs] = useState<Configuration[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
-  const [lockOpen, setLockOpen] = useState(false);
   const [newVersion, setNewVersion] = useState('');
 
   const fetchConfigs = useCallback(async () => {
@@ -59,18 +57,20 @@ export function ConfigPage() {
     }
   };
 
-  const handleLock = async () => {
-    if (!activeConfigId) return;
+  const handleFreeze = async (config: Configuration) => {
     try {
-      await lockBaseline(activeConfigId);
-      toast.success('已锁定为基线');
+      if (config.is_frozen) {
+        await unfreezeConfig(config.id);
+        toast.success(`构型 ${config.version} 已解冻`);
+      } else {
+        await freezeConfig(config.id);
+        toast.success(`构型 ${config.version} 已冻结基线`);
+      }
       fetchConfigs();
     } catch {
-      toast.error('锁定失败（可能已锁定）');
+      toast.error(config.is_frozen ? '解冻失败' : '冻结失败');
     }
   };
-
-  const currentConfig = configs.find(c => c.id === activeConfigId);
 
   return (
     <div>
@@ -84,26 +84,42 @@ export function ConfigPage() {
           <Copy className="size-4 mr-1" />
           克隆当前
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => setLockOpen(true)}
-          disabled={!activeConfigId || currentConfig?.status === 'baseline'}
-        >
-          <Lock className="size-4 mr-1" />
-          锁定基线
-        </Button>
       </div>
 
+      {/* Config list with freeze controls */}
+      {configs.length > 0 && (
+        <div className="mb-4 space-y-1.5">
+          {configs.map((cfg) => (
+            <div key={cfg.id} className="flex items-center justify-between rounded-md border px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{cfg.version}</span>
+                {cfg.is_frozen && (
+                  <Badge variant="secondary" className="text-xs">冻结</Badge>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {cfg.equipment_count} 台设备
+                </span>
+              </div>
+              <Button
+                variant={cfg.is_frozen ? 'destructive' : 'outline'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => handleFreeze(cfg)}
+              >
+                {cfg.is_frozen ? (
+                  <><Unlock className="size-3 mr-1" />解冻</>
+                ) : (
+                  <><Lock className="size-3 mr-1" />冻结基线</>
+                )}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Main content */}
-      <div className="flex gap-4">
-        <div className="w-80 shrink-0">
-          <h3 className="text-sm font-semibold mb-3">版本历史</h3>
-          <ConfigTimeline configs={configs} activeId={activeConfigId} onSelect={setActiveConfig} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold mb-3">构型对比</h3>
-          <ConfigDiff configs={configs} />
-        </div>
+      <div>
+        <ConfigDiff configs={configs} />
       </div>
 
       {/* Create dialog */}
@@ -143,15 +159,6 @@ export function ConfigPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Lock baseline confirm */}
-      <ConfirmDialog
-        open={lockOpen}
-        onOpenChange={setLockOpen}
-        title="锁定基线"
-        description="锁定后此构型将不可修改。确认锁定为基线？"
-        confirmLabel="锁定"
-        onConfirm={handleLock}
-      />
     </div>
   );
 }
