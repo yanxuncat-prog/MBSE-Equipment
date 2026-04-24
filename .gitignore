@@ -3,4 +3,16 @@ __pycache__/
 *.pyc
 node_modules/
 .env
-
+.DS_Store
+*.db
+backend/.venv/
+backend/data/
+frontend/dist/
+frontend/node_modules/
+data/
+data_import/
+设备管理数据/
+EXCEL数据/
+*.xmind
+*.xlsx
+*.docx
