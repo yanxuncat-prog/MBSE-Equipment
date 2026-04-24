@@ -12,6 +12,11 @@ from app.api.zones import router as zones_router
 from app.api.buses import router as buses_router
 from app.api.dashboard import router as dashboard_router
 from app.api.procurement import router as procurement_router
+from app.api.electrical_details import router as electrical_details_router
+from app.api.data_governance import router as data_governance_router
+from app.api.excel_export import router as excel_export_router
+from app.api.excel_import import router as excel_import_router
+from app.api.audit_logs import router as audit_logs_router
 from app.ws.constraint_ws import router as ws_router
 
 app = FastAPI(title="AeroEquip", version="0.1.0")
@@ -35,6 +40,11 @@ app.include_router(zones_router, prefix="/api")
 app.include_router(buses_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(procurement_router, prefix="/api")
+app.include_router(electrical_details_router, prefix="/api")
+app.include_router(data_governance_router, prefix="/api")
+app.include_router(excel_export_router, prefix="/api")
+app.include_router(excel_import_router, prefix="/api")
+app.include_router(audit_logs_router, prefix="/api")
 app.include_router(ws_router)
 
 
