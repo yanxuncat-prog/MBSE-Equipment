@@ -10,6 +10,29 @@ export interface ConfigEquipmentData {
   bus_id: string | null;
   bus_name: string | null;
   notes: string | null;
+
+  // Display name override
+  config_name: string | null;
+
+  // Per-config weight & CG
+  mass_kg: number | null;
+  cg_x: number | null;
+  cg_y: number | null;
+  cg_z: number | null;
+  inertia_ix: number | null;
+  inertia_iy: number | null;
+  inertia_iz: number | null;
+  inertia_ixy: number | null;
+  inertia_ixz: number | null;
+  inertia_iyz: number | null;
+  weight_target_kg: number | null;
+  overweight_risk: string | null;
+
+  // Per-config electrical
+  power_kva_normal: number | null;
+  power_kva_emergency: number | null;
+  power_kva_max: number | null;
+
   install_method: string | null;
   bonding_method: string | null;
   bonding_type: string | null;
@@ -135,6 +158,7 @@ export interface Configuration {
   description: string | null;
   created_by: string | null;
   locked_at: string | null;
+  is_frozen: boolean;
   created_at: string;
   equipment_count: number;
 }
@@ -175,6 +199,7 @@ export interface DiffItem {
   equipment_id: string;
   part_number: string;
   name: string;
+  ata_chapter: string;
   change_type: string;
   changes: Record<string, any> | null;
 }
@@ -187,5 +212,6 @@ export interface ConfigDiffResponse {
   added: DiffItem[];
   removed: DiffItem[];
   modified: DiffItem[];
+  unchanged: DiffItem[];
   impact_summary: Record<string, any>;
 }
