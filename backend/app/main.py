@@ -18,6 +18,7 @@ from app.api.excel_export import router as excel_export_router
 from app.api.excel_import import router as excel_import_router
 from app.api.audit_logs import router as audit_logs_router
 from app.api.equipment_library import router as equipment_library_router
+from app.api.micd import router as micd_router
 from app.ws.constraint_ws import router as ws_router
 
 app = FastAPI(title="AeroEquip", version="0.1.0")
@@ -47,6 +48,7 @@ app.include_router(excel_export_router, prefix="/api")
 app.include_router(excel_import_router, prefix="/api")
 app.include_router(audit_logs_router, prefix="/api")
 app.include_router(equipment_library_router, prefix="/api")
+app.include_router(micd_router, prefix="/api")
 app.include_router(ws_router)
 
 
