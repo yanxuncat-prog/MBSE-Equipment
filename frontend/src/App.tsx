@@ -8,6 +8,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProcurementPage } from '@/pages/ProcurementPage';
 import { EquipmentLibraryPage } from '@/pages/EquipmentLibraryPage';
+import { UserManagementPage } from '@/pages/UserManagementPage';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/procurement" element={<ProcurementPage />} />
             <Route path="/equipment-library" element={<EquipmentLibraryPage />} />
+            <Route path="/user-management" element={<UserManagementPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

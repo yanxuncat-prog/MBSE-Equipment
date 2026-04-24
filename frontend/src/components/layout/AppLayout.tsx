@@ -4,7 +4,7 @@ import {
   Eye, GitBranch, LayoutDashboard, Database,
   GripVertical, ShoppingCart, PanelLeftClose, PanelLeft,
   Plane, LogOut, Settings, Sun, Moon, Check, ChevronDown,
-  Weight, Zap, Thermometer, MapPin, Cable, ClipboardCheck,
+  Weight, Zap, Thermometer, MapPin, Cable, ClipboardCheck, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GlobalNav } from './GlobalNav';
@@ -53,6 +53,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/config': '构型管理',
   '/dashboard': '管理看板',
   '/procurement': '采购进度',
+  '/user-management': '用户管理',
 };
 
 const STORAGE_KEY = 'aeroequip_menu_order';
@@ -250,6 +251,38 @@ export function AppLayout() {
 
               return navItem;
             })}
+
+            {/* User Management */}
+            {(() => {
+              const umActive = location.pathname === '/user-management';
+              const umItem = (
+                <div
+                  onClick={() => navigate('/user-management')}
+                  className={cn(
+                    "group relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150 select-none",
+                    umActive
+                      ? "bg-primary/10 text-primary font-medium shadow-sm shadow-primary/5"
+                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                    collapsed && "justify-center px-2"
+                  )}
+                >
+                  <span className={cn("shrink-0", umActive && "text-primary")}><Users className="size-4" /></span>
+                  {!collapsed && <span className="flex-1 truncate">用户管理</span>}
+                  {umActive && (
+                    <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                  )}
+                </div>
+              );
+              if (collapsed) {
+                return (
+                  <Tooltip>
+                    <TooltipTrigger render={<div />}>{umItem}</TooltipTrigger>
+                    <TooltipContent side="right">用户管理</TooltipContent>
+                  </Tooltip>
+                );
+              }
+              return umItem;
+            })()}
 
             {/* Separator before settings */}
             <div className="my-2 mx-1">
