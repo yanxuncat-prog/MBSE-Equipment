@@ -20,7 +20,7 @@ class ConfigResponse(BaseModel):
     status: str
     description: str | None = None
     created_by: UUID | None = None
-    locked_at: datetime | None = None
+    frozen_at: datetime | None = None
     created_at: datetime
     equipment_count: int = 0
 

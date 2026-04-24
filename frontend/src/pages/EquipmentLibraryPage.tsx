@@ -171,7 +171,7 @@ export function EquipmentLibraryPage() {
                           {cfg.config_name && (
                             <span className="text-muted-foreground">{cfg.config_name}</span>
                           )}
-                          {cfg.is_frozen && (
+                          {cfg.frozen_at != null && (
                             <Badge variant="secondary" className="text-xs">冻结</Badge>
                           )}
                         </div>

@@ -23,7 +23,7 @@ export interface LibraryConfigUsage {
   config_version: string;
   config_name: string;
   mass_kg: number | null;
-  is_frozen: boolean;
+  frozen_at: string | null;
 }
 
 export interface LibraryEquipmentDetail {

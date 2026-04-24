@@ -102,7 +102,7 @@ async def get_equipment_configs(
             "config_version": cfg.version,
             "config_name": ce.config_name,
             "mass_kg": ce.mass_kg,
-            "is_frozen": cfg.is_frozen,
+            "frozen_at": cfg.frozen_at.isoformat() if cfg.frozen_at else None,
         })
 
     return {

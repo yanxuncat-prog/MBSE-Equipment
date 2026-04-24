@@ -112,7 +112,7 @@ async def clone_config(db: AsyncSession, source_id: str, new_version: str, user_
 
 
 async def lock_baseline(db: AsyncSession, config_id: str) -> dict | None:
-    """Sets status to 'baseline', sets locked_at timestamp. Fails if already locked."""
+    """Sets status to 'baseline', sets frozen_at timestamp. Fails if already locked."""
     result = await db.execute(
         select(Configuration).where(Configuration.id == uuid.UUID(config_id))
     )
@@ -124,7 +124,7 @@ async def lock_baseline(db: AsyncSession, config_id: str) -> dict | None:
         raise ValueError(f"Configuration is already '{config.status}', cannot lock")
 
     config.status = "baseline"
-    config.locked_at = datetime.now(timezone.utc)
+    config.frozen_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(config)
 

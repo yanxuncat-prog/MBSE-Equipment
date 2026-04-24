@@ -121,7 +121,7 @@ export function GlobalNav() {
               ))}
             </SelectContent>
           </Select>
-          {activeConfigId && configs.find(c => c.id === activeConfigId)?.is_frozen && (
+          {activeConfigId && configs.find(c => c.id === activeConfigId)?.frozen_at != null && (
             <Badge variant="secondary" className="text-xs shrink-0">冻结</Badge>
           )}
         </div>

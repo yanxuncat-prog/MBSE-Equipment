@@ -21,7 +21,7 @@ def _to_response(data: dict) -> ConfigResponse:
         status=config.status,
         description=config.description,
         created_by=str(config.created_by) if config.created_by else None,
-        locked_at=config.locked_at.isoformat() if config.locked_at else None,
+        frozen_at=config.frozen_at.isoformat() if config.frozen_at else None,
         created_at=config.created_at.isoformat(),
         equipment_count=data["equipment_count"],
     )

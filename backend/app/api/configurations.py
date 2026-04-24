@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -39,8 +39,7 @@ def _to_response(data: dict) -> ConfigResponse:
         status=config.status,
         description=config.description,
         created_by=str(config.created_by) if config.created_by else None,
-        locked_at=config.locked_at.isoformat() if config.locked_at else None,
-        is_frozen=config.is_frozen or False,
+        frozen_at=config.frozen_at.isoformat() if config.frozen_at else None,
         created_at=config.created_at.isoformat(),
         equipment_count=data["equipment_count"],
     )
@@ -109,7 +108,7 @@ async def freeze_configuration(
     config = result.scalar_one_or_none()
     if not config:
         raise HTTPException(status_code=404, detail="Configuration not found")
-    config.is_frozen = True
+    config.frozen_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(config)
     # Build a response-compatible dict
@@ -131,7 +130,7 @@ async def unfreeze_configuration(
     config = result.scalar_one_or_none()
     if not config:
         raise HTTPException(status_code=404, detail="Configuration not found")
-    config.is_frozen = False
+    config.frozen_at = None
     await db.commit()
     await db.refresh(config)
     count_result = await db.execute(
@@ -210,7 +209,7 @@ async def update_config_equipment(
             if not hasattr(equip, field):
                 continue
             # Freeze enforcement: reject edits to master identity fields
-            if config.is_frozen and field in FROZEN_MASTER_FIELDS:
+            if config.frozen_at is not None and field in FROZEN_MASTER_FIELDS:
                 raise HTTPException(
                     status_code=403,
                     detail=f"构型已冻结，不允许修改主数据字段: {field}",

@@ -53,7 +53,7 @@ class Configuration(Base):
     status: Mapped[str] = mapped_column(SAEnum(*CONFIG_STATUS, name="config_status_enum"), default="draft")
     description: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
-    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), comment="基线冻结时间，非空表示已冻结")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     series: Mapped["Series"] = relationship(back_populates="configurations")

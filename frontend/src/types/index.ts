@@ -158,8 +158,7 @@ export interface Configuration {
   status: string;
   description: string | null;
   created_by: string | null;
-  locked_at: string | null;
-  is_frozen: boolean;
+  frozen_at: string | null;
   created_at: string;
   equipment_count: number;
 }

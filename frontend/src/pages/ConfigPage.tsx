@@ -59,7 +59,7 @@ export function ConfigPage() {
 
   const handleFreeze = async (config: Configuration) => {
     try {
-      if (config.is_frozen) {
+      if (config.frozen_at != null) {
         await unfreezeConfig(config.id);
         toast.success(`构型 ${config.version} 已解冻`);
       } else {
@@ -68,7 +68,7 @@ export function ConfigPage() {
       }
       fetchConfigs();
     } catch {
-      toast.error(config.is_frozen ? '解冻失败' : '冻结失败');
+      toast.error(config.frozen_at != null ? '解冻失败' : '冻结失败');
     }
   };
 
@@ -93,7 +93,7 @@ export function ConfigPage() {
             <div key={cfg.id} className="flex items-center justify-between rounded-md border px-4 py-2.5">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{cfg.version}</span>
-                {cfg.is_frozen && (
+                {cfg.frozen_at != null && (
                   <Badge variant="secondary" className="text-xs">冻结</Badge>
                 )}
                 <span className="text-xs text-muted-foreground">
@@ -101,12 +101,12 @@ export function ConfigPage() {
                 </span>
               </div>
               <Button
-                variant={cfg.is_frozen ? 'destructive' : 'outline'}
+                variant={cfg.frozen_at != null ? 'destructive' : 'outline'}
                 size="sm"
                 className="h-7 text-xs"
                 onClick={() => handleFreeze(cfg)}
               >
-                {cfg.is_frozen ? (
+                {cfg.frozen_at != null ? (
                   <><Unlock className="size-3 mr-1" />解冻</>
                 ) : (
                   <><Lock className="size-3 mr-1" />冻结基线</>

@@ -89,8 +89,7 @@ class Configuration(Base):
     status: Mapped[str] = mapped_column(String(20), default="draft")
     description: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    is_frozen: Mapped[bool] = mapped_column(default=False, comment="基线冻结:令号/DM号/设备名称不可修改")
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), comment="基线冻结时间，非空表示已冻结")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     program: Mapped["Program"] = relationship(back_populates="configurations")

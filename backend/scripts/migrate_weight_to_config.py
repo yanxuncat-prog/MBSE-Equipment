@@ -2,7 +2,7 @@
 Migration script: copy weight/electrical data from equipment-level tables
 (weight_balances, electrical_loads) into per-config fields on config_equipment.
 
-Also adds is_frozen column to configurations table.
+Also adds frozen_at column to configurations table.
 
 Uses sqlite3 directly (no SQLAlchemy).
 """
@@ -56,15 +56,15 @@ def add_columns(conn: sqlite3.Connection) -> None:
     if added == 0:
         print("  (all config_equipment columns already exist)")
 
-    # --- configurations.is_frozen ---
+    # --- configurations.frozen_at ---
     cfg_cols = get_existing_columns(conn, "configurations")
-    if "is_frozen" not in cfg_cols:
+    if "frozen_at" not in cfg_cols:
         conn.execute(
-            "ALTER TABLE configurations ADD COLUMN is_frozen BOOLEAN DEFAULT 0"
+            "ALTER TABLE configurations ADD COLUMN frozen_at DATETIME"
         )
-        print("  + configurations.is_frozen (BOOLEAN DEFAULT 0)")
+        print("  + configurations.frozen_at (DATETIME)")
     else:
-        print("  (configurations.is_frozen already exists)")
+        print("  (configurations.frozen_at already exists)")
 
     conn.commit()
 
