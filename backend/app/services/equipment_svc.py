@@ -76,6 +76,12 @@ async def list_equipment(
                 ce_alias.power_kva_normal,
                 ce_alias.power_kva_emergency,
                 ce_alias.power_kva_max,
+                ce_alias.actual_arrival_date,
+                ce_alias.micd_confirmed,
+                ce_alias.structure_ready,
+                ce_alias.installation_ready,
+                ce_alias.planned_install_date,
+                ce_alias.actual_install_date,
             )
             .where(ce_alias.config_id == config_id)
         )
@@ -159,6 +165,12 @@ async def list_equipment(
             ce_power_kva_normal = row[34]
             ce_power_kva_emergency = row[35]
             ce_power_kva_max = row[36]
+            ce_actual_arrival_date = row[37]
+            ce_micd_confirmed = row[38]
+            ce_structure_ready = row[39]
+            ce_installation_ready = row[40]
+            ce_planned_install_date = row[41]
+            ce_actual_install_date = row[42]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -212,6 +224,12 @@ async def list_equipment(
                 planned_delivery_date=str(ce_planned_delivery_date) if ce_planned_delivery_date else None,
                 estimated_delivery_date=str(ce_estimated_delivery_date) if ce_estimated_delivery_date else None,
                 procurement_notes=ce_procurement_notes,
+                actual_arrival_date=str(ce_actual_arrival_date) if ce_actual_arrival_date else None,
+                micd_confirmed=ce_micd_confirmed,
+                structure_ready=ce_structure_ready,
+                installation_ready=ce_installation_ready,
+                planned_install_date=str(ce_planned_install_date) if ce_planned_install_date else None,
+                actual_install_date=str(ce_actual_install_date) if ce_actual_install_date else None,
             )
 
             resp = EquipmentResponse.model_validate(equip)

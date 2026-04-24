@@ -51,6 +51,14 @@ class ConfigEquipmentData(BaseModel):
     estimated_delivery_date: str | None = None
     procurement_notes: str | None = None
 
+    # Physical asset lifecycle
+    actual_arrival_date: str | None = None
+    micd_confirmed: bool | None = None
+    structure_ready: bool | None = None
+    installation_ready: bool | None = None
+    planned_install_date: str | None = None
+    actual_install_date: str | None = None
+
 
 class WeightBalanceData(BaseModel):
     mass_kg: float
@@ -112,6 +120,14 @@ class ConfigEquipmentUpdate(BaseModel):
     layout_adjustment: str | None = None
     use_batch0_device: bool | None = None
     notes: str | None = None
+
+    # Physical asset lifecycle
+    actual_arrival_date: str | None = None
+    micd_confirmed: bool | None = None
+    structure_ready: bool | None = None
+    installation_ready: bool | None = None
+    planned_install_date: str | None = None
+    actual_install_date: str | None = None
 
 
 class EquipmentFullUpdate(BaseModel):
