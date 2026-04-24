@@ -27,6 +27,8 @@ from app.api.equipment_constraints import router as equipment_constraints_router
 from app.api.attachments import router as attachments_router
 from app.api.config_platform import router as config_platform_router
 from app.api.eicd import router as eicd_router
+from app.api.ai_reports import router as ai_reports_router
+from app.api.report_parsing import router as report_parsing_router
 from app.ws.constraint_ws import router as ws_router
 
 app = FastAPI(title="AeroEquip", version="0.1.0")
@@ -65,6 +67,8 @@ app.include_router(equipment_constraints_router, prefix="/api")
 app.include_router(attachments_router, prefix="/api")
 app.include_router(config_platform_router, prefix="/api")
 app.include_router(eicd_router, prefix="/api")
+app.include_router(ai_reports_router, prefix="/api")
+app.include_router(report_parsing_router, prefix="/api")
 app.include_router(ws_router)
 
 

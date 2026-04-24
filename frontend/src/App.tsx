@@ -9,6 +9,9 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { ProcurementPage } from '@/pages/ProcurementPage';
 import { EquipmentLibraryPage } from '@/pages/EquipmentLibraryPage';
 import { UserManagementPage } from '@/pages/UserManagementPage';
+import { AIReportPage } from '@/pages/AIReportPage';
+import { MICDStatsPage } from '@/pages/MICDStatsPage';
+import { ReportParsingPage } from '@/pages/ReportParsingPage';
 
 export default function App() {
   return (
@@ -24,6 +27,9 @@ export default function App() {
             <Route path="/procurement" element={<ProcurementPage />} />
             <Route path="/equipment-library" element={<EquipmentLibraryPage />} />
             <Route path="/user-management" element={<UserManagementPage />} />
+            <Route path="/ai-reports" element={<AIReportPage />} />
+            <Route path="/micd-stats" element={<MICDStatsPage />} />
+            <Route path="/report-parsing" element={<ReportParsingPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

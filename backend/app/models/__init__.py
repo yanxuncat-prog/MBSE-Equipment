@@ -14,6 +14,7 @@ from app.models.micd import MICDRecord
 from app.models.do160 import DO160Record
 from app.models.notification import Notification
 from app.models.equipment_constraint import EquipmentConstraint
+from app.models.ai_report import AIReport
 
 __all__ = [
     "User", "Program", "Series", "Equipment", "Configuration", "ConfigEquipment",
@@ -22,4 +23,5 @@ __all__ = [
     "ElectricalDetail", "FlightPhase", "LoadWorkMode",
     "MICDRecord", "DO160Record",
     "Notification", "EquipmentConstraint",
+    "AIReport",
 ]

@@ -5,6 +5,7 @@ import {
   GripVertical, ShoppingCart, PanelLeftClose, PanelLeft,
   Plane, LogOut, Settings, Sun, Moon, Check, ChevronDown,
   Weight, Zap, Thermometer, MapPin, Cable, ClipboardCheck, Users,
+  Sparkles, BarChart3, FileSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GlobalNav } from './GlobalNav';
@@ -45,6 +46,9 @@ const DEFAULT_MENU: MenuItem[] = [
   { key: '/config', icon: <GitBranch className="size-4" />, label: '构型管理' },
   { key: '/dashboard', icon: <LayoutDashboard className="size-4" />, label: '管理看板' },
   { key: '/procurement', icon: <ShoppingCart className="size-4" />, label: '采购进度' },
+  { key: '/ai-reports', icon: <Sparkles className="size-4" />, label: 'AI 报告' },
+  { key: '/micd-stats', icon: <BarChart3 className="size-4" />, label: 'MICD 统计' },
+  { key: '/report-parsing', icon: <FileSearch className="size-4" />, label: '报告解析' },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
@@ -54,6 +58,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard': '管理看板',
   '/procurement': '采购进度',
   '/user-management': '用户管理',
+  '/ai-reports': 'AI 报告生成',
+  '/micd-stats': 'MICD 工作量统计',
+  '/report-parsing': '报告解析',
 };
 
 const STORAGE_KEY = 'aeroequip_menu_order';
