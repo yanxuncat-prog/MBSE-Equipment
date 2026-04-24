@@ -2,7 +2,6 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Plus, Trash2, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -483,7 +482,7 @@ function ConstraintSection({ equipment }: { equipment: Equipment[] }) {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>设备A *</Label>
-              <Select value={eqAId} onValueChange={setEqAId}>
+              <Select value={eqAId} onValueChange={(v) => v && setEqAId(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择设备A" />
                 </SelectTrigger>
@@ -496,7 +495,7 @@ function ConstraintSection({ equipment }: { equipment: Equipment[] }) {
             </div>
             <div className="space-y-1.5">
               <Label>设备B *</Label>
-              <Select value={eqBId} onValueChange={setEqBId}>
+              <Select value={eqBId} onValueChange={(v) => v && setEqBId(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择设备B" />
                 </SelectTrigger>
@@ -509,7 +508,7 @@ function ConstraintSection({ equipment }: { equipment: Equipment[] }) {
             </div>
             <div className="space-y-1.5">
               <Label>约束类型 *</Label>
-              <Select value={cType} onValueChange={setCType}>
+              <Select value={cType} onValueChange={(v) => v && setCType(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择约束类型" />
                 </SelectTrigger>

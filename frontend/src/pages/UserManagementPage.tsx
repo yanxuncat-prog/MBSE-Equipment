@@ -232,7 +232,7 @@ export function UserManagementPage() {
             </div>
             <div className="space-y-1.5">
               <Label>角色 *</Label>
-              <Select value={newRole} onValueChange={setNewRole}>
+              <Select value={newRole} onValueChange={(v) => v && setNewRole(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择角色" />
                 </SelectTrigger>
@@ -245,7 +245,7 @@ export function UserManagementPage() {
             </div>
             <div className="space-y-1.5">
               <Label>专业方向</Label>
-              <Select value={newSpecialty} onValueChange={setNewSpecialty}>
+              <Select value={newSpecialty} onValueChange={(v) => v && setNewSpecialty(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择专业方向" />
                 </SelectTrigger>
@@ -281,7 +281,7 @@ export function UserManagementPage() {
             </div>
             <div className="space-y-1.5">
               <Label>角色</Label>
-              <Select value={editRole} onValueChange={setEditRole}>
+              <Select value={editRole} onValueChange={(v) => v && setEditRole(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择角色" />
                 </SelectTrigger>
@@ -294,7 +294,7 @@ export function UserManagementPage() {
             </div>
             <div className="space-y-1.5">
               <Label>专业方向</Label>
-              <Select value={editSpecialty} onValueChange={setEditSpecialty}>
+              <Select value={editSpecialty} onValueChange={(v) => v && setEditSpecialty(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择专业方向" />
                 </SelectTrigger>
