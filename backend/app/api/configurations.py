@@ -1,14 +1,32 @@
+import uuid
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
+from app.models import Equipment, WeightBalance, ElectricalLoad
+from app.models.configuration import Configuration, ConfigEquipment as ConfigEquipmentModel
+from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.api.deps import get_current_user
 from app.schemas.configuration import ConfigCreate, ConfigResponse, ConfigDiffResponse
+from app.schemas.equipment import EquipmentFullUpdate
 from app.services import configuration_svc
 
 router = APIRouter(tags=["configurations"])
+
+FROZEN_MASTER_FIELDS = {"name", "part_number", "lin_number"}
+
+
+def _serialize(val):
+    """Convert non-JSON-serializable values (e.g. date) to strings."""
+    if isinstance(val, date):
+        return val.isoformat()
+    return val
 
 
 def _to_response(data: dict) -> ConfigResponse:
@@ -22,6 +40,7 @@ def _to_response(data: dict) -> ConfigResponse:
         description=config.description,
         created_by=str(config.created_by) if config.created_by else None,
         locked_at=config.locked_at.isoformat() if config.locked_at else None,
+        is_frozen=config.is_frozen or False,
         created_at=config.created_at.isoformat(),
         equipment_count=data["equipment_count"],
     )
@@ -79,6 +98,49 @@ async def lock_configuration(
     return _to_response(result)
 
 
+@router.post("/configurations/{config_id}/freeze", response_model=ConfigResponse)
+async def freeze_configuration(
+    config_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Freeze a configuration — prevents edits to master fields (name, part_number, lin_number)."""
+    result = await db.execute(select(Configuration).where(Configuration.id == config_id))
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    config.is_frozen = True
+    await db.commit()
+    await db.refresh(config)
+    # Build a response-compatible dict
+    count_result = await db.execute(
+        select(ConfigEquipmentModel).where(ConfigEquipmentModel.config_id == config_id)
+    )
+    equipment_count = len(count_result.scalars().all())
+    return _to_response({"config": config, "equipment_count": equipment_count})
+
+
+@router.post("/configurations/{config_id}/unfreeze", response_model=ConfigResponse)
+async def unfreeze_configuration(
+    config_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Unfreeze a configuration — re-enables edits to master fields."""
+    result = await db.execute(select(Configuration).where(Configuration.id == config_id))
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    config.is_frozen = False
+    await db.commit()
+    await db.refresh(config)
+    count_result = await db.execute(
+        select(ConfigEquipmentModel).where(ConfigEquipmentModel.config_id == config_id)
+    )
+    equipment_count = len(count_result.scalars().all())
+    return _to_response({"config": config, "equipment_count": equipment_count})
+
+
 @router.post("/configurations/{config_id}/equipment/{equipment_id}", status_code=204)
 async def add_equipment(
     config_id: str,
@@ -103,6 +165,130 @@ async def remove_equipment(
         await configuration_svc.remove_equipment_from_config(db, config_id, equipment_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.patch("/configurations/{config_id}/equipment/{equipment_id}")
+async def update_config_equipment(
+    config_id: str,
+    equipment_id: str,
+    body: EquipmentFullUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+    reason: str | None = Query(None, description="变更原因(可选)"),
+):
+    """Update equipment + config-equipment + weight + electrical in one call."""
+    # Load the configuration to check freeze status
+    config_result = await db.execute(
+        select(Configuration).where(Configuration.id == config_id)
+    )
+    config = config_result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="构型不存在")
+
+    # Load config_equipment record
+    result = await db.execute(
+        select(ConfigEquipmentModel)
+        .options(
+            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.weight_balance),
+            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
+        )
+        .where(ConfigEquipmentModel.config_id == config_id, ConfigEquipmentModel.equipment_id == equipment_id)
+    )
+    ce = result.scalar_one_or_none()
+    if not ce:
+        raise HTTPException(status_code=404, detail="设备未在该构型中")
+
+    equip = ce.equipment
+    old_values: dict[str, object] = {}
+    new_values: dict[str, object] = {}
+
+    # Update equipment (master) fields
+    if body.equipment:
+        for field, value in body.equipment.model_dump(exclude_unset=True).items():
+            if field in ('weight_balance', 'electrical_load'):
+                continue  # handled separately
+            if not hasattr(equip, field):
+                continue
+            # Freeze enforcement: reject edits to master identity fields
+            if config.is_frozen and field in FROZEN_MASTER_FIELDS:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"构型已冻结，不允许修改主数据字段: {field}",
+                )
+            old_val = getattr(equip, field)
+            if old_val != value:
+                old_values[f"equipment.{field}"] = _serialize(old_val)
+                new_values[f"equipment.{field}"] = _serialize(value)
+                setattr(equip, field, value)
+
+    # Update config_equipment fields
+    if body.config_equipment:
+        for field, value in body.config_equipment.model_dump(exclude_unset=True).items():
+            if not hasattr(ce, field):
+                continue
+            old_val = getattr(ce, field)
+            if old_val != value:
+                old_values[f"config_equipment.{field}"] = _serialize(old_val)
+                new_values[f"config_equipment.{field}"] = _serialize(value)
+                setattr(ce, field, value)
+
+    # Update weight_balance → write to ConfigEquipment AND legacy WeightBalance
+    if body.weight_balance:
+        wb_data = body.weight_balance.model_dump(exclude_unset=True)
+        # Per-config: mass_kg on ConfigEquipment
+        if "mass_kg" in wb_data:
+            old_val = ce.mass_kg
+            if old_val != wb_data["mass_kg"]:
+                old_values["weight_balance.mass_kg"] = _serialize(old_val)
+                new_values["weight_balance.mass_kg"] = _serialize(wb_data["mass_kg"])
+                ce.mass_kg = wb_data["mass_kg"]
+        # Legacy write-through
+        if equip.weight_balance:
+            equip.weight_balance.mass_kg = body.weight_balance.mass_kg
+        else:
+            wb = WeightBalance(id=str(uuid.uuid4()), equipment_id=equip.id, mass_kg=body.weight_balance.mass_kg)
+            db.add(wb)
+
+    # Update electrical_load → write to ConfigEquipment AND legacy ElectricalLoad
+    if body.electrical_load:
+        el_data = body.electrical_load.model_dump(exclude_unset=True)
+        # Per-config: power fields on ConfigEquipment
+        for el_field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
+            if el_field in el_data:
+                old_val = getattr(ce, el_field)
+                if old_val != el_data[el_field]:
+                    old_values[f"electrical_load.{el_field}"] = _serialize(old_val)
+                    new_values[f"electrical_load.{el_field}"] = _serialize(el_data[el_field])
+                    setattr(ce, el_field, el_data[el_field])
+        # Legacy write-through
+        if equip.electrical_load:
+            for field, value in el_data.items():
+                setattr(equip.electrical_load, field, value)
+        else:
+            el = ElectricalLoad(
+                id=str(uuid.uuid4()), equipment_id=equip.id,
+                power_kva_normal=body.electrical_load.power_kva_normal,
+                power_kva_emergency=body.electrical_load.power_kva_emergency,
+                power_kva_max=body.electrical_load.power_kva_max,
+            )
+            db.add(el)
+
+    # Audit log: only create if at least one field actually changed
+    if old_values:
+        audit = AuditLog(
+            id=str(uuid.uuid4()),
+            entity_type="config_equipment",
+            entity_id=f"{config_id}:{equipment_id}",
+            action="update",
+            old_value=old_values,
+            new_value=new_values,
+            user_id=str(user.id),
+            reason=reason,
+        )
+        db.add(audit)
+
+    await db.commit()
+    return {"status": "ok"}
 
 
 @router.get("/configurations/{config_a_id}/diff/{config_b_id}", response_model=ConfigDiffResponse)
