@@ -12,6 +12,7 @@ import { UserManagementPage } from '@/pages/UserManagementPage';
 import { AIReportPage } from '@/pages/AIReportPage';
 import { MICDStatsPage } from '@/pages/MICDStatsPage';
 import { ReportParsingPage } from '@/pages/ReportParsingPage';
+import { ConfigPlatformPage } from '@/pages/ConfigPlatformPage';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/ai-reports" element={<AIReportPage />} />
             <Route path="/micd-stats" element={<MICDStatsPage />} />
             <Route path="/report-parsing" element={<ReportParsingPage />} />
+            <Route path="/config-platform" element={<ConfigPlatformPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

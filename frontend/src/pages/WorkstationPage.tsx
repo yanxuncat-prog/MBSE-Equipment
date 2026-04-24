@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useConfigStore } from '../store/configStore';
 import { useConstraintWS } from '../hooks/useConstraintWS';
@@ -79,7 +80,16 @@ export function WorkstationPage() {
           <LayoutTab equipment={filteredEquipment} onSelect={handleSelect} onEdit={handleEdit} />
         </TabsContent>
         <TabsContent value="ewis">
-          <div className="py-20 text-center text-muted-foreground">EICD 暂时单独维护</div>
+          <div className="py-12 flex flex-col items-center gap-4">
+            <div className="p-6 rounded-lg border bg-card max-w-lg text-center space-y-3">
+              <h3 className="font-semibold text-lg">EICD 平台状态</h3>
+              <p className="text-sm text-muted-foreground">
+                EICD平台独立管理连接器和针孔关系。当前与设备管理平台断开联动，各自独立管理。
+                后续再考虑数据同步机制。
+              </p>
+              <Badge variant="secondary">独立运行</Badge>
+            </div>
+          </div>
         </TabsContent>
         <TabsContent value="elec-details">
           <ElectricalDetailsTab />
