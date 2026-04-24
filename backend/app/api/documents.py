@@ -13,16 +13,19 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 GENERATORS = {
     ("equipment_list", "pdf"): document_svc.generate_equipment_list_pdf,
     ("equipment_list", "xlsx"): document_svc.generate_equipment_list_xlsx,
+    ("equipment_list", "docx"): document_svc.generate_equipment_list_docx,
     ("weight_report", "pdf"): document_svc.generate_weight_report_pdf,
     ("eload_report", "pdf"): document_svc.generate_eload_report_pdf,
+    ("installation_report", "docx"): document_svc.generate_installation_report_docx,
 }
 
 CONTENT_TYPES = {
     "pdf": "application/pdf",
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 
-EXTENSIONS = {"pdf": ".pdf", "xlsx": ".xlsx"}
+EXTENSIONS = {"pdf": ".pdf", "xlsx": ".xlsx", "docx": ".docx"}
 
 
 @router.post("/generate")
