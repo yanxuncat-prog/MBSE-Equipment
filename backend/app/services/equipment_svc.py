@@ -60,12 +60,28 @@ async def list_equipment(
                 ce_alias.planned_delivery_date,
                 ce_alias.estimated_delivery_date,
                 ce_alias.procurement_notes,
+                ce_alias.config_name,
+                ce_alias.mass_kg,
+                ce_alias.cg_x,
+                ce_alias.cg_y,
+                ce_alias.cg_z,
+                ce_alias.inertia_ix,
+                ce_alias.inertia_iy,
+                ce_alias.inertia_iz,
+                ce_alias.inertia_ixy,
+                ce_alias.inertia_ixz,
+                ce_alias.inertia_iyz,
+                ce_alias.weight_target_kg,
+                ce_alias.overweight_risk,
+                ce_alias.power_kva_normal,
+                ce_alias.power_kva_emergency,
+                ce_alias.power_kva_max,
             )
-            .where(ce_alias.config_id == uuid.UUID(config_id))
+            .where(ce_alias.config_id == config_id)
         )
         count_query = count_query.join(
             ce_alias, ce_alias.equipment_id == Equipment.id
-        ).where(ce_alias.config_id == uuid.UUID(config_id))
+        ).where(ce_alias.config_id == config_id)
 
     if ata_chapter:
         query = query.where(Equipment.ata_chapter.startswith(ata_chapter))
@@ -73,18 +89,18 @@ async def list_equipment(
 
     if zone_id:
         if ce_alias is not None:
-            query = query.where(ce_alias.zone_id == uuid.UUID(zone_id))
+            query = query.where(ce_alias.zone_id == zone_id)
             count_query = count_query.join(
                 ConfigEquipmentModel, ConfigEquipmentModel.equipment_id == Equipment.id, isouter=True
-            ).where(ConfigEquipmentModel.zone_id == uuid.UUID(zone_id))
+            ).where(ConfigEquipmentModel.zone_id == zone_id)
         else:
             # Without a config context, filter by zone across all config_equipment rows
             query = query.join(
                 ConfigEquipmentModel, ConfigEquipmentModel.equipment_id == Equipment.id, isouter=True
-            ).where(ConfigEquipmentModel.zone_id == uuid.UUID(zone_id))
+            ).where(ConfigEquipmentModel.zone_id == zone_id)
             count_query = count_query.join(
                 ConfigEquipmentModel, ConfigEquipmentModel.equipment_id == Equipment.id, isouter=True
-            ).where(ConfigEquipmentModel.zone_id == uuid.UUID(zone_id))
+            ).where(ConfigEquipmentModel.zone_id == zone_id)
 
     if search:
         pattern = f"%{search}%"
@@ -127,6 +143,22 @@ async def list_equipment(
             ce_planned_delivery_date = row[18]
             ce_estimated_delivery_date = row[19]
             ce_procurement_notes = row[20]
+            ce_config_name = row[21]
+            ce_mass_kg = row[22]
+            ce_cg_x = row[23]
+            ce_cg_y = row[24]
+            ce_cg_z = row[25]
+            ce_inertia_ix = row[26]
+            ce_inertia_iy = row[27]
+            ce_inertia_iz = row[28]
+            ce_inertia_ixy = row[29]
+            ce_inertia_ixz = row[30]
+            ce_inertia_iyz = row[31]
+            ce_weight_target_kg = row[32]
+            ce_overweight_risk = row[33]
+            ce_power_kva_normal = row[34]
+            ce_power_kva_emergency = row[35]
+            ce_power_kva_max = row[36]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -152,6 +184,22 @@ async def list_equipment(
                 bus_name=bus_name,
                 notes=ce_notes,
                 install_method=ce_install_method,
+                config_name=ce_config_name,
+                mass_kg=ce_mass_kg,
+                cg_x=ce_cg_x,
+                cg_y=ce_cg_y,
+                cg_z=ce_cg_z,
+                inertia_ix=ce_inertia_ix,
+                inertia_iy=ce_inertia_iy,
+                inertia_iz=ce_inertia_iz,
+                inertia_ixy=ce_inertia_ixy,
+                inertia_ixz=ce_inertia_ixz,
+                inertia_iyz=ce_inertia_iyz,
+                weight_target_kg=ce_weight_target_kg,
+                overweight_risk=ce_overweight_risk,
+                power_kva_normal=ce_power_kva_normal,
+                power_kva_emergency=ce_power_kva_emergency,
+                power_kva_max=ce_power_kva_max,
                 bonding_method=ce_bonding_method,
                 bonding_type=ce_bonding_type,
                 bonding_resistance=ce_bonding_resistance,
@@ -188,7 +236,7 @@ async def get_equipment(db: AsyncSession, equipment_id: str) -> Equipment | None
             selectinload(Equipment.electrical_load),
             selectinload(Equipment.supplier),
         )
-        .where(Equipment.id == uuid.UUID(equipment_id))
+        .where(Equipment.id == equipment_id)
     )
     return result.scalar_one_or_none()
 
@@ -199,7 +247,7 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
         name=data.name,
         ata_chapter=data.ata_chapter,
         equipment_type=data.equipment_type,
-        supplier_id=uuid.UUID(data.supplier_id) if data.supplier_id else None,
+        supplier_id=data.supplier_id if data.supplier_id else None,
         status=data.status,
         description=data.description,
     )
@@ -227,7 +275,7 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
         entity_id=equip.id,
         action="create",
         new_value=data.model_dump(),
-        user_id=uuid.UUID(user_id),
+        user_id=user_id,
     )
     db.add(audit)
     await db.commit()
@@ -245,7 +293,7 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
     for field, value in update_fields.items():
         old_values[field] = getattr(equip, field)
         if field == "supplier_id" and value:
-            value = uuid.UUID(value)
+            value = value
         setattr(equip, field, value)
 
     if data.weight_balance is not None:
@@ -267,7 +315,7 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
     audit = AuditLog(
         entity_type="equipment", entity_id=equip.id, action="update",
         old_value=old_values, new_value=data.model_dump(exclude_unset=True),
-        user_id=uuid.UUID(user_id),
+        user_id=user_id,
     )
     db.add(audit)
     await db.commit()
@@ -283,7 +331,7 @@ async def delete_equipment(db: AsyncSession, equipment_id: str, user_id: str) ->
     audit = AuditLog(
         entity_type="equipment", entity_id=equip.id, action="delete",
         old_value={"part_number": equip.part_number, "name": equip.name},
-        user_id=uuid.UUID(user_id),
+        user_id=user_id,
     )
     db.add(audit)
     await db.delete(equip)
