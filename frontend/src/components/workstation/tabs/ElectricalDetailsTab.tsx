@@ -159,7 +159,7 @@ function PowerCurve({ data, label, color }: {
 
 /* ── Main Component ── */
 export function ElectricalDetailsTab() {
-  const { activeConfigId, activeATA } = useConfigStore();
+  const { activeConfigId, activeProgramId, activeATA } = useConfigStore();
   const [rawDetails, setRawDetails] = useState<Detail[]>([]);
   const [phases, setPhases] = useState<Phase[]>([]);
   const [rawWorkModes, setRawWorkModes] = useState<WorkMode[]>([]);
@@ -170,7 +170,7 @@ export function ElectricalDetailsTab() {
     setLoading(true);
     Promise.all([
       listElectricalDetails(activeConfigId),
-      listFlightPhases(activeConfigId),
+      listFlightPhases(activeProgramId || activeConfigId),
       listLoadWorkModes(activeConfigId),
     ]).then(([d, p, w]) => { setRawDetails(d); setPhases(p); setRawWorkModes(w); })
       .finally(() => setLoading(false));

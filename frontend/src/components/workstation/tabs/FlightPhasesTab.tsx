@@ -5,15 +5,15 @@ import { listFlightPhases } from '@/api/electrical-details';
 import { useConfigStore } from '@/store/configStore';
 
 export function FlightPhasesTab() {
-  const { activeConfigId } = useConfigStore();
+  const { activeProgramId } = useConfigStore();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!activeConfigId) return;
+    if (!activeProgramId) return;
     setLoading(true);
-    listFlightPhases(activeConfigId).then(setData).finally(() => setLoading(false));
-  }, [activeConfigId]);
+    listFlightPhases(activeProgramId).then(setData).finally(() => setLoading(false));
+  }, [activeProgramId]);
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>;
 

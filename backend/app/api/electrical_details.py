@@ -27,13 +27,13 @@ async def list_electrical_details(
 
 @router.get("/flight-phases")
 async def list_flight_phases(
-    config_id: str = Query(...),
+    program_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
         select(FlightPhase)
-        .where(FlightPhase.config_id == config_id)
+        .where(FlightPhase.program_id == program_id)
         .order_by(FlightPhase.phase_code)
     )
     rows = result.scalars().all()

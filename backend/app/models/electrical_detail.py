@@ -38,7 +38,7 @@ class FlightPhase(Base):
     __tablename__ = "flight_phases"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    config_id: Mapped[str] = mapped_column(String(36), ForeignKey("configurations.id"))
+    program_id: Mapped[str] = mapped_column(String(36), ForeignKey("programs.id"), comment="所属型号")
     phase_code: Mapped[str] = mapped_column(String(10))     # 阶段编号 G0~G8
     phase_name: Mapped[str] = mapped_column(String(50))     # 阶段名称
     original_phase: Mapped[str | None] = mapped_column(String(100)) # 原统计运行阶段
