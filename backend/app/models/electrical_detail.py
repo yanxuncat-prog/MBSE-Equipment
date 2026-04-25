@@ -1,36 +1,10 @@
-"""负载电气特性 + 飞行阶段定义 + 负载工作模式 三张表的模型。"""
+"""飞行阶段定义 + 负载工作模式 两张表的模型。"""
 import uuid
 
-from sqlalchemy import String, Text, Float, ForeignKey
+from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
-
-
-class ElectricalDetail(Base):
-    """负载电气特性 — 每条负载记录的完整电气参数。"""
-    __tablename__ = "electrical_details"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    config_id: Mapped[str] = mapped_column(String(36), ForeignKey("configurations.id"))
-    load_id: Mapped[str] = mapped_column(String(100))            # 负载ID
-    equipment_name: Mapped[str] = mapped_column(String(200))      # 设备名称
-    lin_number: Mapped[str | None] = mapped_column(String(50))
-    ata_chapter: Mapped[str | None] = mapped_column(String(100))  # 系统章节
-    part_number: Mapped[str | None] = mapped_column(String(50))   # 设备编号
-    voltage_level: Mapped[str | None] = mapped_column(String(20)) # 正常工作电压等级(V)
-    voltage_range: Mapped[str | None] = mapped_column(String(50)) # 正常工作电压范围(V)
-    soft_start: Mapped[str | None] = mapped_column(String(10))    # 是否需要软启动
-    peak_power_kw: Mapped[str | None] = mapped_column(String(20)) # 峰值功率(kW)
-    peak_power_time_s: Mapped[str | None] = mapped_column(String(20)) # 峰值功率时间(s)
-    supply_channels: Mapped[str | None] = mapped_column(String(50))  # 供电路数
-    dissimilar_supply: Mapped[str | None] = mapped_column(String(20)) # 有无供电非相似需求
-    emergency_sheddable: Mapped[str | None] = mapped_column(String(10)) # 应急是否可卸载
-    working_power_kw: Mapped[str | None] = mapped_column(String(20))  # 工作功率(kW)
-    actual_power_kw: Mapped[str | None] = mapped_column(String(20))   # 实际功率(kW)
-    power_margin: Mapped[str | None] = mapped_column(String(20))      # 功率余量
-    measured_current_a: Mapped[str | None] = mapped_column(String(20))# 实测电流(A)
-    peak_to_working_ratio: Mapped[str | None] = mapped_column(String(20)) # 峰值功率/工作功率
 
 
 class FlightPhase(Base):
@@ -57,13 +31,10 @@ class LoadWorkMode(Base):
     __tablename__ = "load_work_modes"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    config_id: Mapped[str] = mapped_column(String(36), ForeignKey("configurations.id"))
+    config_id: Mapped[str] = mapped_column(String(36), ForeignKey("configurations.id"), comment="所属构型")
+    lin_number: Mapped[str] = mapped_column(String(50), comment="LIN号(关联config_equipment)")
     load_id: Mapped[str] = mapped_column(String(100))            # 负载ID
     work_mode: Mapped[str] = mapped_column(String(50))           # 工作模式
-    equipment_name: Mapped[str | None] = mapped_column(String(200))
-    lin_number: Mapped[str | None] = mapped_column(String(50))
-    ata_chapter: Mapped[str | None] = mapped_column(String(100))
-    part_number: Mapped[str | None] = mapped_column(String(50))
     voltage_level: Mapped[str | None] = mapped_column(String(20))
     emergency_sheddable: Mapped[str | None] = mapped_column(String(10))
     load_type: Mapped[str | None] = mapped_column(String(50))    # 负载类型

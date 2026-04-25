@@ -5,7 +5,7 @@ import { listLoadWorkModes } from '@/api/electrical-details';
 import { useConfigStore } from '@/store/configStore';
 
 export function LoadWorkModesTab() {
-  const { activeConfigId, activeATA } = useConfigStore();
+  const { activeConfigId } = useConfigStore();
   const [rawData, setRawData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,23 +15,14 @@ export function LoadWorkModesTab() {
     listLoadWorkModes(activeConfigId).then(setRawData).finally(() => setLoading(false));
   }, [activeConfigId]);
 
-  const data = useMemo(() => {
-    if (!activeATA) return rawData;
-    return rawData.filter((w: any) => {
-      const ata = w.ata_chapter || '';
-      return ata.includes(`ATA${activeATA}`) || ata.includes(`ata${activeATA}`) || ata === activeATA;
-    });
-  }, [rawData, activeATA]);
+  const data = useMemo(() => rawData, [rawData]);
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>;
 
   const columns: Column<any>[] = [
+    { title: 'LIN号', dataIndex: 'lin_number', key: 'lin', width: 120 },
     { title: '负载ID', dataIndex: 'load_id', key: 'lid', width: 160 },
     { title: '工作模式', dataIndex: 'work_mode', key: 'mode', width: 80 },
-    { title: '设备名称', dataIndex: 'equipment_name', key: 'name', width: 170,
-      render: (v: string) => <span className="truncate block max-w-[160px]">{v || '-'}</span> },
-    { title: '系统章节', dataIndex: 'ata_chapter', key: 'ata', width: 150,
-      render: (v: string) => <span className="truncate block max-w-[140px]">{v || '-'}</span> },
     { title: '电压(V)', dataIndex: 'voltage_level', key: 'vl', width: 70, align: 'right' },
     { title: '应急可卸', dataIndex: 'emergency_sheddable', key: 'es', width: 80 },
     { title: '负载类型', dataIndex: 'load_type', key: 'lt', width: 90 },
