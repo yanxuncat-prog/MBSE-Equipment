@@ -53,10 +53,9 @@ class ConfigEquipment(Base):
     weight_target_kg: Mapped[float | None] = mapped_column(Float, comment="重量指标(PACE分配,kg)")
     overweight_risk: Mapped[str | None] = mapped_column(String(200), comment="超重风险说明")
 
-    # --- Per-config electrical load ---
-    power_kva_normal: Mapped[float | None] = mapped_column(Float, comment="正常功耗(kW)")
-    power_kva_emergency: Mapped[float | None] = mapped_column(Float, comment="应急功耗(kW)")
-    power_kva_max: Mapped[float | None] = mapped_column(Float, comment="峰值功耗(kW)")
+    # --- Per-config electrical measurement ---
+    actual_power_kw: Mapped[float | None] = mapped_column(Float, comment="实际功率(kW)")
+    measured_current_a: Mapped[float | None] = mapped_column(Float, comment="实测电流(A)")
 
     # Bonding/grounding (config-specific because installation method varies)
     install_method: Mapped[str | None] = mapped_column(String(200), comment="安装方式")

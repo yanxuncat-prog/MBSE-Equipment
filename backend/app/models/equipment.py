@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text, Integer, ForeignKey, DateTime, func
+from sqlalchemy import String, Text, Integer, Float, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -45,6 +45,13 @@ class Equipment(Base):
     power_redundancy: Mapped[str | None] = mapped_column(String(100), comment="供电余度")
     power_voltage: Mapped[str | None] = mapped_column(String(50), comment="供电电压")
     power_watts: Mapped[str | None] = mapped_column(String(50), comment="用电功率")
+    power_kva_normal: Mapped[float | None] = mapped_column(Float, comment="正常功耗(kW)")
+    power_kva_emergency: Mapped[float | None] = mapped_column(Float, comment="应急功耗(kW)")
+    power_kva_max: Mapped[float | None] = mapped_column(Float, comment="峰值功耗(kW)")
+    soft_start: Mapped[str | None] = mapped_column(String(10), comment="软启动")
+    peak_power_time_s: Mapped[str | None] = mapped_column(String(20), comment="峰值功率持续时间(s)")
+    dissimilar_supply: Mapped[str | None] = mapped_column(String(20), comment="异类供电")
+    emergency_sheddable: Mapped[str | None] = mapped_column(String(10), comment="应急可卸")
 
     # --- Grounding ---
     shell_grounding_method: Mapped[str | None] = mapped_column(String(100), comment="壳体接地方式")
