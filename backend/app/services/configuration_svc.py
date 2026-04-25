@@ -207,7 +207,7 @@ async def remove_equipment_from_config(
 async def _load_config_equipment(
     db: AsyncSession, config_id: uuid.UUID
 ) -> list[ConfigEquipmentModel]:
-    """Load all ConfigEquipment entries for a config with equipment and electrical_load."""
+    """Load all ConfigEquipment entries for a config with equipment."""
     stmt = (
         select(ConfigEquipmentModel)
         .where(ConfigEquipmentModel.config_id == config_id)
@@ -278,11 +278,11 @@ async def diff_configs(
         )
         if ce.mass_kg:
             net_mass_change += ce.mass_kg
-        if e.electrical_load and ce.bus_id:
+        if e.power_kva_normal and ce.bus_id:
             bus_id = str(ce.bus_id)
             if bus_id not in bus_load_changes:
                 bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
-            bus_load_changes[bus_id]["normal_kva_change"] += e.electrical_load.power_kva_normal
+            bus_load_changes[bus_id]["normal_kva_change"] += e.power_kva_normal
 
     for name_key in removed_ids:
         ce = ce_a_map[name_key]
@@ -298,11 +298,11 @@ async def diff_configs(
         )
         if ce.mass_kg:
             net_mass_change -= ce.mass_kg
-        if e.electrical_load and ce.bus_id:
+        if e.power_kva_normal and ce.bus_id:
             bus_id = str(ce.bus_id)
             if bus_id not in bus_load_changes:
                 bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
-            bus_load_changes[bus_id]["normal_kva_change"] -= e.electrical_load.power_kva_normal
+            bus_load_changes[bus_id]["normal_kva_change"] -= e.power_kva_normal
 
     for name_key in common_ids:
         ce_a = ce_a_map[name_key]
@@ -363,39 +363,22 @@ async def diff_configs(
         if zone_a != zone_b:
             changes["config.zone_id"] = {"from": zone_a, "to": zone_b}
 
-        # Compare electrical_load fields (equipment-level)
-        el_a = ea.electrical_load
-        el_b = eb.electrical_load
-        if el_a and el_b:
-            for field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
-                val_a = getattr(el_a, field)
-                val_b = getattr(el_b, field)
-                if val_a != val_b:
-                    changes[f"electrical_load.{field}"] = {
-                        "from": val_a,
-                        "to": val_b,
-                    }
-            # Track bus load changes for common items
-            normal_diff = (el_b.power_kva_normal or 0) - (el_a.power_kva_normal or 0)
-            if normal_diff != 0 and ce_b.bus_id:
-                bus_id_b = str(ce_b.bus_id)
-                if bus_id_b not in bus_load_changes:
-                    bus_load_changes[bus_id_b] = {"normal_kva_change": 0.0}
-                bus_load_changes[bus_id_b]["normal_kva_change"] += normal_diff
-        elif el_b and not el_a:
-            changes["electrical_load"] = {"from": None, "to": "added"}
-            if ce_b.bus_id:
-                bus_id = str(ce_b.bus_id)
-                if bus_id not in bus_load_changes:
-                    bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
-                bus_load_changes[bus_id]["normal_kva_change"] += el_b.power_kva_normal
-        elif el_a and not el_b:
-            changes["electrical_load"] = {"from": "present", "to": None}
-            if ce_a.bus_id:
-                bus_id = str(ce_a.bus_id)
-                if bus_id not in bus_load_changes:
-                    bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
-                bus_load_changes[bus_id]["normal_kva_change"] -= el_a.power_kva_normal
+        # Compare power_kva fields (equipment-level)
+        for field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
+            val_a = getattr(ea, field, None)
+            val_b = getattr(eb, field, None)
+            if val_a != val_b:
+                changes[f"equipment.{field}"] = {
+                    "from": val_a,
+                    "to": val_b,
+                }
+        # Track bus load changes for common items
+        normal_diff = (eb.power_kva_normal or 0) - (ea.power_kva_normal or 0)
+        if normal_diff != 0 and ce_b.bus_id:
+            bus_id_b = str(ce_b.bus_id)
+            if bus_id_b not in bus_load_changes:
+                bus_load_changes[bus_id_b] = {"normal_kva_change": 0.0}
+            bus_load_changes[bus_id_b]["normal_kva_change"] += normal_diff
 
         if changes:
             modified.append(

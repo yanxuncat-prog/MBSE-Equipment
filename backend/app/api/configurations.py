@@ -209,7 +209,7 @@ async def update_config_equipment(
     # Update equipment (master) fields
     if body.equipment:
         for field, value in body.equipment.model_dump(exclude_unset=True).items():
-            if field == 'electrical_load' or field == 'weight_balance':
+            if field == 'weight_balance':
                 continue
             if not hasattr(equip, field):
                 continue
@@ -235,17 +235,6 @@ async def update_config_equipment(
                 old_values[f"config_equipment.{field}"] = _serialize(old_val)
                 new_values[f"config_equipment.{field}"] = _serialize(value)
                 setattr(ce, field, value)
-
-    # Update electrical_load → write to ConfigEquipment
-    if body.electrical_load:
-        el_data = body.electrical_load.model_dump(exclude_unset=True)
-        for el_field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
-            if el_field in el_data:
-                old_val = getattr(ce, el_field)
-                if old_val != el_data[el_field]:
-                    old_values[f"config_equipment.{el_field}"] = _serialize(old_val)
-                    new_values[f"config_equipment.{el_field}"] = _serialize(el_data[el_field])
-                    setattr(ce, el_field, el_data[el_field])
 
     # Audit log: only create if at least one field actually changed
     if old_values:

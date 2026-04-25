@@ -35,7 +35,6 @@ async def _load_config_equipment(db: AsyncSession, config_id: str) -> tuple[Conf
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
             selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.supplier),
             selectinload(ConfigEquipmentModel.zone),
             selectinload(ConfigEquipmentModel.bus),
@@ -85,7 +84,7 @@ async def generate_equipment_list_pdf(db: AsyncSession, config_id: str) -> bytes
             "zone_code": item["zone_code"],
             "sta": f"{item['sta']:.0f}" if item["sta"] is not None else None,
             "bus_name": item["bus_name"],
-            "power_kva": f"{e.electrical_load.power_kva_normal:.2f}" if e.electrical_load else None,
+            "power_kva": f"{e.power_kva_normal:.2f}" if e.power_kva_normal else None,
         }
         ata = e.ata_chapter.split("-")[0] if "-" in e.ata_chapter else e.ata_chapter
         grouped[ata].append(row)
@@ -120,7 +119,7 @@ async def generate_equipment_list_xlsx(db: AsyncSession, config_id: str) -> byte
             item["zone_code"],
             item["sta"],
             item["bus_name"],
-            e.electrical_load.power_kva_normal if e.electrical_load else None,
+            e.power_kva_normal,
             e.status,
         ])
 
@@ -180,7 +179,7 @@ async def generate_eload_report_pdf(db: AsyncSession, config_id: str, phase: str
     # Build a lookup: bus_id -> list of equipment items assigned to that bus in this config
     bus_equip_map = defaultdict(list)
     for item in items:
-        if item["bus_id"] and item["equipment"].electrical_load:
+        if item["bus_id"] and item["equipment"].power_kva_normal is not None:
             bus_equip_map[str(item["bus_id"])].append(item)
 
     buses = []
@@ -193,12 +192,11 @@ async def generate_eload_report_pdf(db: AsyncSession, config_id: str, phase: str
         bus_equip = []
         for item in bus_equip_map.get(bid, []):
             e = item["equipment"]
-            el = e.electrical_load
             bus_equip.append({
                 "part_number": e.part_number, "name": e.name, "ata_chapter": e.ata_chapter,
-                "power_normal": f"{el.power_kva_normal:.2f}",
-                "power_emergency": f"{el.power_kva_emergency:.2f}" if el.power_kva_emergency else None,
-                "power_max": f"{el.power_kva_max:.2f}" if el.power_kva_max else None,
+                "power_normal": f"{e.power_kva_normal:.2f}" if e.power_kva_normal else "0.00",
+                "power_emergency": f"{e.power_kva_emergency:.2f}" if e.power_kva_emergency else None,
+                "power_max": f"{e.power_kva_max:.2f}" if e.power_kva_max else None,
             })
 
         buses.append({
@@ -442,7 +440,7 @@ async def generate_equipment_list_docx(db: AsyncSession, config_id: str) -> byte
         _set_cell_text(row.cells[6], item["zone_code"] or "-", size=8)
         _set_cell_text(row.cells[7], f"{item['sta']:.0f}" if item["sta"] is not None else "-", size=8)
         _set_cell_text(row.cells[8], item["bus_name"] or "-", size=8)
-        _set_cell_text(row.cells[9], f"{e.electrical_load.power_kva_normal:.2f}" if e.electrical_load else "-", size=8)
+        _set_cell_text(row.cells[9], f"{e.power_kva_normal:.2f}" if e.power_kva_normal else "-", size=8)
         _set_cell_text(row.cells[10], e.status, size=8)
 
     buf = io.BytesIO()

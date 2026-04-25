@@ -91,9 +91,9 @@ const FIELD_GROUPS: { key: string; label: string; fields: FieldDef[] }[] = [
   {
     key: 'electrical', label: '电气特性',
     fields: [
-      { key: 'power_kva_normal', label: '正常功耗 (kW)', type: 'number', target: 'electrical_load' },
-      { key: 'power_kva_emergency', label: '应急功耗 (kW)', type: 'number', target: 'electrical_load' },
-      { key: 'power_kva_max', label: '峰值功耗 (kW)', type: 'number', target: 'electrical_load' },
+      { key: 'power_kva_normal', label: '正常功耗 (kW)', type: 'number', target: 'equipment' },
+      { key: 'power_kva_emergency', label: '应急功耗 (kW)', type: 'number', target: 'equipment' },
+      { key: 'power_kva_max', label: '峰值功耗 (kW)', type: 'number', target: 'equipment' },
       { key: 'power_voltage', label: '供电电压', type: 'text', target: 'equipment' },
       { key: 'power_redundancy', label: '供电余度', type: 'text', target: 'equipment' },
       { key: 'voltage_range', label: '电压范围 (V)', type: 'text', target: 'equipment' },
@@ -132,7 +132,6 @@ const PRESETS: { label: string; groups: string[] }[] = [
 /* ── Helpers ── */
 function getFieldValue(equip: Equipment | null, field: FieldDef): string {
   if (!equip) return '';
-  if (field.target === 'config_equipment' && ['power_kva_normal','power_kva_emergency','power_kva_max'].includes(field.key)) return String((equip.config_data as any)?.[field.key] ?? '');
   if (field.target === 'config_equipment') return String((equip.config_data as any)?.[field.key] ?? '');
   const v = (equip as any)[field.key];
   if (v === true) return 'true';
@@ -181,8 +180,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
         // Use the new combined update API
         const eqFields: Record<string, any> = {};
         const ceFields: Record<string, any> = {};
-        let elData: any = null;
-
         for (const group of visibleGroups) {
           for (const field of group.fields) {
             const val = form[field.key];
@@ -206,7 +203,6 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
         await client.patch(url, {
           equipment: Object.keys(eqFields).length > 0 ? eqFields : undefined,
           config_equipment: Object.keys(ceFields).length > 0 ? ceFields : undefined,
-          electrical_load: elData,
         });
         onSave({}, reason);
       } else {
@@ -218,7 +214,7 @@ export function EquipmentForm({ open, equipment, onSave, onCancel }: Props) {
           equipment_type: form.equipment_type || 'LRU',
           description: form.description,
         };
-        if (form.power_kva_normal) if (body.config_equipment) body.config_equipment.power_kva_normal = parseFloat(form.power_kva_normal); else body.config_equipment = { power_kva_normal: parseFloat(form.power_kva_normal) };
+        if (form.power_kva_normal) body.power_kva_normal = parseFloat(form.power_kva_normal);
         onSave(body);
       }
     } finally {

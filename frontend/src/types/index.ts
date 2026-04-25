@@ -38,10 +38,9 @@ export interface ConfigEquipmentData {
   weight_target_kg: number | null;
   overweight_risk: string | null;
 
-  // Per-config electrical
-  power_kva_normal: number | null;
-  power_kva_emergency: number | null;
-  power_kva_max: number | null;
+  // Per-config electrical measurement
+  actual_power_kw: number | null;
+  measured_current_a: number | null;
 
   install_method: string | null;
   bonding_position: string | null;
@@ -98,6 +97,13 @@ export interface Equipment {
   power_redundancy: string | null;
   power_voltage: string | null;
   power_watts: string | null;
+  power_kva_normal: number | null;
+  power_kva_emergency: number | null;
+  power_kva_max: number | null;
+  soft_start: string | null;
+  peak_power_time_s: string | null;
+  dissimilar_supply: string | null;
+  emergency_sheddable: string | null;
 
   // Grounding
   shell_grounding_method: string | null;

@@ -50,9 +50,9 @@ EXPORT_COLUMNS = [
     ("供电电压", "equipment", "power_voltage"),
     ("供电余度", "equipment", "power_redundancy"),
     ("用电功率", "equipment", "power_watts"),
-    ("正常功耗(kW)", "config_equipment", "power_kva_normal"),
-    ("应急功耗(kW)", "config_equipment", "power_kva_emergency"),
-    ("峰值功耗(kW)", "config_equipment", "power_kva_max"),
+    ("正常功耗(kW)", "equipment", "power_kva_normal"),
+    ("应急功耗(kW)", "equipment", "power_kva_emergency"),
+    ("峰值功耗(kW)", "equipment", "power_kva_max"),
     ("备注", "equipment", "notes"),
 ]
 
@@ -96,8 +96,6 @@ async def export_equipment(
                 val = getattr(e, field, None)
             elif source == "config_equipment":
                 val = getattr(ce, field, None)
-            elif source == "electrical_load":
-                val = getattr(e.electrical_load, field, None) if e.electrical_load else None
             else:
                 val = None
             if val is True:

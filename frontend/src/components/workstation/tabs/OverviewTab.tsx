@@ -25,15 +25,15 @@ function EquipmentVisualPreview({ equipment, allEquipment }: { equipment: Equipm
     // Power share within same voltage group
     const myVoltage = e.power_voltage || '';
     const sameVoltageTotal = allEquipment
-      .filter(eq => eq.power_voltage === myVoltage && eq.config_data?.power_kva_normal)
-      .reduce((s, eq) => s + (eq.config_data?.power_kva_normal ?? 0), 0);
-    const myPower = e.config_data?.power_kva_normal ?? 0;
+      .filter(eq => eq.power_voltage === myVoltage && eq.power_kva_normal)
+      .reduce((s, eq) => s + (eq.power_kva_normal ?? 0), 0);
+    const myPower = e.power_kva_normal ?? 0;
     const powerShare = sameVoltageTotal > 0 ? myPower / sameVoltageTotal : 0;
 
     // Data completeness per dimension (for radar)
     const weightFields = [e.config_data?.mass_kg, e.dimensions_mm];
     const layoutFields = [e.config_data?.sta, e.config_data?.bl, e.config_data?.wl, e.config_data?.install_method];
-    const elecFields = [e.power_voltage, e.config_data?.power_kva_normal, e.power_redundancy, e.is_electrical];
+    const elecFields = [e.power_voltage, e.power_kva_normal, e.power_redundancy, e.is_electrical];
     const envFields: any[] = [];  // DO-160 fields moved to do160_records
 
     const completeness = (fields: any[]) => fields.filter(f => f != null && f !== '' && f !== undefined).length / fields.length;

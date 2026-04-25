@@ -66,9 +66,8 @@ async def list_equipment(
                 ce_alias.inertia_iyz,
                 ce_alias.weight_target_kg,
                 ce_alias.overweight_risk,
-                ce_alias.power_kva_normal,
-                ce_alias.power_kva_emergency,
-                ce_alias.power_kva_max,
+                ce_alias.actual_power_kw,
+                ce_alias.measured_current_a,
                 ce_alias.actual_arrival_date,
                 ce_alias.micd_confirmed,
                 ce_alias.structure_ready,
@@ -160,23 +159,22 @@ async def list_equipment(
             ce_inertia_iyz = row[28]
             ce_weight_target_kg = row[29]
             ce_overweight_risk = row[30]
-            ce_power_kva_normal = row[31]
-            ce_power_kva_emergency = row[32]
-            ce_power_kva_max = row[33]
-            ce_actual_arrival_date = row[34]
-            ce_micd_confirmed = row[35]
-            ce_structure_ready = row[36]
-            ce_installation_ready = row[37]
-            ce_planned_install_date = row[38]
-            ce_actual_install_date = row[39]
+            ce_actual_power_kw = row[31]
+            ce_measured_current_a = row[32]
+            ce_actual_arrival_date = row[33]
+            ce_micd_confirmed = row[34]
+            ce_structure_ready = row[35]
+            ce_installation_ready = row[36]
+            ce_planned_install_date = row[37]
+            ce_actual_install_date = row[38]
             # 7 moved fields
-            ce_equipment_status = row[40]
-            ce_responsible_person = row[41]
-            ce_has_special_wiring = row[42]
-            ce_equipment_level = row[43]
-            ce_is_optional = row[44]
-            ce_internal_number = row[45]
-            ce_lin_number = row[46]
+            ce_equipment_status = row[39]
+            ce_responsible_person = row[40]
+            ce_has_special_wiring = row[41]
+            ce_equipment_level = row[42]
+            ce_is_optional = row[43]
+            ce_internal_number = row[44]
+            ce_lin_number = row[45]
 
             # Resolve zone name and bus name via lazy load or direct query
             zone_name = None
@@ -215,9 +213,8 @@ async def list_equipment(
                 inertia_iyz=ce_inertia_iyz,
                 weight_target_kg=ce_weight_target_kg,
                 overweight_risk=ce_overweight_risk,
-                power_kva_normal=ce_power_kva_normal,
-                power_kva_emergency=ce_power_kva_emergency,
-                power_kva_max=ce_power_kva_max,
+                actual_power_kw=ce_actual_power_kw,
+                measured_current_a=ce_measured_current_a,
                 bonding_position=ce_bonding_position,
                 in_pace_drawing=ce_in_pace_drawing,
                 layout_adjustment=ce_layout_adjustment,
@@ -289,7 +286,7 @@ async def create_equipment(db: AsyncSession, data: EquipmentCreate, user_id: str
     )
     db.add(audit)
     await db.commit()
-    await db.refresh(equip, ["electrical_load"])
+    await db.refresh(equip)
     return equip
 
 
@@ -299,7 +296,7 @@ async def update_equipment(db: AsyncSession, equipment_id: str, data: EquipmentU
         return None
 
     old_values = {}
-    update_fields = data.model_dump(exclude_unset=True, exclude={"electrical_load"})
+    update_fields = data.model_dump(exclude_unset=True)
     for field, value in update_fields.items():
         old_values[field] = getattr(equip, field)
         if field == "supplier_id" and value:

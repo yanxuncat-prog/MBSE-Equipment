@@ -21,7 +21,7 @@ async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[d
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
+            selectinload(ConfigEquipmentModel.equipment),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
     )
@@ -44,15 +44,14 @@ async def _load_equipment_for_config(db: AsyncSession, config_id: str) -> list[d
         else:
             d["weight_balance"] = None
 
-        if equip.electrical_load:
-            # Use config_equipment.bus_id instead of electrical_load.bus_id
+        if equip.power_kva_normal is not None:
             bus_id = str(ce.bus_id) if ce.bus_id else ""
             d["electrical_load"] = {
                 "bus_id": bus_id,
                 "bus_name": "",
-                "power_kva_normal": equip.electrical_load.power_kva_normal,
-                "power_kva_emergency": equip.electrical_load.power_kva_emergency,
-                "power_kva_max": equip.electrical_load.power_kva_max,
+                "power_kva_normal": equip.power_kva_normal,
+                "power_kva_emergency": equip.power_kva_emergency,
+                "power_kva_max": equip.power_kva_max,
             }
         else:
             d["electrical_load"] = None
@@ -70,9 +69,6 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
     result = await db.execute(
         select(Equipment)
         .where(Equipment.id.in_(uuids))
-        .options(
-            selectinload(Equipment.electrical_load),
-        )
     )
     equipment_list = list(result.scalars().unique().all())
 
@@ -81,13 +77,13 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
         d = {"id": str(equip.id), "part_number": equip.part_number, "name": equip.name}
         # No config context — no mass_kg available for hypothetical adds
         d["weight_balance"] = None
-        if equip.electrical_load:
+        if equip.power_kva_normal is not None:
             d["electrical_load"] = {
                 "bus_id": "",
                 "bus_name": "",
-                "power_kva_normal": equip.electrical_load.power_kva_normal,
-                "power_kva_emergency": equip.electrical_load.power_kva_emergency,
-                "power_kva_max": equip.electrical_load.power_kva_max,
+                "power_kva_normal": equip.power_kva_normal,
+                "power_kva_emergency": equip.power_kva_emergency,
+                "power_kva_max": equip.power_kva_max,
             }
         else:
             d["electrical_load"] = None

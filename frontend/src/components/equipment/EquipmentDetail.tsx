@@ -105,8 +105,8 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
                 <Separator className="flex-1" />
               </div>
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                <DescriptionItem label="正常功耗">{equipment.config_data.power_kva_normal} kVA</DescriptionItem>
-                <DescriptionItem label="应急功耗">{equipment.config_data.power_kva_emergency ?? '-'} kVA</DescriptionItem>
+                <DescriptionItem label="正常功耗">{equipment.power_kva_normal ?? '-'} kVA</DescriptionItem>
+                <DescriptionItem label="应急功耗">{equipment.power_kva_emergency ?? '-'} kVA</DescriptionItem>
               </div>
             </div>
           )}

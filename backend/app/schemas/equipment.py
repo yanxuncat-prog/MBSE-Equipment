@@ -43,10 +43,9 @@ class ConfigEquipmentData(BaseModel):
     weight_target_kg: float | None = None
     overweight_risk: str | None = None
 
-    # Per-config electrical
-    power_kva_normal: float | None = None
-    power_kva_emergency: float | None = None
-    power_kva_max: float | None = None
+    # Per-config electrical measurement
+    actual_power_kw: float | None = None
+    measured_current_a: float | None = None
 
     bonding_position: str | None = None
     in_pace_drawing: bool | None = None
@@ -112,10 +111,9 @@ class ConfigEquipmentUpdate(BaseModel):
     weight_target_kg: float | None = None
     overweight_risk: str | None = None
 
-    # Per-config electrical
-    power_kva_normal: float | None = None
-    power_kva_emergency: float | None = None
-    power_kva_max: float | None = None
+    # Per-config electrical measurement
+    actual_power_kw: float | None = None
+    measured_current_a: float | None = None
 
     bonding_position: str | None = None
     in_pace_drawing: bool | None = None
@@ -162,6 +160,13 @@ class EquipmentUpdate(BaseModel):
     power_redundancy: str | None = None
     power_voltage: str | None = None
     power_watts: str | None = None
+    power_kva_normal: float | None = None
+    power_kva_emergency: float | None = None
+    power_kva_max: float | None = None
+    soft_start: str | None = None
+    peak_power_time_s: str | None = None
+    dissimilar_supply: str | None = None
+    emergency_sheddable: str | None = None
     shell_grounding_method: str | None = None
     # Grounding
     metal_shell_non_conductive: str | None = None
@@ -216,6 +221,13 @@ class EquipmentResponse(_ORMBase):
     power_redundancy: str | None = None
     power_voltage: str | None = None
     power_watts: str | None = None
+    power_kva_normal: float | None = None
+    power_kva_emergency: float | None = None
+    power_kva_max: float | None = None
+    soft_start: str | None = None
+    peak_power_time_s: str | None = None
+    dissimilar_supply: str | None = None
+    emergency_sheddable: str | None = None
 
     # Grounding
     shell_grounding_method: str | None = None

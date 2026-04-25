@@ -175,18 +175,18 @@ export function ElectricalTab({ equipment, report, onSelect, onEdit }: Props) {
 
     let equipY = 20;
     const maxPower = Math.max(
-      ...equipment.filter(e => e.is_electrical).map(e => e.config_data?.power_kva_normal ?? 0),
+      ...equipment.filter(e => e.is_electrical).map(e => e.power_kva_normal ?? 0),
       0.1,
     );
 
     for (const b of busEntries) {
       const eqs = (equipByBus[b.bus_name] || []).sort(
-        (a, z) => (z.config_data?.power_kva_normal ?? 0) - (a.config_data?.power_kva_normal ?? 0),
+        (a, z) => (z.power_kva_normal ?? 0) - (a.power_kva_normal ?? 0),
       );
       const sliced = eqs.slice(0, 8); // Show top 8 per bus to avoid clutter
 
       for (const eq of sliced) {
-        const power = eq.config_data?.power_kva_normal ?? 0;
+        const power = eq.power_kva_normal ?? 0;
         const h = Math.max((power / maxPower) * 32, 8);
         const node: SankeyNode = {
           id: `eq-${eq.id}`, label: eq.name, column: 'equipment',
@@ -287,7 +287,7 @@ export function ElectricalTab({ equipment, report, onSelect, onEdit }: Props) {
       title: '功耗(kVA)', key: 'power', width: 90, align: 'right',
       render: (_, r) => (
         <span className="tabular-nums">
-          {r.config_data?.power_kva_normal?.toFixed(2) || '-'}
+          {r.power_kva_normal?.toFixed(2) || '-'}
         </span>
       ),
     },

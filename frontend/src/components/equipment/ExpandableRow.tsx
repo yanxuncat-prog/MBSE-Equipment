@@ -110,9 +110,9 @@ export function ExpandableRow({ equipment }: Props) {
       {activeTab === 'electrical' && (
         <div className="grid grid-cols-4 gap-x-6 gap-y-3">
           <Field label="供电电压" value={display(e.power_voltage)} highlight />
-          <Field label="正常功耗" value={display(e.config_data?.power_kva_normal, ' kW')} highlight />
-          <Field label="应急功耗" value={display(e.config_data?.power_kva_emergency, ' kW')} />
-          <Field label="峰值功耗" value={display(e.config_data?.power_kva_max, ' kW')} />
+          <Field label="正常功耗" value={display(e.power_kva_normal, ' kW')} highlight />
+          <Field label="应急功耗" value={display(e.power_kva_emergency, ' kW')} />
+          <Field label="峰值功耗" value={display(e.power_kva_max, ' kW')} />
           <Field label="供电余度" value={display(e.power_redundancy)} />
           <Field label="电压范围" value={display(e.voltage_range)} />
           <Field label="用电功率" value={display(e.power_watts)} />

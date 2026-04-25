@@ -32,6 +32,7 @@ FLOAT_FIELDS = {
     "mass_kg", "sta", "bl", "wl",
     "cg_x", "cg_y", "cg_z", "weight_target_kg",
     "power_kva_normal", "power_kva_emergency", "power_kva_max",
+    "actual_power_kw", "measured_current_a",
 }
 
 
@@ -73,9 +74,6 @@ def _get_current_value(source: str, field: str, equipment: Equipment,
         return getattr(equipment, field, None)
     elif source == "config_equipment":
         return getattr(config_equip, field, None)
-    elif source == "electrical_load":
-        el = equipment.electrical_load
-        return getattr(el, field, None) if el else None
     return None
 
 
@@ -180,7 +178,7 @@ async def import_preview(
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
+            selectinload(ConfigEquipmentModel.equipment),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
         .order_by(ConfigEquipmentModel.lin_number)
@@ -296,7 +294,7 @@ async def import_apply(
     result = await db.execute(
         select(ConfigEquipmentModel)
         .options(
-            selectinload(ConfigEquipmentModel.equipment).selectinload(Equipment.electrical_load),
+            selectinload(ConfigEquipmentModel.equipment),
         )
         .where(ConfigEquipmentModel.config_id == config_id)
     )
@@ -315,7 +313,6 @@ async def import_apply(
             name = row["name"]
             equip_fields: dict[str, Any] = {}
             ce_fields: dict[str, Any] = {}
-            el_fields: dict[str, Any] = {}
 
             for key, field_info in row["fields"].items():
                 source = field_info["source"]
@@ -327,8 +324,6 @@ async def import_apply(
                     equip_fields[field] = value
                 elif source == "config_equipment":
                     ce_fields[field] = value
-                elif source == "electrical_load":
-                    el_fields[field] = value
 
             # Create equipment with required defaults
             equipment_id = str(uuid.uuid4())
@@ -353,13 +348,6 @@ async def import_apply(
                 **ce_fields,
             )
             db.add(new_ce)
-
-            # Create electrical_load if any fields (backward compat)
-            if el_fields:
-                # Also sync to ConfigEquipment
-                for pf in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
-                    if pf in el_fields and el_fields[pf] is not None:
-                        setattr(new_ce, pf, el_fields[pf])
 
             success_count += 1
         except Exception as e:
@@ -391,9 +379,6 @@ async def import_apply(
                     setattr(equipment, field, value)
                 elif source == "config_equipment":
                     setattr(ce, field, value)
-                elif source == "electrical_load":
-                    if field in ("power_kva_normal", "power_kva_emergency", "power_kva_max"):
-                        setattr(ce, field, value)
 
             success_count += 1
         except Exception as e:
