@@ -18,7 +18,6 @@ from app.api.excel_export import router as excel_export_router
 from app.api.excel_import import router as excel_import_router
 from app.api.audit_logs import router as audit_logs_router
 from app.api.equipment_library import router as equipment_library_router
-from app.api.micd import router as micd_router
 from app.api.do160 import router as do160_router
 from app.api.weight_reduction import router as weight_reduction_router
 from app.api.users import router as users_router
@@ -58,7 +57,6 @@ app.include_router(excel_export_router, prefix="/api")
 app.include_router(excel_import_router, prefix="/api")
 app.include_router(audit_logs_router, prefix="/api")
 app.include_router(equipment_library_router, prefix="/api")
-app.include_router(micd_router, prefix="/api")
 app.include_router(do160_router, prefix="/api")
 app.include_router(weight_reduction_router, prefix="/api")
 app.include_router(users_router, prefix="/api")

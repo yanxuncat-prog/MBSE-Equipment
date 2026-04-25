@@ -62,6 +62,12 @@ class Equipment(Base):
     bonding_method: Mapped[str | None] = mapped_column(String(50), comment="电搭接方式")
     bonding_type: Mapped[str | None] = mapped_column(String(100), comment="电搭接类型")
     bonding_resistance: Mapped[str | None] = mapped_column(String(50), comment="电搭接阻值要求(mΩ)")
+    grounding_terminal_diameter: Mapped[str | None] = mapped_column(String(50), comment="结构侧接地端子内径")
+
+    # --- MICD/安装 ---
+    screw_spec: Mapped[str | None] = mapped_column(String(100), comment="螺钉牌号(长度待定)")
+    bracket_delegated_158: Mapped[bool | None] = mapped_column(comment="标准托架是否委托158设计+装配")
+    has_tolerance_drawing: Mapped[bool | None] = mapped_column(comment="是否有包含公差尺寸的工程图")
 
     # --- Notes ---
     notes: Mapped[str | None] = mapped_column(Text, comment="备注")

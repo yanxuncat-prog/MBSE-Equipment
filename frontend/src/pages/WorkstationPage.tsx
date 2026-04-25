@@ -16,7 +16,6 @@ import { LayoutTab } from '../components/workstation/tabs/LayoutTab';
 import { ElectricalDetailsTab } from '../components/workstation/tabs/ElectricalDetailsTab';
 import { FlightPhasesTab } from '../components/workstation/tabs/FlightPhasesTab';
 import { LoadWorkModesTab } from '../components/workstation/tabs/LoadWorkModesTab';
-import { MICDTab } from '../components/workstation/tabs/MICDTab';
 import type { Equipment } from '../types';
 
 export function WorkstationPage() {
@@ -99,9 +98,6 @@ export function WorkstationPage() {
         </TabsContent>
         <TabsContent value="load-modes">
           <LoadWorkModesTab />
-        </TabsContent>
-        <TabsContent value="micd">
-          <MICDTab equipment={filteredEquipment} />
         </TabsContent>
       </Tabs>
       <EquipmentForm open={formOpen} equipment={editEquip} onSave={handleSave} onCancel={() => setFormOpen(false)} />

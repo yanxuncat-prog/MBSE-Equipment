@@ -9,7 +9,6 @@ from app.models.supplier import Supplier
 from app.models.change_request import ChangeRequest
 from app.models.audit_log import AuditLog
 from app.models.electrical_detail import FlightPhase, LoadWorkMode
-from app.models.micd import MICDRecord
 from app.models.do160 import DO160Record
 from app.models.notification import Notification
 from app.models.equipment_constraint import EquipmentConstraint
@@ -20,7 +19,7 @@ __all__ = [
     "Zone", "BusDefinition",
     "Supplier", "ChangeRequest", "AuditLog",
     "FlightPhase", "LoadWorkMode",
-    "MICDRecord", "DO160Record",
+    "DO160Record",
     "Notification", "EquipmentConstraint",
     "AIReport",
 ]

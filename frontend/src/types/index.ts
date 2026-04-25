@@ -199,29 +199,6 @@ export interface ConfigDiffResponse {
 }
 
 // MICD Record
-export interface MICDRecord {
-  id: string;
-  config_id: string;
-  equipment_id: string;
-  installation_structure_id: string | null;
-  bonding_surface: string | null;
-  fastener_brand: string | null;
-  fastener_count: number | null;
-  fastener_team: string | null;
-  bracket_model: string | null;
-  bracket_source: string | null;
-  bracket_mass_kg: number | null;
-  screw_spec: string | null;
-  wire_bonding_size: string | null;
-  digital_model_config: string | null;
-  has_tolerance_drawing: boolean | null;
-  tolerance_drawing_url: string | null;
-  is_confirmed: boolean;
-  confirmed_at: string | null;
-  confirmed_by: string | null;
-  notes: string | null;
-  created_at: string | null;
-}
 
 // DO-160 Record
 export interface DO160Record {
