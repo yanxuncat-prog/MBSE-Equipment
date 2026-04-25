@@ -492,11 +492,10 @@ function DeviceListTable({
 
   const columns: Column<DO160Record>[] = useMemo(() => [
     {
-      title: '设备名称',
-      dataIndex: 'equipment_id',
-      key: 'equipment_id',
-      width: 180,
-      render: (_: any, record: DO160Record) => equipName(record.equipment_id),
+      title: 'LIN号',
+      dataIndex: 'lin_number',
+      key: 'lin_number',
+      width: 120,
     },
     {
       title: '设计等级',

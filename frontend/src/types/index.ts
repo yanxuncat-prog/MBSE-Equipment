@@ -178,7 +178,7 @@ export interface ValidationReport {
 }
 
 export interface DiffItem {
-  equipment_id: string;
+  lin_number: string;
   part_number: string;
   name: string;
   ata_chapter: string;
@@ -204,7 +204,7 @@ export interface ConfigDiffResponse {
 export interface DO160Record {
   id: string;
   config_id: string;
-  equipment_id: string;
+  lin_number: string;
   test_category: string;
   category_label: string;
   design_level: string | null;

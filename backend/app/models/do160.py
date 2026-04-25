@@ -33,7 +33,7 @@ class DO160Record(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     config_id: Mapped[str] = mapped_column(String(36), index=True, comment="所属构型ID")
-    equipment_id: Mapped[str] = mapped_column(String(36), index=True, comment="所属设备ID")
+    lin_number: Mapped[str] = mapped_column(String(50), index=True, comment="LIN号(关联config_equipment)")
 
     test_category: Mapped[str] = mapped_column(String(30), index=True, comment="DO-160测试类别")
     design_level: Mapped[str | None] = mapped_column(String(50), comment="设计要求等级(如A1, B2)")

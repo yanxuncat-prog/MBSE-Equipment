@@ -5,7 +5,7 @@ export async function listDO160Categories(): Promise<DO160Category[]> {
   const { data } = await client.get('/do160/categories');
   return data;
 }
-export async function listDO160(params: { config_id: string; equipment_id?: string; test_category?: string; limit?: number }): Promise<{ items: DO160Record[]; total: number }> {
+export async function listDO160(params: { config_id: string; lin_number?: string; test_category?: string; limit?: number }): Promise<{ items: DO160Record[]; total: number }> {
   const { data } = await client.get('/do160', { params });
   return data;
 }

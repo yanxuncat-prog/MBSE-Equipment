@@ -17,7 +17,7 @@ router = APIRouter(prefix="/do160", tags=["do160"])
 
 class DO160Create(BaseModel):
     config_id: str
-    equipment_id: str
+    lin_number: str
     test_category: str
     design_level: str | None = None
     qual_level: str | None = None
@@ -40,7 +40,7 @@ def _to_dict(r: DO160Record) -> dict:
     return {
         "id": r.id,
         "config_id": r.config_id,
-        "equipment_id": r.equipment_id,
+        "lin_number": r.lin_number,
         "test_category": r.test_category,
         "category_label": DO160_CATEGORY_LABELS.get(r.test_category, r.test_category),
         "design_level": r.design_level,
@@ -126,7 +126,7 @@ async def do160_summary(
 @router.get("")
 async def list_do160(
     config_id: str = Query(...),
-    equipment_id: str | None = Query(None),
+    lin_number: str | None = Query(None),
     test_category: str | None = Query(None),
     limit: int = Query(200, ge=1, le=1000),
     offset: int = Query(0, ge=0),
@@ -136,9 +136,9 @@ async def list_do160(
     q = select(DO160Record).where(DO160Record.config_id == config_id)
     count_q = select(func.count()).select_from(DO160Record).where(DO160Record.config_id == config_id)
 
-    if equipment_id:
-        q = q.where(DO160Record.equipment_id == equipment_id)
-        count_q = count_q.where(DO160Record.equipment_id == equipment_id)
+    if lin_number:
+        q = q.where(DO160Record.lin_number == lin_number)
+        count_q = count_q.where(DO160Record.lin_number == lin_number)
     if test_category:
         q = q.where(DO160Record.test_category == test_category)
         count_q = count_q.where(DO160Record.test_category == test_category)
@@ -173,7 +173,7 @@ async def create_do160(
     record = DO160Record(
         id=str(uuid.uuid4()),
         config_id=body.config_id,
-        equipment_id=body.equipment_id,
+        lin_number=body.lin_number,
         test_category=body.test_category,
         design_level=body.design_level,
         qual_level=body.qual_level,
