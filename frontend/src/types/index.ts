@@ -8,8 +8,6 @@ export interface ConfigEquipmentData {
   wl: number | null;
   bl: number | null;
   rack_position: string | null;
-  bus_id: string | null;
-  bus_name: string | null;
   notes: string | null;
 
   // Display name override
@@ -157,12 +155,6 @@ export interface Zone {
   bl_to: number | null;
 }
 
-export interface BusDefinition {
-  id: string;
-  bus_name: string;
-  bus_type: string;
-  rated_capacity_kva: number;
-}
 
 export interface EngineResult {
   engine_name: string;

@@ -75,8 +75,6 @@ export function EquipmentDetail({ equipment, open, onClose }: Props) {
                   <div>{equipment.config_data.wl ?? '-'}</div>
                   <div className="text-muted-foreground">BL</div>
                   <div>{equipment.config_data.bl ?? '-'}</div>
-                  <div className="text-muted-foreground">母线</div>
-                  <div>{equipment.config_data.bus_name ?? '-'}</div>
                 </div>
               </div>
             </>

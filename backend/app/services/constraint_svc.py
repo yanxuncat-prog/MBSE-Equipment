@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, Configuration, BusDefinition, ConfigEquipment
+from app.models import Equipment, Configuration, ConfigEquipment
 from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.engines import WeightBalanceEngine, ElectricalLoadEngine, ConstraintStatus
 from app.schemas.constraint import ValidationReport, EngineResult
@@ -93,14 +93,7 @@ async def _load_equipment_by_ids(db: AsyncSession, ids: list[str]) -> list[dict]
 
 
 async def _load_bus_definitions(db: AsyncSession, program_id: str) -> list[dict]:
-    result = await db.execute(
-        select(BusDefinition).where(BusDefinition.program_id == program_id)
-    )
-    buses = result.scalars().all()
-    return [
-        {"id": str(b.id), "bus_name": b.bus_name, "bus_type": b.bus_type, "rated_capacity_kva": b.rated_capacity_kva}
-        for b in buses
-    ]
+    return []  # bus_definitions table removed
 
 
 async def validate_config(

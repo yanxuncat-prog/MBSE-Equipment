@@ -41,7 +41,6 @@ async def list_equipment(
                 ce_alias.wl,
                 ce_alias.bl,
                 ce_alias.rack_position,
-                ce_alias.bus_id,
                 ce_alias.notes,
                 ce_alias.install_method,
                 ce_alias.bonding_position,
@@ -121,7 +120,6 @@ async def list_equipment(
 
     items: list[EquipmentResponse] = []
     if config_id:
-        # Result rows contain (Equipment, zone_id, sta, wl, bl, rack_position, bus_id, notes, install_method, ...)
         seen = set()
         for row in result.unique().all():
             equip = row[0]
@@ -134,7 +132,6 @@ async def list_equipment(
             ce_wl = row[3]
             ce_bl = row[4]
             ce_rack_position = row[5]
-            ce_bus_id = row[6]
             ce_notes = row[7]
             ce_install_method = row[8]
             ce_bonding_position = row[9]
@@ -183,11 +180,6 @@ async def list_equipment(
                 zone_obj = await db.get(Zone, ce_zone_id)
                 zone_name = zone_obj.name if zone_obj else None
 
-            bus_name = None
-            if ce_bus_id:
-                from app.models import BusDefinition
-                bus_obj = await db.get(BusDefinition, ce_bus_id)
-                bus_name = bus_obj.bus_name if bus_obj else None
 
             config_data = ConfigEquipmentData(
                 zone_id=ce_zone_id,
@@ -196,8 +188,6 @@ async def list_equipment(
                 wl=ce_wl,
                 bl=ce_bl,
                 rack_position=ce_rack_position,
-                bus_id=ce_bus_id,
-                bus_name=bus_name,
                 notes=ce_notes,
                 install_method=ce_install_method,
                 config_name=ce_config_name,

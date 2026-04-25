@@ -168,7 +168,7 @@ export function ElectricalTab({ equipment, report, onSelect, onEdit }: Props) {
     const equipByBus: Record<string, Equipment[]> = {};
     for (const e of equipment) {
       if (!e.is_electrical) continue;
-      const bn = e.config_data?.bus_name || '未知';
+      const bn = '未知';
       if (!equipByBus[bn]) equipByBus[bn] = [];
       equipByBus[bn].push(e);
     }
@@ -271,9 +271,9 @@ export function ElectricalTab({ equipment, report, onSelect, onEdit }: Props) {
     { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
     {
       title: '母线', key: 'bus', width: 100,
-      render: (_, r) => {
-        const bn = r.config_data?.bus_name;
-        if (!bn) return <span className="text-muted-foreground">-</span>;
+      render: () => {
+        const bn = '-';
+        if (!bn || bn === '-') return <span className="text-muted-foreground">-</span>;
         const busInfo = busEntries.find(b => b.bus_name === bn);
         const pct = busInfo?.load_ratio_pct ?? 0;
         return (

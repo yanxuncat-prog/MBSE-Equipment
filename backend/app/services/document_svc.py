@@ -20,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Equipment, Configuration, BusDefinition, Zone, ConfigEquipment
+from app.models import Equipment, Configuration, Zone, ConfigEquipment
 from app.models.configuration import ConfigEquipment as ConfigEquipmentModel
 from app.services.constraint_svc import validate_config
 
@@ -56,8 +56,6 @@ async def _load_config_equipment(db: AsyncSession, config_id: str) -> tuple[Conf
             "wl": ce.wl,
             "bl": ce.bl,
             "rack_position": ce.rack_position,
-            "bus_id": ce.bus_id,
-            "bus_name": ce.bus.bus_name if ce.bus else None,
             "install_method": ce.install_method,
             "layout_adjustment": ce.layout_adjustment,
             "mass_kg": ce.mass_kg,
@@ -83,7 +81,6 @@ async def generate_equipment_list_pdf(db: AsyncSession, config_id: str) -> bytes
             "mass_kg": f"{mass:.1f}" if mass else None,
             "zone_code": item["zone_code"],
             "sta": f"{item['sta']:.0f}" if item["sta"] is not None else None,
-            "bus_name": item["bus_name"],
             "power_kva": f"{e.power_kva_normal:.2f}" if e.power_kva_normal else None,
         }
         ata = e.ata_chapter.split("-")[0] if "-" in e.ata_chapter else e.ata_chapter
@@ -118,7 +115,6 @@ async def generate_equipment_list_xlsx(db: AsyncSession, config_id: str) -> byte
             item.get("mass_kg"),
             item["zone_code"],
             item["sta"],
-            item["bus_name"],
             e.power_kva_normal,
             e.status,
         ])
@@ -171,43 +167,7 @@ async def generate_eload_report_pdf(db: AsyncSession, config_id: str, phase: str
     report = await validate_config(db, config_id, phase=phase)
 
     eload_result = next((e for e in report.engines if e.engine_name == "electrical_load"), None)
-    bus_details = eload_result.details.get("buses", {}) if eload_result else {}
-
-    bus_result = await db.execute(select(BusDefinition).where(BusDefinition.program_id == config.program_id))
-    bus_defs = {str(b.id): b for b in bus_result.scalars().all()}
-
-    # Build a lookup: bus_id -> list of equipment items assigned to that bus in this config
-    bus_equip_map = defaultdict(list)
-    for item in items:
-        if item["bus_id"] and item["equipment"].power_kva_normal is not None:
-            bus_equip_map[str(item["bus_id"])].append(item)
-
-    buses = []
-    for bid, info in bus_details.items():
-        bdef = bus_defs.get(bid)
-        ratio = info.get("load_ratio_pct", 0)
-        status_class = "blocked" if ratio > 100 else "warning" if ratio > 85 else "pass"
-        status_text = "过载" if ratio > 100 else "接近满载" if ratio > 85 else "正常"
-
-        bus_equip = []
-        for item in bus_equip_map.get(bid, []):
-            e = item["equipment"]
-            bus_equip.append({
-                "part_number": e.part_number, "name": e.name, "ata_chapter": e.ata_chapter,
-                "power_normal": f"{e.power_kva_normal:.2f}" if e.power_kva_normal else "0.00",
-                "power_emergency": f"{e.power_kva_emergency:.2f}" if e.power_kva_emergency else None,
-                "power_max": f"{e.power_kva_max:.2f}" if e.power_kva_max else None,
-            })
-
-        buses.append({
-            "bus_name": info.get("bus_name", ""), "bus_type": bdef.bus_type if bdef else "",
-            "capacity_kva": f"{info.get('capacity_kva', 0):.1f}",
-            "load_kva": f"{info.get('load_kva', 0):.1f}",
-            "load_ratio_pct": f"{ratio:.1f}",
-            "margin_kva": f"{info.get('margin_kva', 0):.1f}",
-            "status_class": status_class, "status_text": status_text,
-            "equipment": bus_equip,
-        })
+    buses = []  # bus_definitions removed
 
     template = jinja_env.get_template("eload_report.html")
     html_str = template.render(
@@ -439,7 +399,6 @@ async def generate_equipment_list_docx(db: AsyncSession, config_id: str) -> byte
         _set_cell_text(row.cells[5], f"{item.get('mass_kg'):.1f}" if item.get("mass_kg") else "-", size=8)
         _set_cell_text(row.cells[6], item["zone_code"] or "-", size=8)
         _set_cell_text(row.cells[7], f"{item['sta']:.0f}" if item["sta"] is not None else "-", size=8)
-        _set_cell_text(row.cells[8], item["bus_name"] or "-", size=8)
         _set_cell_text(row.cells[9], f"{e.power_kva_normal:.2f}" if e.power_kva_normal else "-", size=8)
         _set_cell_text(row.cells[10], e.status, size=8)
 

@@ -102,7 +102,6 @@ async def clone_config(db: AsyncSession, source_id: str, new_version: str, user_
             wl=ce.wl,
             bl=ce.bl,
             rack_position=ce.rack_position,
-            bus_id=ce.bus_id,
             notes=ce.notes,
         )
         db.add(new_ce)
@@ -278,11 +277,6 @@ async def diff_configs(
         )
         if ce.mass_kg:
             net_mass_change += ce.mass_kg
-        if e.power_kva_normal and ce.bus_id:
-            bus_id = str(ce.bus_id)
-            if bus_id not in bus_load_changes:
-                bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
-            bus_load_changes[bus_id]["normal_kva_change"] += e.power_kva_normal
 
     for name_key in removed_ids:
         ce = ce_a_map[name_key]
@@ -298,11 +292,6 @@ async def diff_configs(
         )
         if ce.mass_kg:
             net_mass_change -= ce.mass_kg
-        if e.power_kva_normal and ce.bus_id:
-            bus_id = str(ce.bus_id)
-            if bus_id not in bus_load_changes:
-                bus_load_changes[bus_id] = {"normal_kva_change": 0.0}
-            bus_load_changes[bus_id]["normal_kva_change"] -= e.power_kva_normal
 
     for name_key in common_ids:
         ce_a = ce_a_map[name_key]
@@ -374,11 +363,6 @@ async def diff_configs(
                 }
         # Track bus load changes for common items
         normal_diff = (eb.power_kva_normal or 0) - (ea.power_kva_normal or 0)
-        if normal_diff != 0 and ce_b.bus_id:
-            bus_id_b = str(ce_b.bus_id)
-            if bus_id_b not in bus_load_changes:
-                bus_load_changes[bus_id_b] = {"normal_kva_change": 0.0}
-            bus_load_changes[bus_id_b]["normal_kva_change"] += normal_diff
 
         if changes:
             modified.append(

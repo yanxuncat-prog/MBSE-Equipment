@@ -23,9 +23,6 @@ class ConfigEquipment(Base):
     bl: Mapped[float | None] = mapped_column(Float, comment="Buttline")
     rack_position: Mapped[str | None] = mapped_column(String(100))
 
-    # Bus assignment (config-specific)
-    bus_id: Mapped[str | None] = mapped_column(ForeignKey("bus_definitions.id"))
-
     notes: Mapped[str | None] = mapped_column(String(500))
 
     # Display name override (may differ from Equipment.name per config)
@@ -82,7 +79,6 @@ class ConfigEquipment(Base):
     # Relationships
     equipment: Mapped["Equipment | None"] = relationship()
     zone: Mapped["Zone | None"] = relationship()
-    bus: Mapped["BusDefinition | None"] = relationship()
 
 
 class Configuration(Base):

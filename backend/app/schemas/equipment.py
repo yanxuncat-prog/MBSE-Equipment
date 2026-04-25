@@ -12,8 +12,6 @@ class ConfigEquipmentData(BaseModel):
     wl: float | None = None
     bl: float | None = None
     rack_position: str | None = None
-    bus_id: UUID | None = None
-    bus_name: str | None = None
     notes: str | None = None
     install_method: str | None = None
 

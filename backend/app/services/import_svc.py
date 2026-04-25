@@ -15,7 +15,6 @@ COLUMN_MAP = {
     "WL": "wl",
     "BL": "bl",
     "区域ID": "zone_id",
-    "母线ID": "bus_id",
     "功耗kVA": "power_kva_normal",
     "状态": "status",
     "描述": "description",
@@ -33,7 +32,6 @@ async def import_from_excel(
     db: AsyncSession,
     file_path: str,
     zone_map: dict[str, str] | None = None,   # zone_code -> zone_id
-    bus_map: dict[str, str] | None = None,     # bus_name -> bus_id
 ) -> dict:
     """Import equipment from Excel file. Returns summary with success_count, error_rows.
 
