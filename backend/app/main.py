@@ -22,7 +22,6 @@ from app.api.do160 import router as do160_router
 from app.api.weight_reduction import router as weight_reduction_router
 from app.api.users import router as users_router
 from app.api.notifications import router as notifications_router
-from app.api.equipment_constraints import router as equipment_constraints_router
 from app.api.attachments import router as attachments_router
 from app.api.config_platform import router as config_platform_router
 from app.api.eicd import router as eicd_router
@@ -61,7 +60,6 @@ app.include_router(do160_router, prefix="/api")
 app.include_router(weight_reduction_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
-app.include_router(equipment_constraints_router, prefix="/api")
 app.include_router(attachments_router, prefix="/api")
 app.include_router(config_platform_router, prefix="/api")
 app.include_router(eicd_router, prefix="/api")

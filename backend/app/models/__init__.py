@@ -11,7 +11,6 @@ from app.models.audit_log import AuditLog
 from app.models.electrical_detail import FlightPhase, LoadWorkMode
 from app.models.do160 import DO160Record
 from app.models.notification import Notification
-from app.models.equipment_constraint import EquipmentConstraint
 from app.models.ai_report import AIReport
 
 __all__ = [
@@ -20,6 +19,6 @@ __all__ = [
     "Supplier", "ChangeRequest", "AuditLog",
     "FlightPhase", "LoadWorkMode",
     "DO160Record",
-    "Notification", "EquipmentConstraint",
+    "Notification",
     "AIReport",
 ]
