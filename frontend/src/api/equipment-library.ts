@@ -4,10 +4,17 @@ export interface LibraryEquipment {
   id: string;
   part_number: string;
   name: string;
+  name_en: string | null;
   ata_chapter: string;
   equipment_type: string;
-  status: string;
+  dal: string | null;
   is_electrical: boolean | null;
+  is_primary_electrical: boolean | null;
+  has_eicd: boolean | null;
+  dimensions_mm: string | null;
+  power_voltage: string | null;
+  power_kva_normal: number | null;
+  supplier_part_number: string | null;
   config_count: number;
 }
 

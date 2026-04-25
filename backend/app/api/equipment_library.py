@@ -66,10 +66,17 @@ async def list_equipment_library(
             "id": equip.id,
             "part_number": equip.part_number,
             "name": equip.name,
+            "name_en": equip.name_en,
             "ata_chapter": equip.ata_chapter,
             "equipment_type": equip.equipment_type,
-            "is_primary_electrical": equip.is_primary_electrical,
+            "dal": equip.dal,
             "is_electrical": equip.is_electrical,
+            "is_primary_electrical": equip.is_primary_electrical,
+            "has_eicd": equip.has_eicd,
+            "dimensions_mm": equip.dimensions_mm,
+            "power_voltage": equip.power_voltage,
+            "power_kva_normal": equip.power_kva_normal,
+            "supplier_part_number": equip.supplier_part_number,
             "config_count": cfg_count,
         })
 
