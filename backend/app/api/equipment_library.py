@@ -51,20 +51,51 @@ async def list_equipment_library(
     for equip in result.scalars().all():
         items.append({
             "id": equip.id,
+            "library_status": equip.library_status,
+            # 组1: 标识与分类
             "part_number": equip.part_number,
             "name": equip.name,
             "name_en": equip.name_en,
+            "abbreviation_en": equip.abbreviation_en,
             "ata_chapter": equip.ata_chapter,
             "equipment_type": equip.equipment_type,
-            "library_status": equip.library_status,
             "dal": equip.dal,
+            "supplier_part_number": equip.supplier_part_number,
+            "description": equip.description,
+            "notes": equip.notes,
+            # 组2: 物理特性
+            "dimensions_mm": equip.dimensions_mm,
+            "connector_count": equip.connector_count,
+            "is_metal_shell": equip.is_metal_shell,
+            "metal_shell_non_conductive": equip.metal_shell_non_conductive,
+            # 组3: 电气特性
             "is_electrical": equip.is_electrical,
             "is_primary_electrical": equip.is_primary_electrical,
             "has_eicd": equip.has_eicd,
-            "dimensions_mm": equip.dimensions_mm,
             "power_voltage": equip.power_voltage,
+            "voltage_range": equip.voltage_range,
+            "power_redundancy": equip.power_redundancy,
+            "power_watts": equip.power_watts,
             "power_kva_normal": equip.power_kva_normal,
-            "supplier_part_number": equip.supplier_part_number,
+            "power_kva_emergency": equip.power_kva_emergency,
+            "power_kva_max": equip.power_kva_max,
+            "soft_start": equip.soft_start,
+            "peak_power_time_s": equip.peak_power_time_s,
+            "dissimilar_supply": equip.dissimilar_supply,
+            "emergency_sheddable": equip.emergency_sheddable,
+            # 组4: 接地与搭接
+            "internal_grounding": equip.internal_grounding,
+            "shell_grounding_method": equip.shell_grounding_method,
+            "shell_grounding_fault_path": equip.shell_grounding_fault_path,
+            "grounding_special_requirements": equip.grounding_special_requirements,
+            "grounding_terminal_diameter": equip.grounding_terminal_diameter,
+            "bonding_method": equip.bonding_method,
+            "bonding_type": equip.bonding_type,
+            "bonding_resistance": equip.bonding_resistance,
+            # 组5: 机械接口
+            "screw_spec": equip.screw_spec,
+            "bracket_delegated_158": equip.bracket_delegated_158,
+            "has_tolerance_drawing": equip.has_tolerance_drawing,
         })
 
     return {"items": items, "total": total, "offset": offset, "limit": limit}
