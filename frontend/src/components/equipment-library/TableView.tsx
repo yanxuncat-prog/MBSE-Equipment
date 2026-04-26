@@ -66,7 +66,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
 
       {/* Table */}
       <div className="rounded-lg border overflow-x-auto">
-        <table className="text-sm">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
               {showActions && (
