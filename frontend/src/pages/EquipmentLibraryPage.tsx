@@ -6,6 +6,7 @@ import {
   getATAOptions,
   validateEquipment,
   validateBatch,
+  deleteLibraryEquipment,
   type LibraryEquipment,
   type ATAOption,
 } from '@/api/equipment-library';
@@ -71,6 +72,16 @@ export function EquipmentLibraryPage() {
     catch { toast.error('确认失败'); }
   };
 
+  const handleEdit = (_id: string) => {
+    toast.info('编辑功能开发中');
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除该设备吗？')) return;
+    try { await deleteLibraryEquipment(id); toast.success('设备已删除'); fetchList(); }
+    catch { toast.error('删除失败'); }
+  };
+
   const handleBatchConfirm = async () => {
     if (selected.size === 0) { toast.error('请先选择设备'); return; }
     try {
@@ -117,6 +128,8 @@ export function EquipmentLibraryPage() {
           onToggleSelect={handleToggleSelect}
           onSelectAll={handleSelectAll}
           onConfirmOne={handleConfirmOne}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           showActions={showActions}
         />
       ) : (

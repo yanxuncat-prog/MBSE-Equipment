@@ -78,6 +78,10 @@ export async function validateEquipment(id: string): Promise<void> {
   await client.post(`/equipment-library/${id}/validate`);
 }
 
+export async function deleteLibraryEquipment(id: string): Promise<void> {
+  await client.delete(`/equipment-library/${id}`);
+}
+
 export async function validateBatch(ids: string[]): Promise<{ validated_count: number }> {
   const { data } = await client.post('/equipment-library/validate-batch', { ids });
   return data;

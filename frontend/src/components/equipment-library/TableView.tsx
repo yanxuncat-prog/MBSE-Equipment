@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Check, X, Info } from 'lucide-react';
+import { Check, X, Info, Pencil, Trash2, CheckCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ATTR_GROUPS } from './column-defs';
 import { KnowledgePanel } from './KnowledgePanel';
@@ -29,10 +28,12 @@ interface Props {
   onToggleSelect: (id: string) => void;
   onSelectAll: () => void;
   onConfirmOne: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   showActions: boolean;
 }
 
-export function TableView({ items, attrGroup, onAttrGroupChange, selected, onToggleSelect, onSelectAll, onConfirmOne, showActions }: Props) {
+export function TableView({ items, attrGroup, onAttrGroupChange, selected, onToggleSelect, onSelectAll, onConfirmOne, onEdit, onDelete, showActions }: Props) {
   const [colSearch, setColSearch] = useState<Record<string, string>>({});
   const [knowledgeKey, setKnowledgeKey] = useState<string | null>(null);
 
@@ -73,6 +74,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   <Checkbox checked={selected.size > 0 && selected.size === draftItems.length} onCheckedChange={onSelectAll} />
                 </th>
               )}
+              <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>
               <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
               {group.columns.map(col => (
                 <th key={col.key} className={`px-2 py-2 text-xs font-medium text-muted-foreground whitespace-nowrap ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}`}>
@@ -84,11 +86,11 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   </span>
                 </th>
               ))}
-              {showActions && <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>}
             </tr>
             {/* Column search row */}
             <tr className="border-b bg-amber-50/50">
               {showActions && <td className="px-2 py-1" />}
+              <td className="px-2 py-1" />
               <td className="px-2 py-1" />
               {group.columns.map(col => (
                 <td key={col.key} className="px-1 py-1">
@@ -102,7 +104,6 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   ) : null}
                 </td>
               ))}
-              {showActions && <td className="px-2 py-1" />}
             </tr>
           </thead>
           <tbody>
@@ -114,6 +115,21 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   </td>
                 )}
                 <td className="px-2 py-1.5">
+                  <div className="flex items-center gap-1 justify-center">
+                    <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑">
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除">
+                      <Trash2 className="size-3.5" />
+                    </button>
+                    {item.library_status === 'draft' && (
+                      <button onClick={() => onConfirmOne(item.id)} className="text-green-500 hover:text-green-700 cursor-pointer" title="确认入库">
+                        <CheckCircle className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </td>
+                <td className="px-2 py-1.5">
                   <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                     className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                     {item.library_status === 'valid' ? 'Valid' : 'Draft'}
@@ -124,13 +140,6 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                     <CellValue value={(item as any)[col.key]} mono={col.mono} />
                   </td>
                 ))}
-                {showActions && (
-                  <td className="px-2 py-1.5 text-center">
-                    {item.library_status === 'draft' && (
-                      <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => onConfirmOne(item.id)}>确认入库</Button>
-                    )}
-                  </td>
-                )}
               </tr>
             ))}
             {filtered.length === 0 && (

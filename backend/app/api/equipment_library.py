@@ -134,6 +134,21 @@ async def validate_equipment(
     return {"id": equip.id, "library_status": "valid"}
 
 
+@router.delete("/{equipment_id}")
+async def delete_equipment(
+    equipment_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Delete an equipment entry from the library."""
+    equip = await db.get(Equipment, equipment_id)
+    if not equip:
+        raise HTTPException(status_code=404, detail="设备不存在")
+    await db.delete(equip)
+    await db.commit()
+    return {"status": "deleted"}
+
+
 @router.post("/validate-batch")
 async def validate_batch(
     body: dict,
