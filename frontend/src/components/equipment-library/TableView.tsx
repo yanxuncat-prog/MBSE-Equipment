@@ -203,7 +203,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       {item.library_status === 'draft' && <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggleSelect(item.id)} />}
                     </td>
                   )}
-                  <td className={`px-2 py-1.5 ${FIXED_BG}`} style={{ width: OPS_WIDTH, minWidth: OPS_WIDTH }}>
+                  <td className={`px-2 py-1.5 overflow-hidden ${FIXED_BG}`} style={{ width: OPS_WIDTH, minWidth: OPS_WIDTH }}>
                     <div className="flex items-center gap-1">
                       <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑"><Pencil className="size-3.5" /></button>
                       <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除"><Trash2 className="size-3.5" /></button>
@@ -212,14 +212,14 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       )}
                     </div>
                   </td>
-                  <td className={`px-2 py-1.5 ${FIXED_BG}`} style={{ width: STATUS_WIDTH, minWidth: STATUS_WIDTH }}>
+                  <td className={`px-2 py-1.5 overflow-hidden ${FIXED_BG}`} style={{ width: STATUS_WIDTH, minWidth: STATUS_WIDTH }}>
                     <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
                     </Badge>
                   </td>
-                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: PN_WIDTH, minWidth: PN_WIDTH, maxWidth: PN_WIDTH }}>
-                    <span className="inline-flex items-center gap-0.5">
+                  <td className={`px-2 py-1.5 text-xs overflow-hidden ${FIXED_BG}`} style={{ width: PN_WIDTH, minWidth: PN_WIDTH, maxWidth: PN_WIDTH }}>
+                    <span className="inline-flex items-center gap-0.5 max-w-full">
                       <span className="truncate font-mono text-[10px]">{item.part_number}</span>
                       {itemWarnings?.has('part_number') && (
                         <button onClick={() => onEdit(item.id, attrGroup)} className="text-amber-500 hover:text-amber-700 cursor-pointer shrink-0" title={itemWarnings.get('part_number')}>
@@ -228,15 +228,15 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       )}
                     </span>
                   </td>
-                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: NAME_WIDTH, minWidth: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
-                    <span className="truncate block">{item.name}</span>
+                  <td className={`px-2 py-1.5 text-xs overflow-hidden text-ellipsis ${FIXED_BG}`} style={{ width: NAME_WIDTH, minWidth: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
+                    <span className="block truncate">{item.name}</span>
                   </td>
                   {/* ── Attribute-specific columns ── */}
                   {attrColumns.map(col => {
                     const warning = itemWarnings?.get(col.key);
                     return (
-                      <td key={col.key} className="px-2 py-1.5 text-xs text-left" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
-                        <span className="inline-flex items-center gap-0.5">
+                      <td key={col.key} className="px-2 py-1.5 text-xs text-left overflow-hidden" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
+                        <span className="inline-flex items-center gap-0.5 max-w-full">
                           <span className="truncate"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
                           {warning && (
                             <button onClick={() => onEdit(item.id, attrGroup)} className="text-amber-500 hover:text-amber-700 cursor-pointer shrink-0" title={warning}>
