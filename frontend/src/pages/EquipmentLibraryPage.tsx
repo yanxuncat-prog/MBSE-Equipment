@@ -155,29 +155,29 @@ export function EquipmentLibraryPage() {
         </div>
       ) : (
         <div className="rounded-lg border overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
                 {tab !== 'valid' && (
-                  <th className="px-3 py-2.5 w-10">
+                  <th className="px-2 py-2 w-8">
                     <Checkbox
                       checked={selected.size > 0 && selected.size === items.filter(i => i.library_status === 'draft').length}
                       onCheckedChange={handleSelectAll}
                     />
                   </th>
                 )}
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">状态</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">件号</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">设备类型名称</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">ATA</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">类型</th>
-                <th className="px-3 py-2.5 text-center font-medium text-muted-foreground whitespace-nowrap">电设备</th>
-                <th className="px-3 py-2.5 text-center font-medium text-muted-foreground whitespace-nowrap">EICD</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">供电电压</th>
-                <th className="px-3 py-2.5 text-right font-medium text-muted-foreground whitespace-nowrap">功耗(kW)</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">尺寸</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">状态</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">件号</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">设备类型名称</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">ATA</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">类型</th>
+                <th className="px-2 py-2 text-center font-medium text-muted-foreground whitespace-nowrap text-xs">电设备</th>
+                <th className="px-2 py-2 text-center font-medium text-muted-foreground whitespace-nowrap text-xs">EICD</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">供电电压</th>
+                <th className="px-2 py-2 text-right font-medium text-muted-foreground whitespace-nowrap text-xs">功耗(kW)</th>
+                <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap text-xs">尺寸</th>
                 {tab !== 'valid' && (
-                  <th className="px-3 py-2.5 text-center font-medium text-muted-foreground whitespace-nowrap">操作</th>
+                  <th className="px-2 py-2 text-center font-medium text-muted-foreground whitespace-nowrap text-xs">操作</th>
                 )}
               </tr>
             </thead>
@@ -190,7 +190,7 @@ export function EquipmentLibraryPage() {
                   }`}
                 >
                   {tab !== 'valid' && (
-                    <td className="px-3 py-2">
+                    <td className="px-2 py-1.5">
                       {item.library_status === 'draft' && (
                         <Checkbox
                           checked={selected.has(item.id)}
@@ -199,7 +199,7 @@ export function EquipmentLibraryPage() {
                       )}
                     </td>
                   )}
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1.5">
                     <Badge
                       variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}
@@ -207,19 +207,19 @@ export function EquipmentLibraryPage() {
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
                     </Badge>
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">{item.part_number}</td>
-                  <td className="px-3 py-2">{item.name}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{item.ata_chapter}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1.5 font-mono text-xs">{item.part_number}</td>
+                  <td className="px-2 py-1.5">{item.name}</td>
+                  <td className="px-2 py-1.5 text-muted-foreground">{item.ata_chapter}</td>
+                  <td className="px-2 py-1.5">
                     <Badge variant="outline" className="text-[10px]">{item.equipment_type}</Badge>
                   </td>
-                  <td className="px-3 py-2 text-center"><BoolIcon value={item.is_electrical} /></td>
-                  <td className="px-3 py-2 text-center"><BoolIcon value={item.has_eicd} /></td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{item.power_voltage || '-'}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums">{item.power_kva_normal?.toFixed(1) ?? '-'}</td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{item.dimensions_mm || '-'}</td>
+                  <td className="px-2 py-1.5 text-center"><BoolIcon value={item.is_electrical} /></td>
+                  <td className="px-2 py-1.5 text-center"><BoolIcon value={item.has_eicd} /></td>
+                  <td className="px-2 py-1.5 text-xs text-muted-foreground">{item.power_voltage || '-'}</td>
+                  <td className="px-2 py-1.5 text-right text-xs tabular-nums">{item.power_kva_normal?.toFixed(1) ?? '-'}</td>
+                  <td className="px-2 py-1.5 text-xs text-muted-foreground">{item.dimensions_mm || '-'}</td>
                   {tab !== 'valid' && (
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-2 py-1.5 text-center">
                       {item.library_status === 'draft' && (
                         <Button
                           size="sm"
@@ -236,7 +236,7 @@ export function EquipmentLibraryPage() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={12} className="px-2 py-12 text-center text-muted-foreground">
                     暂无数据
                   </td>
                 </tr>
