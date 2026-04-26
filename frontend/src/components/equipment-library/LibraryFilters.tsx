@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { CheckCheck, ChevronDown, LayoutList, LayoutGrid } from 'lucide-react';
+import { CheckCheck, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ATAOption } from '@/api/equipment-library';
@@ -16,14 +16,13 @@ interface Props {
   validCount: number;
   selectedCount: number;
   onBatchConfirm: () => void;
-  viewMode: 'table' | 'card';
-  onViewModeChange: (m: 'table' | 'card') => void;
 }
 
-export function LibraryFilters({ ataOptions, selectedATAs, onATAChange, statusTab, onStatusChange, draftCount, validCount, selectedCount, onBatchConfirm, viewMode, onViewModeChange }: Props) {
+export function LibraryFilters({ ataOptions, selectedATAs, onATAChange, statusTab, onStatusChange, draftCount, validCount, selectedCount, onBatchConfirm }: Props) {
   const [ataOpen, setAtaOpen] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
 
+  // Close popover on outside click
   useEffect(() => {
     if (!ataOpen) return;
     const handler = (e: MouseEvent) => {
@@ -45,29 +44,7 @@ export function LibraryFilters({ ataOptions, selectedATAs, onATAChange, statusTa
   const ataLabel = allSelected ? '全部章节' : `${selectedATAs.length} 个ATA`;
 
   return (
-    <div className="flex items-center gap-3 px-1 py-1 flex-wrap">
-      {/* Program */}
-      <span className="text-xs text-muted-foreground">型号:</span>
-      <span className="text-xs bg-background border rounded px-2 py-0.5">CE-25A</span>
-
-      {/* View toggle */}
-      <div className="flex border rounded overflow-hidden">
-        <button
-          onClick={() => onViewModeChange('table')}
-          className={`flex items-center gap-1 px-2.5 py-1 text-xs transition-colors cursor-pointer ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-        >
-          <LayoutList className="size-3.5" /> 表单
-        </button>
-        <button
-          onClick={() => onViewModeChange('card')}
-          className={`flex items-center gap-1 px-2.5 py-1 text-xs transition-colors cursor-pointer ${viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-        >
-          <LayoutGrid className="size-3.5" /> 卡片
-        </button>
-      </div>
-
-      <div className="w-px h-5 bg-border" />
-
+    <div className="flex items-center gap-3 px-1 py-1">
       {/* ATA multi-select */}
       <div className="relative" ref={popRef}>
         <span className="text-xs text-muted-foreground mr-1">ATA:</span>
@@ -91,6 +68,7 @@ export function LibraryFilters({ ataOptions, selectedATAs, onATAChange, statusTa
                   checked={allSelected || selectedATAs.includes(opt.ata)}
                   onCheckedChange={() => {
                     if (allSelected) {
+                      // Switch from "all" to "all except this one"
                       onATAChange(ataOptions.map(o => o.ata).filter(a => a !== opt.ata));
                     } else {
                       toggleATA(opt.ata);
@@ -105,10 +83,8 @@ export function LibraryFilters({ ataOptions, selectedATAs, onATAChange, statusTa
         )}
       </div>
 
-      <div className="w-px h-5 bg-border" />
-
       {/* Status tabs */}
-      <span className="text-xs text-muted-foreground">状态:</span>
+      <span className="text-xs text-muted-foreground ml-2">状态:</span>
       <div className="flex gap-0.5">
         {([
           { key: 'all' as StatusTab, label: '全部' },

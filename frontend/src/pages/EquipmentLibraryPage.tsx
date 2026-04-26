@@ -9,6 +9,7 @@ import {
   type LibraryEquipment,
   type ATAOption,
 } from '@/api/equipment-library';
+import { LibraryToolbar } from '@/components/equipment-library/LibraryToolbar';
 import { LibraryFilters } from '@/components/equipment-library/LibraryFilters';
 import { TableView } from '@/components/equipment-library/TableView';
 import { CardView } from '@/components/equipment-library/CardView';
@@ -17,7 +18,7 @@ type StatusTab = 'all' | 'draft' | 'valid';
 
 export function EquipmentLibraryPage() {
   const [items, setItems] = useState<LibraryEquipment[]>([]);
-  const [, setTotal] = useState(0);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
@@ -82,8 +83,10 @@ export function EquipmentLibraryPage() {
   };
 
   return (
-    <div className="space-y-3">
-      <LibraryFilters
+    <div className="space-y-2">
+      <div className="flex items-center gap-4 flex-wrap">
+        <LibraryToolbar total={total} viewMode={viewMode} onViewModeChange={setViewMode} />
+        <LibraryFilters
         ataOptions={ataOptions}
         selectedATAs={selectedATAs}
         onATAChange={setSelectedATAs}
@@ -93,9 +96,8 @@ export function EquipmentLibraryPage() {
         validCount={validCount}
         selectedCount={selected.size}
         onBatchConfirm={handleBatchConfirm}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
       />
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
