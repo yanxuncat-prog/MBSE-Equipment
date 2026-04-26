@@ -1,0 +1,146 @@
+import { useState, useMemo } from 'react';
+import { Check, X, Info } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ATTR_GROUPS } from './column-defs';
+import { KnowledgePanel } from './KnowledgePanel';
+import type { LibraryEquipment } from '@/api/equipment-library';
+
+function BoolIcon({ value }: { value: boolean | null | undefined }) {
+  if (value === true) return <Check className="size-3.5 text-green-600" />;
+  if (value === false) return <X className="size-3.5 text-muted-foreground/40" />;
+  return <span className="text-muted-foreground/30">-</span>;
+}
+
+function CellValue({ value, mono }: { value: any; mono?: boolean }) {
+  if (value === null || value === undefined || value === '') return <span className="text-muted-foreground/30">-</span>;
+  if (typeof value === 'boolean') return <BoolIcon value={value} />;
+  if (typeof value === 'number') return <span className="tabular-nums">{value}</span>;
+  return <span className={mono ? 'font-mono text-[10px]' : ''}>{String(value)}</span>;
+}
+
+interface Props {
+  items: LibraryEquipment[];
+  attrGroup: string;
+  onAttrGroupChange: (g: string) => void;
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onSelectAll: () => void;
+  onConfirmOne: (id: string) => void;
+  showActions: boolean;
+}
+
+export function TableView({ items, attrGroup, onAttrGroupChange, selected, onToggleSelect, onSelectAll, onConfirmOne, showActions }: Props) {
+  const [colSearch, setColSearch] = useState<Record<string, string>>({});
+  const [knowledgeKey, setKnowledgeKey] = useState<string | null>(null);
+
+  const group = ATTR_GROUPS.find(g => g.key === attrGroup) || ATTR_GROUPS[0];
+
+  const filtered = useMemo(() => {
+    const activeFilters = Object.entries(colSearch).filter(([, v]) => v.trim());
+    if (activeFilters.length === 0) return items;
+    return items.filter(item =>
+      activeFilters.every(([key, search]) => {
+        const val = (item as any)[key];
+        if (val === null || val === undefined) return false;
+        return String(val).toLowerCase().includes(search.toLowerCase());
+      })
+    );
+  }, [items, colSearch]);
+
+  const draftItems = filtered.filter(i => i.library_status === 'draft');
+
+  return (
+    <>
+      {/* Attribute group tabs */}
+      <div className="flex gap-1 mb-3">
+        {ATTR_GROUPS.map(g => (
+          <button key={g.key} onClick={() => { onAttrGroupChange(g.key); setColSearch({}); }}
+            className={`px-3 py-1.5 text-xs rounded-md transition-colors ${attrGroup === g.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+          >{g.icon} {g.label}</button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border overflow-x-auto">
+        <table className="text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              {showActions && (
+                <th className="px-2 py-2 w-8">
+                  <Checkbox checked={selected.size > 0 && selected.size === draftItems.length} onCheckedChange={onSelectAll} />
+                </th>
+              )}
+              <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
+              {group.columns.map(col => (
+                <th key={col.key} className={`px-2 py-2 text-xs font-medium text-muted-foreground whitespace-nowrap ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                  <span className="inline-flex items-center gap-0.5">
+                    {col.label}
+                    <button onClick={() => setKnowledgeKey(col.key)} className="text-blue-400 hover:text-blue-600 cursor-pointer">
+                      <Info className="size-3" />
+                    </button>
+                  </span>
+                </th>
+              ))}
+              {showActions && <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>}
+            </tr>
+            {/* Column search row */}
+            <tr className="border-b bg-amber-50/50">
+              {showActions && <td className="px-2 py-1" />}
+              <td className="px-2 py-1" />
+              {group.columns.map(col => (
+                <td key={col.key} className="px-1 py-1">
+                  {col.searchable ? (
+                    <Input
+                      className="h-6 text-xs px-1.5 border-amber-200"
+                      placeholder="🔍"
+                      value={colSearch[col.key] || ''}
+                      onChange={e => setColSearch(prev => ({ ...prev, [col.key]: e.target.value }))}
+                    />
+                  ) : null}
+                </td>
+              ))}
+              {showActions && <td className="px-2 py-1" />}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(item => (
+              <tr key={item.id} className={`border-b last:border-0 transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
+                {showActions && (
+                  <td className="px-2 py-1.5">
+                    {item.library_status === 'draft' && <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggleSelect(item.id)} />}
+                  </td>
+                )}
+                <td className="px-2 py-1.5">
+                  <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
+                    className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
+                    {item.library_status === 'valid' ? 'Valid' : 'Draft'}
+                  </Badge>
+                </td>
+                {group.columns.map(col => (
+                  <td key={col.key} className={`px-2 py-1.5 text-xs max-w-[200px] truncate ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>
+                    <CellValue value={(item as any)[col.key]} mono={col.mono} />
+                  </td>
+                ))}
+                {showActions && (
+                  <td className="px-2 py-1.5 text-center">
+                    {item.library_status === 'draft' && (
+                      <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => onConfirmOne(item.id)}>确认入库</Button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan={group.columns.length + 3} className="px-2 py-12 text-center text-muted-foreground">暂无数据</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <KnowledgePanel fieldKey={knowledgeKey} open={knowledgeKey !== null} onClose={() => setKnowledgeKey(null)} />
+    </>
+  );
+}
