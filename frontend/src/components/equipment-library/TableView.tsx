@@ -116,11 +116,11 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   <Checkbox checked={selected.size > 0 && selected.size === draftItems.length} onCheckedChange={onSelectAll} />
                 </th>
               )}
-              <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>
-              <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
+              <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>
+              <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
               {group.columns.map(col => (
-                <th key={col.key} className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">
-                  <span className="inline-flex items-center gap-0.5 justify-center">
+                <th key={col.key} className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  <span className="inline-flex items-center gap-0.5">
                     {col.label}
                     <button onClick={() => setKnowledgeKey(col.key)} className="text-blue-400 hover:text-blue-600 cursor-pointer">
                       <Info className="size-3" />
@@ -169,7 +169,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-1.5 text-center">
+                  <td className="px-2 py-1.5 text-left">
                     <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
@@ -178,8 +178,8 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   {group.columns.map(col => {
                     const warning = itemWarnings?.get(col.key);
                     return (
-                      <td key={col.key} className="px-2 py-1.5 text-xs text-center">
-                        <span className="inline-flex items-center gap-0.5 justify-center">
+                      <td key={col.key} className="px-2 py-1.5 text-xs text-left">
+                        <span className="inline-flex items-center gap-0.5">
                           <span className="truncate max-w-[180px]"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
                           {warning && (
                             <button
