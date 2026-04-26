@@ -119,7 +119,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
               <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>
               <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
               {group.columns.map(col => (
-                <th key={col.key} className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">
+                <th key={col.key} className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
                   <span className="inline-flex items-center gap-0.5">
                     {col.label}
                     <button onClick={() => setKnowledgeKey(col.key)} className="text-blue-400 hover:text-blue-600 cursor-pointer">
@@ -178,9 +178,9 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   {group.columns.map(col => {
                     const warning = itemWarnings?.get(col.key);
                     return (
-                      <td key={col.key} className="px-2 py-1.5 text-xs text-left">
-                        <span className="inline-flex items-center gap-0.5">
-                          <span className="truncate max-w-[180px]"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
+                      <td key={col.key} className="px-2 py-1.5 text-xs text-left" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
+                        <span className="inline-flex items-center gap-0.5" style={col.width ? { maxWidth: col.width } : undefined}>
+                          <span className="truncate"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
                           {warning && (
                             <button
                               onClick={() => onEdit(item.id, attrGroup)}

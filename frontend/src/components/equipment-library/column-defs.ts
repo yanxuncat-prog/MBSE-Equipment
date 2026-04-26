@@ -4,6 +4,7 @@ export type ColDef = {
   align?: 'center' | 'right';
   mono?: boolean;
   searchable?: boolean;
+  width?: string;  // CSS width, e.g. '120px'
 };
 
 export type AttrGroup = {
@@ -18,7 +19,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
   {
     key: 'identity', label: '标识与分类', icon: '🏷', color: 'text-foreground',
     columns: [
-      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'part_number', label: '件号', mono: true, searchable: true, width: '115px' },
       { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'name_en', label: '英文名称', searchable: true },
       { key: 'abbreviation_en', label: '英文缩写', searchable: true },
@@ -32,7 +33,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
   {
     key: 'physical', label: '物理特性', icon: '📐', color: 'text-blue-600',
     columns: [
-      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'part_number', label: '件号', mono: true, searchable: true, width: '115px' },
       { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'dimensions_mm', label: '尺寸(mm)', searchable: true },
       { key: 'connector_count', label: '连接器数量', align: 'right' },
@@ -43,7 +44,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
   {
     key: 'elec-class', label: '电气分类与供电', icon: '⚡', color: 'text-amber-600',
     columns: [
-      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'part_number', label: '件号', mono: true, searchable: true, width: '115px' },
       { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'is_electrical', label: '电设备', align: 'center' },
       { key: 'is_primary_electrical', label: '一级用电', align: 'center' },
@@ -57,7 +58,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
   {
     key: 'elec-load', label: '功耗与负载', icon: '🔋', color: 'text-orange-600',
     columns: [
-      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'part_number', label: '件号', mono: true, searchable: true, width: '115px' },
       { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'power_watts', label: '用电功率' },
       { key: 'power_kva_normal', label: '正常功耗(kW)', align: 'right' },
@@ -71,7 +72,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
   {
     key: 'grounding', label: '接地与搭接', icon: '🔌', color: 'text-emerald-600',
     columns: [
-      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'part_number', label: '件号', mono: true, searchable: true, width: '115px' },
       { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'internal_grounding', label: '内部共地', searchable: true },
       { key: 'shell_grounding_method', label: '壳体接地方式', searchable: true },
@@ -86,7 +87,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
   {
     key: 'mechanical', label: '机械接口', icon: '🔧', color: 'text-violet-600',
     columns: [
-      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'part_number', label: '件号', mono: true, searchable: true, width: '115px' },
       { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'screw_spec', label: '螺钉牌号', searchable: true },
       { key: 'bracket_delegated_158', label: '托架委托158', align: 'center' },
