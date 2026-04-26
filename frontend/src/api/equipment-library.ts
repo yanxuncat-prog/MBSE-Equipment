@@ -79,6 +79,10 @@ export async function validateEquipment(id: string): Promise<void> {
   await client.post(`/equipment-library/${id}/validate`);
 }
 
+export async function updateLibraryEquipment(id: string, data: Record<string, any>): Promise<void> {
+  await client.patch(`/equipment-library/${id}`, data);
+}
+
 export async function deleteLibraryEquipment(id: string): Promise<void> {
   await client.delete(`/equipment-library/${id}`);
 }

@@ -7,6 +7,7 @@ import {
   validateEquipment,
   validateBatch,
   deleteLibraryEquipment,
+  updateLibraryEquipment,
   type LibraryEquipment,
   type ATAOption,
 } from '@/api/equipment-library';
@@ -14,6 +15,7 @@ import { libraryActions } from '@/components/layout/GlobalNav';
 import { LibraryFilters } from '@/components/equipment-library/LibraryFilters';
 import { TableView } from '@/components/equipment-library/TableView';
 import { CardView } from '@/components/equipment-library/CardView';
+import { EditDialog } from '@/components/equipment-library/EditDialog';
 
 type StatusTab = 'all' | 'draft' | 'valid';
 
@@ -27,6 +29,7 @@ export function EquipmentLibraryPage() {
   const [ataOptions, setAtaOptions] = useState<ATAOption[]>([]);
   const [attrGroup, setAttrGroup] = useState('identity');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [editItem, setEditItem] = useState<LibraryEquipment | null>(null);
 
   // Sync with GlobalNav
   useEffect(() => {
@@ -72,8 +75,20 @@ export function EquipmentLibraryPage() {
     catch { toast.error('确认失败'); }
   };
 
-  const handleEdit = (_id: string) => {
-    toast.info('编辑功能开发中');
+  const handleEdit = (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item) setEditItem(item);
+  };
+
+  const handleSave = async (id: string, data: Record<string, any>) => {
+    try {
+      await updateLibraryEquipment(id, data);
+      toast.success('保存成功');
+      setEditItem(null);
+      fetchList();
+    } catch {
+      toast.error('保存失败');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -139,6 +154,12 @@ export function EquipmentLibraryPage() {
           showActions={showActions}
         />
       )}
+      <EditDialog
+        equipment={editItem}
+        open={editItem !== null}
+        onClose={() => setEditItem(null)}
+        onSave={handleSave}
+      />
     </div>
   );
 }

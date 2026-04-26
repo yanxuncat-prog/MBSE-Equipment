@@ -135,6 +135,27 @@ async def validate_equipment(
     return {"id": equip.id, "library_status": "valid"}
 
 
+@router.patch("/{equipment_id}")
+async def update_library_equipment(
+    equipment_id: str,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Update equipment attributes in the library."""
+    equip = await db.get(Equipment, equipment_id)
+    if not equip:
+        raise HTTPException(status_code=404, detail="设备不存在")
+    read_only = {"id", "part_number", "created_at", "updated_at", "library_status"}
+    for key, value in body.items():
+        if key in read_only:
+            continue
+        if hasattr(equip, key):
+            setattr(equip, key, value)
+    await db.commit()
+    return {"id": equip.id, "status": "updated"}
+
+
 @router.delete("/{equipment_id}")
 async def delete_equipment(
     equipment_id: str,
