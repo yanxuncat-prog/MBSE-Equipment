@@ -40,7 +40,8 @@ export function GlobalNav() {
   const [search, setSearch] = useState('');
   const location = useLocation();
   const isWorkstation = location.pathname === '/workstation';
-  const needsConfig = location.pathname !== '/login';
+  const configFreePages = ['/login', '/equipment-library', '/user-management', '/ai-reports', '/report-parsing', '/config-platform'];
+  const needsConfig = !configFreePages.includes(location.pathname);
 
   useEffect(() => {
     listPrograms().then(setPrograms).catch(() => {});
