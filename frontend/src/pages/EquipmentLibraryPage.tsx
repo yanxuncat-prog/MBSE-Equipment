@@ -10,7 +10,6 @@ import {
   type ATAOption,
 } from '@/api/equipment-library';
 import { LibraryToolbar } from '@/components/equipment-library/LibraryToolbar';
-import { LibraryFilters } from '@/components/equipment-library/LibraryFilters';
 import { TableView } from '@/components/equipment-library/TableView';
 import { CardView } from '@/components/equipment-library/CardView';
 
@@ -27,12 +26,8 @@ export function EquipmentLibraryPage() {
   const [attrGroup, setAttrGroup] = useState('identity');
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Load ATA options once
-  useEffect(() => {
-    getATAOptions().then(setAtaOptions).catch(() => {});
-  }, []);
+  useEffect(() => { getATAOptions().then(setAtaOptions).catch(() => {}); }, []);
 
-  // Load equipment list
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
@@ -48,16 +43,12 @@ export function EquipmentLibraryPage() {
     }
   }, [statusTab, selectedATAs]);
 
-  useEffect(() => {
-    setSelected(new Set());
-    fetchList();
-  }, [fetchList]);
+  useEffect(() => { setSelected(new Set()); fetchList(); }, [fetchList]);
 
   const draftCount = useMemo(() => items.filter(i => i.library_status === 'draft').length, [items]);
   const validCount = useMemo(() => items.filter(i => i.library_status === 'valid').length, [items]);
   const showActions = statusTab !== 'valid';
 
-  // Actions
   const handleConfirmOne = async (id: string) => {
     try { await validateEquipment(id); toast.success('设备已确认入库'); fetchList(); }
     catch { toast.error('确认失败'); }
@@ -68,8 +59,7 @@ export function EquipmentLibraryPage() {
     try {
       const r = await validateBatch(Array.from(selected));
       toast.success(`已确认 ${r.validated_count} 台设备入库`);
-      setSelected(new Set());
-      fetchList();
+      setSelected(new Set()); fetchList();
     } catch { toast.error('批量确认失败'); }
   };
 
@@ -83,10 +73,11 @@ export function EquipmentLibraryPage() {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-4 flex-wrap">
-        <LibraryToolbar total={total} viewMode={viewMode} onViewModeChange={setViewMode} />
-        <LibraryFilters
+    <div className="space-y-3">
+      <LibraryToolbar
+        total={total}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         ataOptions={ataOptions}
         selectedATAs={selectedATAs}
         onATAChange={setSelectedATAs}
@@ -97,7 +88,6 @@ export function EquipmentLibraryPage() {
         selectedCount={selected.size}
         onBatchConfirm={handleBatchConfirm}
       />
-      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
