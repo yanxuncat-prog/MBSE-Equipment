@@ -132,7 +132,18 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
 
       {/* Table */}
       <div className="rounded-lg border overflow-x-auto">
-        <table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
+        <table className="text-sm" style={{ tableLayout: 'fixed', width: '100%' }}>
+          {/* colgroup locks fixed column widths */}
+          <colgroup>
+            {showActions && <col style={{ width: CHECK_WIDTH }} />}
+            <col style={{ width: OPS_WIDTH }} />
+            <col style={{ width: STATUS_WIDTH }} />
+            <col style={{ width: PN_WIDTH }} />
+            <col style={{ width: NAME_WIDTH }} />
+            {attrColumns.map(col => (
+              <col key={col.key} style={{ width: col.width || 'auto' }} />
+            ))}
+          </colgroup>
           <thead>
             {/* Header row */}
             <tr className="border-b">
