@@ -31,7 +31,7 @@ interface MenuItem {
 }
 
 const DEFAULT_MENU: MenuItem[] = [
-  { key: '/equipment-library', icon: <Database className="size-4" />, label: '设备库' },
+  { key: '/equipment-library', icon: <Database className="size-4" />, label: '设备库清单' },
   {
     key: '/workstation', icon: <Eye className="size-4" />, label: '构型查看',
     children: [
@@ -53,7 +53,7 @@ const DEFAULT_MENU: MenuItem[] = [
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  '/equipment-library': '设备库',
+  '/equipment-library': '设备库清单',
   '/workstation': '构型查看',
   '/config': '构型管理',
   '/dashboard': '管理看板',
