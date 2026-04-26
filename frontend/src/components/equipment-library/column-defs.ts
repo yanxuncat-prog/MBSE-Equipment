@@ -41,7 +41,7 @@ export const ATTR_GROUPS: AttrGroup[] = [
     ],
   },
   {
-    key: 'electrical', label: '电气特性', icon: '⚡', color: 'text-amber-600',
+    key: 'elec-class', label: '电气分类与供电', icon: '⚡', color: 'text-amber-600',
     columns: [
       { key: 'part_number', label: '件号', mono: true, searchable: true },
       { key: 'name', label: '设备类型名称', searchable: true },
@@ -51,13 +51,20 @@ export const ATTR_GROUPS: AttrGroup[] = [
       { key: 'power_voltage', label: '供电电压' },
       { key: 'voltage_range', label: '电压范围' },
       { key: 'power_redundancy', label: '供电余度' },
+      { key: 'dissimilar_supply', label: '异类供电' },
+    ],
+  },
+  {
+    key: 'elec-load', label: '功耗与负载', icon: '🔋', color: 'text-orange-600',
+    columns: [
+      { key: 'part_number', label: '件号', mono: true, searchable: true },
+      { key: 'name', label: '设备类型名称', searchable: true },
       { key: 'power_watts', label: '用电功率' },
       { key: 'power_kva_normal', label: '正常功耗(kW)', align: 'right' },
       { key: 'power_kva_emergency', label: '应急功耗(kW)', align: 'right' },
       { key: 'power_kva_max', label: '峰值功耗(kW)', align: 'right' },
       { key: 'soft_start', label: '软启动' },
       { key: 'peak_power_time_s', label: '峰值时间(s)' },
-      { key: 'dissimilar_supply', label: '异类供电' },
       { key: 'emergency_sheddable', label: '应急可卸' },
     ],
   },
