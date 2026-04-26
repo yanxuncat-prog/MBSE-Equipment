@@ -7,6 +7,7 @@ export interface LibraryEquipment {
   name_en: string | null;
   ata_chapter: string;
   equipment_type: string;
+  library_status: string;
   dal: string | null;
   is_electrical: boolean | null;
   is_primary_electrical: boolean | null;
@@ -15,7 +16,6 @@ export interface LibraryEquipment {
   power_voltage: string | null;
   power_kva_normal: number | null;
   supplier_part_number: string | null;
-  config_count: number;
 }
 
 export interface LibraryListResponse {
@@ -25,28 +25,10 @@ export interface LibraryListResponse {
   limit: number;
 }
 
-export interface LibraryConfigUsage {
-  config_id: string;
-  config_version: string;
-  config_name: string;
-  mass_kg: number | null;
-  frozen_at: string | null;
-}
-
-export interface LibraryEquipmentDetail {
-  equipment: {
-    id: string;
-    part_number: string;
-    master_name: string;
-    ata_chapter: string;
-    equipment_type: string;
-  };
-  configs: LibraryConfigUsage[];
-}
-
 export async function listLibraryEquipment(params: {
   search?: string;
   ata_chapter?: string;
+  library_status?: string;
   offset?: number;
   limit?: number;
 }): Promise<LibraryListResponse> {
@@ -54,7 +36,11 @@ export async function listLibraryEquipment(params: {
   return data;
 }
 
-export async function getEquipmentConfigs(equipmentId: string): Promise<LibraryEquipmentDetail> {
-  const { data } = await client.get(`/equipment-library/${equipmentId}/configs`);
+export async function validateEquipment(id: string): Promise<void> {
+  await client.post(`/equipment-library/${id}/validate`);
+}
+
+export async function validateBatch(ids: string[]): Promise<{ validated_count: number }> {
+  const { data } = await client.post('/equipment-library/validate-batch', { ids });
   return data;
 }

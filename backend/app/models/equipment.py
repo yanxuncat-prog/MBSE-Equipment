@@ -17,6 +17,7 @@ class Equipment(Base):
     name: Mapped[str] = mapped_column(String(200))
     ata_chapter: Mapped[str] = mapped_column(String(20), index=True)
     equipment_type: Mapped[str] = mapped_column(String(20))
+    library_status: Mapped[str] = mapped_column(String(10), default="draft", index=True, comment="设备库状态: draft/valid")
     supplier_id: Mapped[str | None] = mapped_column(ForeignKey("suppliers.id"))
     description: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
