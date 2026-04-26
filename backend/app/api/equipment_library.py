@@ -98,6 +98,7 @@ async def list_equipment_library(
             "screw_spec": equip.screw_spec,
             "bracket_delegated_158": equip.bracket_delegated_158,
             "has_tolerance_drawing": equip.has_tolerance_drawing,
+            "warnings": equip.warnings,
         })
 
     return {"items": items, "total": total, "offset": offset, "limit": limit}

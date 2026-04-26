@@ -72,6 +72,7 @@ class Equipment(Base):
 
     # --- Notes ---
     notes: Mapped[str | None] = mapped_column(Text, comment="备注")
+    warnings: Mapped[str | None] = mapped_column(Text, comment="数据警告信息(导入冲突等)")
 
     # --- Relationships ---
     supplier: Mapped["Supplier | None"] = relationship(back_populates="equipment_list")

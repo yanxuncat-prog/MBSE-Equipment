@@ -47,6 +47,7 @@ export interface LibraryEquipment {
   screw_spec: string | null;
   bracket_delegated_158: boolean | null;
   has_tolerance_drawing: boolean | null;
+  warnings: string | null;
 }
 
 export interface LibraryListResponse {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, X, Info, Pencil, Trash2, CheckCircle } from 'lucide-react';
+import { Check, X, Info, Pencil, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -130,10 +130,17 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   </div>
                 </td>
                 <td className="px-2 py-1.5">
-                  <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
-                    className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
-                    {item.library_status === 'valid' ? 'Valid' : 'Draft'}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
+                      className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
+                      {item.library_status === 'valid' ? 'Valid' : 'Draft'}
+                    </Badge>
+                    {item.warnings && (
+                      <span title={item.warnings} className="text-amber-500 cursor-help">
+                        <AlertTriangle className="size-3.5" />
+                      </span>
+                    )}
+                  </div>
                 </td>
                 {group.columns.map(col => (
                   <td key={col.key} className={`px-2 py-1.5 text-xs max-w-[200px] truncate ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>
