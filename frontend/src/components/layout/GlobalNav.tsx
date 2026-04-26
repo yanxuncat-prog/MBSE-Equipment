@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Plus, Search, FileDown } from 'lucide-react';
+import { Plus, Search, FileDown, Database, LayoutList, LayoutGrid } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useConfigStore } from '@/store/configStore';
 import { listPrograms, listConfigs } from '@/api/configurations';
@@ -17,6 +17,13 @@ export const workstationActions = {
   onAdd: null as (() => void) | null,
   onSearch: null as ((value: string) => void) | null,
   searchValue: '',
+};
+
+// Equipment library page actions (set by EquipmentLibraryPage)
+export const libraryActions = {
+  viewMode: 'table' as 'table' | 'card',
+  onViewModeChange: null as ((m: 'table' | 'card') => void) | null,
+  total: 0,
 };
 
 const ATA_OPTIONS = [
@@ -40,6 +47,7 @@ export function GlobalNav() {
   const [search, setSearch] = useState('');
   const location = useLocation();
   const isWorkstation = location.pathname === '/workstation';
+  const isLibrary = location.pathname === '/equipment-library';
   const configFreePages = ['/login', '/equipment-library', '/user-management', '/ai-reports', '/report-parsing', '/config-platform'];
   const needsConfig = !configFreePages.includes(location.pathname);
 
@@ -125,6 +133,31 @@ export function GlobalNav() {
           {activeConfigId && configs.find(c => c.id === activeConfigId)?.frozen_at != null && (
             <Badge variant="secondary" className="text-xs shrink-0">冻结</Badge>
           )}
+        </div>
+      )}
+
+      {isLibrary && (
+        <div className="flex shrink-0 items-center gap-2">
+          <Database className="size-4 text-primary" />
+          <span className="text-sm font-semibold">设备库清单</span>
+          <Badge variant="secondary" className="text-xs">{libraryActions.total} 种</Badge>
+          <Separator orientation="vertical" className="mx-1 h-5" />
+          <span className="text-xs text-muted-foreground">型号:</span>
+          <span className="text-xs bg-background border rounded px-2 py-0.5">CE-25A</span>
+          <div className="flex border rounded overflow-hidden ml-1">
+            <button
+              onClick={() => libraryActions.onViewModeChange?.('table')}
+              className={`flex items-center gap-1 px-2.5 py-1 text-xs transition-colors cursor-pointer ${libraryActions.viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            >
+              <LayoutList className="size-3" /> 表单
+            </button>
+            <button
+              onClick={() => libraryActions.onViewModeChange?.('card')}
+              className={`flex items-center gap-1 px-2.5 py-1 text-xs transition-colors cursor-pointer ${libraryActions.viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            >
+              <LayoutGrid className="size-3" /> 卡片
+            </button>
+          </div>
         </div>
       )}
 
