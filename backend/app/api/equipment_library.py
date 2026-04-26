@@ -16,7 +16,7 @@ async def list_equipment_library(
     search: str | None = Query(None),
     ata_chapter: str | None = Query(None),
     offset: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=2000),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):

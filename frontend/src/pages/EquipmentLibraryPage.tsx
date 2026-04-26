@@ -1,15 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Search, Database, ChevronRight, Check, X } from 'lucide-react';
+import { Loader2, Search, Database, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
-import {
   listLibraryEquipment,
-  getEquipmentConfigs,
   type LibraryEquipment,
-  type LibraryEquipmentDetail,
 } from '@/api/equipment-library';
 
 function BoolIcon({ value }: { value: boolean | null | undefined }) {
@@ -23,18 +18,15 @@ export function EquipmentLibraryPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [detail, setDetail] = useState<LibraryEquipmentDetail | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await listLibraryEquipment({ search: search || undefined, limit: 1000 });
+      const res = await listLibraryEquipment({ search: search || undefined, limit: 2000 });
       setItems(res.items);
       setTotal(res.total);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error('设备库加载失败', err);
     } finally {
       setLoading(false);
     }
@@ -44,20 +36,6 @@ export function EquipmentLibraryPage() {
     const timer = setTimeout(fetchList, 300);
     return () => clearTimeout(timer);
   }, [fetchList]);
-
-  const handleRowClick = async (equip: LibraryEquipment) => {
-    setDetailOpen(true);
-    setDetailLoading(true);
-    setDetail(null);
-    try {
-      const data = await getEquipmentConfigs(equip.id);
-      setDetail(data);
-    } catch {
-      // silently fail
-    } finally {
-      setDetailLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -90,7 +68,7 @@ export function EquipmentLibraryPage() {
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">件号</th>
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">设备名称</th>
+                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">设备类型名称</th>
                 <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">ATA</th>
                 <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">类型</th>
                 <th className="px-3 py-2.5 text-center font-medium text-muted-foreground whitespace-nowrap">电设备</th>
@@ -98,19 +76,16 @@ export function EquipmentLibraryPage() {
                 <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">供电电压</th>
                 <th className="px-3 py-2.5 text-right font-medium text-muted-foreground whitespace-nowrap">功耗(kW)</th>
                 <th className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap">尺寸</th>
-                <th className="px-3 py-2.5 text-center font-medium text-muted-foreground whitespace-nowrap">构型数</th>
-                <th className="px-3 py-2.5 w-6" />
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => handleRowClick(item)}
-                  className="border-b last:border-0 cursor-pointer hover:bg-muted/30 transition-colors"
+                  className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                 >
                   <td className="px-3 py-2 font-mono text-xs">{item.part_number}</td>
-                  <td className="px-3 py-2 max-w-[200px] truncate">{item.name}</td>
+                  <td className="px-3 py-2">{item.name}</td>
                   <td className="px-3 py-2 text-muted-foreground">{item.ata_chapter}</td>
                   <td className="px-3 py-2">
                     <Badge variant="outline" className="text-[10px]">{item.equipment_type}</Badge>
@@ -120,19 +95,11 @@ export function EquipmentLibraryPage() {
                   <td className="px-3 py-2 text-xs text-muted-foreground">{item.power_voltage || '-'}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums">{item.power_kva_normal?.toFixed(1) ?? '-'}</td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">{item.dimensions_mm || '-'}</td>
-                  <td className="px-3 py-2 text-center">
-                    <Badge variant={item.config_count > 0 ? 'default' : 'secondary'} className="text-[10px]">
-                      {item.config_count}
-                    </Badge>
-                  </td>
-                  <td className="px-3 py-2">
-                    <ChevronRight className="size-3.5 text-muted-foreground" />
-                  </td>
                 </tr>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     暂无数据
                   </td>
                 </tr>
@@ -141,68 +108,6 @@ export function EquipmentLibraryPage() {
           </table>
         </div>
       )}
-
-      {/* Detail dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle className="text-base">
-              {detail ? detail.equipment.master_name : '设备详情'}
-            </DialogTitle>
-          </DialogHeader>
-          {detailLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="size-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : detail ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">件号: </span>
-                  <span className="font-mono">{detail.equipment.part_number}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">ATA: </span>
-                  <span>{detail.equipment.ata_chapter}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">类型: </span>
-                  <Badge variant="outline" className="text-xs">{detail.equipment.equipment_type}</Badge>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground">使用该设备的构型</h4>
-                {detail.configs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-2">暂无构型使用此设备</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {detail.configs.map((cfg) => (
-                      <div
-                        key={cfg.config_id}
-                        className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{cfg.config_version}</span>
-                          {cfg.config_name && (
-                            <span className="text-muted-foreground">{cfg.config_name}</span>
-                          )}
-                          {cfg.frozen_at != null && (
-                            <Badge variant="secondary" className="text-xs">冻结</Badge>
-                          )}
-                        </div>
-                        {cfg.mass_kg != null && (
-                          <span className="text-xs text-muted-foreground">{cfg.mass_kg} kg</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
