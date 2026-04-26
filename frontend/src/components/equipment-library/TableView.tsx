@@ -30,6 +30,9 @@ function CellValue({ value, mono }: { value: any; mono?: boolean }) {
 // Fixed columns styling
 const FIXED_BG = 'bg-slate-50/80';
 const FIXED_HEADER_BG = 'bg-slate-100';
+const CHECK_WIDTH = '32px';
+const OPS_WIDTH = '72px';
+const STATUS_WIDTH = '52px';
 const PN_WIDTH = '115px';
 const NAME_WIDTH = '140px';
 
@@ -135,16 +138,16 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
             <tr className="border-b">
               {/* ── Fixed columns (colored background) ── */}
               {showActions && (
-                <th className={`px-2 py-2 w-8 ${FIXED_HEADER_BG}`}>
+                <th className={`px-2 py-2 ${FIXED_HEADER_BG}`} style={{ width: CHECK_WIDTH, minWidth: CHECK_WIDTH, maxWidth: CHECK_WIDTH }}>
                   <Checkbox checked={selected.size > 0 && selected.size === draftItems.length} onCheckedChange={onSelectAll} />
                 </th>
               )}
-              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`}>操作</th>
-              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`}>状态</th>
-              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: PN_WIDTH, maxWidth: PN_WIDTH }}>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: OPS_WIDTH, minWidth: OPS_WIDTH, maxWidth: OPS_WIDTH }}>操作</th>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: STATUS_WIDTH, minWidth: STATUS_WIDTH, maxWidth: STATUS_WIDTH }}>状态</th>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: PN_WIDTH, minWidth: PN_WIDTH, maxWidth: PN_WIDTH }}>
                 <span className="inline-flex items-center gap-0.5">件号 <button onClick={() => setKnowledgeKey('part_number')} className="text-blue-400 hover:text-blue-600 cursor-pointer"><Info className="size-3" /></button></span>
               </th>
-              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: NAME_WIDTH, minWidth: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
                 <span className="inline-flex items-center gap-0.5">设备类型名称 <button onClick={() => setKnowledgeKey('name')} className="text-blue-400 hover:text-blue-600 cursor-pointer"><Info className="size-3" /></button></span>
               </th>
               {/* ── Attribute-specific columns (normal background) ── */}
@@ -159,13 +162,13 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
             </tr>
             {/* Search row */}
             <tr className="border-b">
-              {showActions && <td className={`px-2 py-1 ${FIXED_BG}`} />}
-              <td className={`px-2 py-1 ${FIXED_BG}`} />
-              <td className={`px-2 py-1 ${FIXED_BG}`} />
-              <td className={`px-1 py-1 ${FIXED_BG}`}>
+              {showActions && <td className={`px-2 py-1 ${FIXED_BG}`} style={{ width: CHECK_WIDTH, minWidth: CHECK_WIDTH }} />}
+              <td className={`px-2 py-1 ${FIXED_BG}`} style={{ width: OPS_WIDTH, minWidth: OPS_WIDTH }} />
+              <td className={`px-2 py-1 ${FIXED_BG}`} style={{ width: STATUS_WIDTH, minWidth: STATUS_WIDTH }} />
+              <td className={`px-1 py-1 ${FIXED_BG}`} style={{ width: PN_WIDTH, minWidth: PN_WIDTH }}>
                 <Input className="h-6 text-xs px-1.5 border-slate-300" placeholder="🔍" value={pnSearch} onChange={e => setPnSearch(e.target.value)} />
               </td>
-              <td className={`px-1 py-1 ${FIXED_BG}`}>
+              <td className={`px-1 py-1 ${FIXED_BG}`} style={{ width: NAME_WIDTH, minWidth: NAME_WIDTH }}>
                 <Input className="h-6 text-xs px-1.5 border-slate-300" placeholder="🔍" value={nameSearch} onChange={e => setNameSearch(e.target.value)} />
               </td>
               {attrColumns.map(col => (
@@ -185,11 +188,11 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                 <tr key={item.id} className={`border-b last:border-0 transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
                   {/* ── Fixed columns ── */}
                   {showActions && (
-                    <td className={`px-2 py-1.5 ${FIXED_BG}`}>
+                    <td className={`px-2 py-1.5 ${FIXED_BG}`} style={{ width: CHECK_WIDTH, minWidth: CHECK_WIDTH }}>
                       {item.library_status === 'draft' && <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggleSelect(item.id)} />}
                     </td>
                   )}
-                  <td className={`px-2 py-1.5 ${FIXED_BG}`}>
+                  <td className={`px-2 py-1.5 ${FIXED_BG}`} style={{ width: OPS_WIDTH, minWidth: OPS_WIDTH }}>
                     <div className="flex items-center gap-1">
                       <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑"><Pencil className="size-3.5" /></button>
                       <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除"><Trash2 className="size-3.5" /></button>
@@ -198,13 +201,13 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       )}
                     </div>
                   </td>
-                  <td className={`px-2 py-1.5 ${FIXED_BG}`}>
+                  <td className={`px-2 py-1.5 ${FIXED_BG}`} style={{ width: STATUS_WIDTH, minWidth: STATUS_WIDTH }}>
                     <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
                     </Badge>
                   </td>
-                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: PN_WIDTH, maxWidth: PN_WIDTH }}>
+                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: PN_WIDTH, minWidth: PN_WIDTH, maxWidth: PN_WIDTH }}>
                     <span className="inline-flex items-center gap-0.5">
                       <span className="truncate font-mono text-[10px]">{item.part_number}</span>
                       {itemWarnings?.has('part_number') && (
@@ -214,7 +217,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       )}
                     </span>
                   </td>
-                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
+                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: NAME_WIDTH, minWidth: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
                     <span className="truncate block">{item.name}</span>
                   </td>
                   {/* ── Attribute-specific columns ── */}
