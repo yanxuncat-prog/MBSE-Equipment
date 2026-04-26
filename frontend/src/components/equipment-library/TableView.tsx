@@ -108,7 +108,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
 
       {/* Table */}
       <div className="rounded-lg border overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
           <thead>
             <tr className="border-b bg-muted/50">
               {showActions && (
@@ -117,10 +117,10 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                 </th>
               )}
               <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>
-              <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
+              <th className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
               {group.columns.map(col => (
-                <th key={col.key} className={`px-2 py-2 text-xs font-medium text-muted-foreground whitespace-nowrap ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}`}>
-                  <span className="inline-flex items-center gap-0.5">
+                <th key={col.key} className="px-2 py-2 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  <span className="inline-flex items-center gap-0.5 justify-center">
                     {col.label}
                     <button onClick={() => setKnowledgeKey(col.key)} className="text-blue-400 hover:text-blue-600 cursor-pointer">
                       <Info className="size-3" />
@@ -169,7 +169,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-1.5">
+                  <td className="px-2 py-1.5 text-center">
                     <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
@@ -178,9 +178,9 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
                   {group.columns.map(col => {
                     const warning = itemWarnings?.get(col.key);
                     return (
-                      <td key={col.key} className={`px-2 py-1.5 text-xs max-w-[200px] ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>
-                        <span className="inline-flex items-center gap-0.5">
-                          <span className="truncate"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
+                      <td key={col.key} className="px-2 py-1.5 text-xs text-center">
+                        <span className="inline-flex items-center gap-0.5 justify-center">
+                          <span className="truncate max-w-[180px]"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
                           {warning && (
                             <button
                               onClick={() => onEdit(item.id, attrGroup)}
