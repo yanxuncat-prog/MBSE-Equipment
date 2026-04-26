@@ -30,6 +30,7 @@ export function EquipmentLibraryPage() {
   const [attrGroup, setAttrGroup] = useState('identity');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editItem, setEditItem] = useState<LibraryEquipment | null>(null);
+  const [editGroup, setEditGroup] = useState<string | undefined>(undefined);
 
   // Sync with GlobalNav
   useEffect(() => {
@@ -75,9 +76,9 @@ export function EquipmentLibraryPage() {
     catch { toast.error('确认失败'); }
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: string, group?: string) => {
     const item = items.find(i => i.id === id);
-    if (item) setEditItem(item);
+    if (item) { setEditItem(item); setEditGroup(group); }
   };
 
   const handleSave = async (id: string, data: Record<string, any>) => {
@@ -157,8 +158,9 @@ export function EquipmentLibraryPage() {
       <EditDialog
         equipment={editItem}
         open={editItem !== null}
-        onClose={() => setEditItem(null)}
+        onClose={() => { setEditItem(null); setEditGroup(undefined); }}
         onSave={handleSave}
+        initialGroup={editGroup}
       />
     </div>
   );

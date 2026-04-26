@@ -95,6 +95,14 @@ export const ATTR_GROUPS: AttrGroup[] = [
   },
 ];
 
+/** Find which attribute group a field key belongs to */
+export function findGroupForField(fieldKey: string): string | null {
+  for (const g of ATTR_GROUPS) {
+    if (g.columns.some(c => c.key === fieldKey)) return g.key;
+  }
+  return null;
+}
+
 export function computeFillRate(item: Record<string, any>): number {
   const allKeys = ATTR_GROUPS.flatMap(g => g.columns.map(c => c.key));
   const unique = [...new Set(allKeys)];

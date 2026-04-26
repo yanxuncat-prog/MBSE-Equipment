@@ -13,6 +13,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSave: (id: string, data: Record<string, any>) => void;
+  initialGroup?: string;
 }
 
 // Fields that should not be editable
@@ -22,7 +23,7 @@ const BOOL_FIELDS = new Set(['is_electrical', 'is_primary_electrical', 'has_eicd
 // Fields that should use textarea
 const TEXT_FIELDS = new Set(['description', 'notes', 'grounding_special_requirements']);
 
-export function EditDialog({ equipment, open, onClose, onSave }: Props) {
+export function EditDialog({ equipment, open, onClose, onSave, initialGroup }: Props) {
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [activeGroup, setActiveGroup] = useState(ATTR_GROUPS[0].key);
@@ -38,7 +39,7 @@ export function EditDialog({ equipment, open, onClose, onSave }: Props) {
     // Also include warnings and notes
     f['warnings'] = equipment.warnings ?? '';
     setForm(f);
-    setActiveGroup(ATTR_GROUPS[0].key);
+    setActiveGroup(initialGroup || ATTR_GROUPS[0].key);
   }, [equipment, open]);
 
   if (!equipment) return null;

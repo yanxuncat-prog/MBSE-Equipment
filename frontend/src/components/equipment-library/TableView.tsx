@@ -7,6 +7,13 @@ import { ATTR_GROUPS } from './column-defs';
 import { KnowledgePanel } from './KnowledgePanel';
 import type { LibraryEquipment } from '@/api/equipment-library';
 
+interface WarningEntry { field: string; label: string; type: string; detail: string; }
+
+function parseWarnings(raw: string | null): WarningEntry[] {
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
 function BoolIcon({ value }: { value: boolean | null | undefined }) {
   if (value === true) return <Check className="size-3.5 text-green-600" />;
   if (value === false) return <X className="size-3.5 text-muted-foreground/40" />;
@@ -28,7 +35,7 @@ interface Props {
   onToggleSelect: (id: string) => void;
   onSelectAll: () => void;
   onConfirmOne: (id: string) => void;
-  onEdit: (id: string) => void;
+  onEdit: (id: string, group?: string) => void;
   onDelete: (id: string) => void;
   showActions: boolean;
 }
@@ -53,14 +60,49 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
 
   const draftItems = filtered.filter(i => i.library_status === 'draft');
 
+  // Pre-parse warnings for all items: Map<itemId, Set<fieldKey>>
+  const warningMap = useMemo(() => {
+    const map = new Map<string, Map<string, string>>();
+    for (const item of items) {
+      const ws = parseWarnings(item.warnings);
+      if (ws.length > 0) {
+        const fieldMap = new Map<string, string>();
+        for (const w of ws) fieldMap.set(w.field, w.detail);
+        map.set(item.id, fieldMap);
+      }
+    }
+    return map;
+  }, [items]);
+
+  // Count warnings per group for tab badges
+  const groupWarningCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const g of ATTR_GROUPS) counts[g.key] = 0;
+    for (const [, fieldMap] of warningMap) {
+      for (const [fieldKey] of fieldMap) {
+        for (const g of ATTR_GROUPS) {
+          if (g.columns.some(c => c.key === fieldKey)) { counts[g.key]++; break; }
+        }
+      }
+    }
+    return counts;
+  }, [warningMap]);
+
   return (
     <>
       {/* Attribute group tabs */}
       <div className="flex gap-1 mb-3">
         {ATTR_GROUPS.map(g => (
           <button key={g.key} onClick={() => { onAttrGroupChange(g.key); setColSearch({}); }}
-            className={`px-3 py-1.5 text-xs rounded-md transition-colors ${attrGroup === g.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
-          >{g.icon} {g.label}</button>
+            className={`px-3 py-1.5 text-xs rounded-md transition-colors inline-flex items-center gap-1 ${attrGroup === g.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+          >
+            {g.icon} {g.label}
+            {groupWarningCounts[g.key] > 0 && (
+              <span className={`text-[9px] px-1 rounded ${attrGroup === g.key ? 'bg-amber-300 text-amber-900' : 'bg-amber-100 text-amber-600'}`}>
+                {groupWarningCounts[g.key]}
+              </span>
+            )}
+          </button>
         ))}
       </div>
 
@@ -95,60 +137,66 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
               {group.columns.map(col => (
                 <td key={col.key} className="px-1 py-1">
                   {col.searchable ? (
-                    <Input
-                      className="h-6 text-xs px-1.5 border-amber-200"
-                      placeholder="🔍"
-                      value={colSearch[col.key] || ''}
-                      onChange={e => setColSearch(prev => ({ ...prev, [col.key]: e.target.value }))}
-                    />
+                    <Input className="h-6 text-xs px-1.5 border-amber-200" placeholder="🔍"
+                      value={colSearch[col.key] || ''} onChange={e => setColSearch(prev => ({ ...prev, [col.key]: e.target.value }))} />
                   ) : null}
                 </td>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map(item => (
-              <tr key={item.id} className={`border-b last:border-0 transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
-                {showActions && (
+            {filtered.map(item => {
+              const itemWarnings = warningMap.get(item.id);
+              return (
+                <tr key={item.id} className={`border-b last:border-0 transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
+                  {showActions && (
+                    <td className="px-2 py-1.5">
+                      {item.library_status === 'draft' && <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggleSelect(item.id)} />}
+                    </td>
+                  )}
                   <td className="px-2 py-1.5">
-                    {item.library_status === 'draft' && <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggleSelect(item.id)} />}
-                  </td>
-                )}
-                <td className="px-2 py-1.5">
-                  <div className="flex items-center gap-1 justify-center">
-                    <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑">
-                      <Pencil className="size-3.5" />
-                    </button>
-                    <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除">
-                      <Trash2 className="size-3.5" />
-                    </button>
-                    {item.library_status === 'draft' && (
-                      <button onClick={() => onConfirmOne(item.id)} className="text-green-500 hover:text-green-700 cursor-pointer" title="确认入库">
-                        <CheckCircle className="size-3.5" />
+                    <div className="flex items-center gap-1 justify-center">
+                      <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑">
+                        <Pencil className="size-3.5" />
                       </button>
-                    )}
-                  </div>
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="flex items-center gap-1">
+                      <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                      {item.library_status === 'draft' && (
+                        <button onClick={() => onConfirmOne(item.id)} className="text-green-500 hover:text-green-700 cursor-pointer" title="确认入库">
+                          <CheckCircle className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-2 py-1.5">
                     <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
                     </Badge>
-                    {item.warnings && (
-                      <span title={item.warnings} className="text-amber-500 cursor-help">
-                        <AlertTriangle className="size-3.5" />
-                      </span>
-                    )}
-                  </div>
-                </td>
-                {group.columns.map(col => (
-                  <td key={col.key} className={`px-2 py-1.5 text-xs max-w-[200px] truncate ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>
-                    <CellValue value={(item as any)[col.key]} mono={col.mono} />
                   </td>
-                ))}
-              </tr>
-            ))}
+                  {group.columns.map(col => {
+                    const warning = itemWarnings?.get(col.key);
+                    return (
+                      <td key={col.key} className={`px-2 py-1.5 text-xs max-w-[200px] ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>
+                        <span className="inline-flex items-center gap-0.5">
+                          <span className="truncate"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
+                          {warning && (
+                            <button
+                              onClick={() => onEdit(item.id, attrGroup)}
+                              className="text-amber-500 hover:text-amber-700 cursor-pointer shrink-0"
+                              title={warning}
+                            >
+                              <AlertTriangle className="size-3" />
+                            </button>
+                          )}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
             {filtered.length === 0 && (
               <tr><td colSpan={group.columns.length + 3} className="px-2 py-12 text-center text-muted-foreground">暂无数据</td></tr>
             )}
