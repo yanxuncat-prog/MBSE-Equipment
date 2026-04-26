@@ -9,7 +9,6 @@ import {
   type LibraryEquipment,
   type ATAOption,
 } from '@/api/equipment-library';
-import { LibraryToolbar } from '@/components/equipment-library/LibraryToolbar';
 import { LibraryFilters } from '@/components/equipment-library/LibraryFilters';
 import { TableView } from '@/components/equipment-library/TableView';
 import { CardView } from '@/components/equipment-library/CardView';
@@ -18,7 +17,7 @@ type StatusTab = 'all' | 'draft' | 'valid';
 
 export function EquipmentLibraryPage() {
   const [items, setItems] = useState<LibraryEquipment[]>([]);
-  const [total, setTotal] = useState(0);
+  const [, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
@@ -84,8 +83,6 @@ export function EquipmentLibraryPage() {
 
   return (
     <div className="space-y-3">
-      <LibraryToolbar total={total} viewMode={viewMode} onViewModeChange={setViewMode} />
-
       <LibraryFilters
         ataOptions={ataOptions}
         selectedATAs={selectedATAs}
@@ -96,6 +93,8 @@ export function EquipmentLibraryPage() {
         validCount={validCount}
         selectedCount={selected.size}
         onBatchConfirm={handleBatchConfirm}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {loading ? (
