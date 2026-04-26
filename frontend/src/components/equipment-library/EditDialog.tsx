@@ -71,7 +71,7 @@ export function EditDialog({ equipment, open, onClose, onSave, initialGroup }: P
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl h-[70vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-sm">
             编辑: {equipment.name}
@@ -88,53 +88,55 @@ export function EditDialog({ equipment, open, onClose, onSave, initialGroup }: P
           ))}
         </div>
 
-        {/* Fields */}
-        <div className="grid grid-cols-2 gap-3 mt-2">
-          {editableCols.map(col => {
-            const isReadOnly = READ_ONLY.has(col.key);
-            const isBool = BOOL_FIELDS.has(col.key);
-            const isText = TEXT_FIELDS.has(col.key);
-            const value = form[col.key];
+        {/* Scrollable content area — fixed height */}
+        <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+          <div className="grid grid-cols-2 gap-3">
+            {editableCols.map(col => {
+              const isReadOnly = READ_ONLY.has(col.key);
+              const isBool = BOOL_FIELDS.has(col.key);
+              const isText = TEXT_FIELDS.has(col.key);
+              const value = form[col.key];
 
-            return (
-              <div key={col.key} className={isText ? 'col-span-2' : ''}>
-                <Label className="text-xs text-muted-foreground">{col.label}</Label>
-                {isBool ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Checkbox
-                      checked={value === true || value === 'true'}
-                      onCheckedChange={checked => handleChange(col.key, checked)}
+              return (
+                <div key={col.key} className={isText ? 'col-span-2' : ''}>
+                  <Label className="text-xs text-muted-foreground">{col.label}</Label>
+                  {isBool ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Checkbox
+                        checked={value === true || value === 'true'}
+                        onCheckedChange={checked => handleChange(col.key, checked)}
+                        disabled={isReadOnly}
+                      />
+                      <span className="text-xs">{value === true || value === 'true' ? '是' : value === false || value === 'false' ? '否' : '未设置'}</span>
+                    </div>
+                  ) : isText ? (
+                    <Textarea
+                      className="mt-1 text-xs h-16"
+                      value={String(value ?? '')}
+                      onChange={e => handleChange(col.key, e.target.value)}
                       disabled={isReadOnly}
                     />
-                    <span className="text-xs">{value === true || value === 'true' ? '是' : value === false || value === 'false' ? '否' : '未设置'}</span>
-                  </div>
-                ) : isText ? (
-                  <Textarea
-                    className="mt-1 text-xs h-16"
-                    value={String(value ?? '')}
-                    onChange={e => handleChange(col.key, e.target.value)}
-                    disabled={isReadOnly}
-                  />
-                ) : (
-                  <Input
-                    className="mt-1 h-8 text-xs"
-                    value={String(value ?? '')}
-                    onChange={e => handleChange(col.key, e.target.value)}
-                    disabled={isReadOnly}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Warnings (always visible) */}
-        {form['warnings'] && (
-          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-            <strong>⚠ 警告：</strong>
-            <pre className="whitespace-pre-wrap mt-1">{form['warnings']}</pre>
+                  ) : (
+                    <Input
+                      className="mt-1 h-8 text-xs"
+                      value={String(value ?? '')}
+                      onChange={e => handleChange(col.key, e.target.value)}
+                      disabled={isReadOnly}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Warnings */}
+          {form['warnings'] && (
+            <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+              <strong>⚠ 警告：</strong>
+              <pre className="whitespace-pre-wrap mt-1">{form['warnings']}</pre>
+            </div>
+          )}
+        </div>
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose}>取消</Button>
