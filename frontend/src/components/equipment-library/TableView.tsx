@@ -27,6 +27,12 @@ function CellValue({ value, mono }: { value: any; mono?: boolean }) {
   return <span className={mono ? 'font-mono text-[10px]' : ''}>{String(value)}</span>;
 }
 
+// Fixed columns styling
+const FIXED_BG = 'bg-slate-50/80';
+const FIXED_HEADER_BG = 'bg-slate-100';
+const PN_WIDTH = '115px';
+const NAME_WIDTH = '140px';
+
 interface Props {
   items: LibraryEquipment[];
   attrGroup: string;
@@ -43,24 +49,40 @@ interface Props {
 export function TableView({ items, attrGroup, onAttrGroupChange, selected, onToggleSelect, onSelectAll, onConfirmOne, onEdit, onDelete, showActions }: Props) {
   const [colSearch, setColSearch] = useState<Record<string, string>>({});
   const [knowledgeKey, setKnowledgeKey] = useState<string | null>(null);
+  const [pnSearch, setPnSearch] = useState('');
+  const [nameSearch, setNameSearch] = useState('');
 
   const group = ATTR_GROUPS.find(g => g.key === attrGroup) || ATTR_GROUPS[0];
+  // Attribute-specific columns (exclude part_number and name — they are fixed)
+  const attrColumns = group.columns.filter(c => c.key !== 'part_number' && c.key !== 'name');
 
   const filtered = useMemo(() => {
+    let result = items;
+    // Fixed column filters
+    if (pnSearch.trim()) {
+      const s = pnSearch.toLowerCase();
+      result = result.filter(item => item.part_number.toLowerCase().includes(s));
+    }
+    if (nameSearch.trim()) {
+      const s = nameSearch.toLowerCase();
+      result = result.filter(item => item.name.toLowerCase().includes(s));
+    }
+    // Attribute column filters
     const activeFilters = Object.entries(colSearch).filter(([, v]) => v.trim());
-    if (activeFilters.length === 0) return items;
-    return items.filter(item =>
-      activeFilters.every(([key, search]) => {
-        const val = (item as any)[key];
-        if (val === null || val === undefined) return false;
-        return String(val).toLowerCase().includes(search.toLowerCase());
-      })
-    );
-  }, [items, colSearch]);
+    if (activeFilters.length > 0) {
+      result = result.filter(item =>
+        activeFilters.every(([key, search]) => {
+          const val = (item as any)[key];
+          if (val === null || val === undefined) return false;
+          return String(val).toLowerCase().includes(search.toLowerCase());
+        })
+      );
+    }
+    return result;
+  }, [items, pnSearch, nameSearch, colSearch]);
 
   const draftItems = filtered.filter(i => i.library_status === 'draft');
 
-  // Pre-parse warnings for all items: Map<itemId, Set<fieldKey>>
   const warningMap = useMemo(() => {
     const map = new Map<string, Map<string, string>>();
     for (const item of items) {
@@ -74,7 +96,6 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
     return map;
   }, [items]);
 
-  // Count warnings per group for tab badges
   const groupWarningCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const g of ATTR_GROUPS) counts[g.key] = 0;
@@ -110,32 +131,45 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
       <div className="rounded-lg border overflow-x-auto">
         <table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
           <thead>
-            <tr className="border-b bg-muted/50">
+            {/* Header row */}
+            <tr className="border-b">
+              {/* ── Fixed columns (colored background) ── */}
               {showActions && (
-                <th className="px-2 py-2 w-8">
+                <th className={`px-2 py-2 w-8 ${FIXED_HEADER_BG}`}>
                   <Checkbox checked={selected.size > 0 && selected.size === draftItems.length} onCheckedChange={onSelectAll} />
                 </th>
               )}
-              <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">操作</th>
-              <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">状态</th>
-              {group.columns.map(col => (
-                <th key={col.key} className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`}>操作</th>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`}>状态</th>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: PN_WIDTH, maxWidth: PN_WIDTH }}>
+                <span className="inline-flex items-center gap-0.5">件号 <button onClick={() => setKnowledgeKey('part_number')} className="text-blue-400 hover:text-blue-600 cursor-pointer"><Info className="size-3" /></button></span>
+              </th>
+              <th className={`px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap ${FIXED_HEADER_BG}`} style={{ width: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
+                <span className="inline-flex items-center gap-0.5">设备类型名称 <button onClick={() => setKnowledgeKey('name')} className="text-blue-400 hover:text-blue-600 cursor-pointer"><Info className="size-3" /></button></span>
+              </th>
+              {/* ── Attribute-specific columns (normal background) ── */}
+              {attrColumns.map(col => (
+                <th key={col.key} className="px-2 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap bg-muted/50" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
                   <span className="inline-flex items-center gap-0.5">
                     {col.label}
-                    <button onClick={() => setKnowledgeKey(col.key)} className="text-blue-400 hover:text-blue-600 cursor-pointer">
-                      <Info className="size-3" />
-                    </button>
+                    <button onClick={() => setKnowledgeKey(col.key)} className="text-blue-400 hover:text-blue-600 cursor-pointer"><Info className="size-3" /></button>
                   </span>
                 </th>
               ))}
             </tr>
-            {/* Column search row */}
-            <tr className="border-b bg-amber-50/50">
-              {showActions && <td className="px-2 py-1" />}
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              {group.columns.map(col => (
-                <td key={col.key} className="px-1 py-1">
+            {/* Search row */}
+            <tr className="border-b">
+              {showActions && <td className={`px-2 py-1 ${FIXED_BG}`} />}
+              <td className={`px-2 py-1 ${FIXED_BG}`} />
+              <td className={`px-2 py-1 ${FIXED_BG}`} />
+              <td className={`px-1 py-1 ${FIXED_BG}`}>
+                <Input className="h-6 text-xs px-1.5 border-slate-300" placeholder="🔍" value={pnSearch} onChange={e => setPnSearch(e.target.value)} />
+              </td>
+              <td className={`px-1 py-1 ${FIXED_BG}`}>
+                <Input className="h-6 text-xs px-1.5 border-slate-300" placeholder="🔍" value={nameSearch} onChange={e => setNameSearch(e.target.value)} />
+              </td>
+              {attrColumns.map(col => (
+                <td key={col.key} className="px-1 py-1 bg-amber-50/50">
                   {col.searchable ? (
                     <Input className="h-6 text-xs px-1.5 border-amber-200" placeholder="🔍"
                       value={colSearch[col.key] || ''} onChange={e => setColSearch(prev => ({ ...prev, [col.key]: e.target.value }))} />
@@ -149,44 +183,49 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
               const itemWarnings = warningMap.get(item.id);
               return (
                 <tr key={item.id} className={`border-b last:border-0 transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
+                  {/* ── Fixed columns ── */}
                   {showActions && (
-                    <td className="px-2 py-1.5">
+                    <td className={`px-2 py-1.5 ${FIXED_BG}`}>
                       {item.library_status === 'draft' && <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggleSelect(item.id)} />}
                     </td>
                   )}
-                  <td className="px-2 py-1.5">
-                    <div className="flex items-center gap-1 justify-center">
-                      <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑">
-                        <Pencil className="size-3.5" />
-                      </button>
-                      <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除">
-                        <Trash2 className="size-3.5" />
-                      </button>
+                  <td className={`px-2 py-1.5 ${FIXED_BG}`}>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => onEdit(item.id)} className="text-blue-500 hover:text-blue-700 cursor-pointer" title="编辑"><Pencil className="size-3.5" /></button>
+                      <button onClick={() => onDelete(item.id)} className="text-red-400 hover:text-red-600 cursor-pointer" title="删除"><Trash2 className="size-3.5" /></button>
                       {item.library_status === 'draft' && (
-                        <button onClick={() => onConfirmOne(item.id)} className="text-green-500 hover:text-green-700 cursor-pointer" title="确认入库">
-                          <CheckCircle className="size-3.5" />
-                        </button>
+                        <button onClick={() => onConfirmOne(item.id)} className="text-green-500 hover:text-green-700 cursor-pointer" title="确认入库"><CheckCircle className="size-3.5" /></button>
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-1.5 text-left">
+                  <td className={`px-2 py-1.5 ${FIXED_BG}`}>
                     <Badge variant={item.library_status === 'valid' ? 'default' : 'secondary'}
                       className={`text-[10px] ${item.library_status === 'valid' ? 'bg-green-600' : 'bg-amber-500 text-white'}`}>
                       {item.library_status === 'valid' ? 'Valid' : 'Draft'}
                     </Badge>
                   </td>
-                  {group.columns.map(col => {
+                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: PN_WIDTH, maxWidth: PN_WIDTH }}>
+                    <span className="inline-flex items-center gap-0.5">
+                      <span className="truncate font-mono text-[10px]">{item.part_number}</span>
+                      {itemWarnings?.has('part_number') && (
+                        <button onClick={() => onEdit(item.id, attrGroup)} className="text-amber-500 hover:text-amber-700 cursor-pointer shrink-0" title={itemWarnings.get('part_number')}>
+                          <AlertTriangle className="size-3" />
+                        </button>
+                      )}
+                    </span>
+                  </td>
+                  <td className={`px-2 py-1.5 text-xs ${FIXED_BG}`} style={{ width: NAME_WIDTH, maxWidth: NAME_WIDTH }}>
+                    <span className="truncate block">{item.name}</span>
+                  </td>
+                  {/* ── Attribute-specific columns ── */}
+                  {attrColumns.map(col => {
                     const warning = itemWarnings?.get(col.key);
                     return (
                       <td key={col.key} className="px-2 py-1.5 text-xs text-left" style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
-                        <span className="inline-flex items-center gap-0.5" style={col.width ? { maxWidth: col.width } : undefined}>
+                        <span className="inline-flex items-center gap-0.5">
                           <span className="truncate"><CellValue value={(item as any)[col.key]} mono={col.mono} /></span>
                           {warning && (
-                            <button
-                              onClick={() => onEdit(item.id, attrGroup)}
-                              className="text-amber-500 hover:text-amber-700 cursor-pointer shrink-0"
-                              title={warning}
-                            >
+                            <button onClick={() => onEdit(item.id, attrGroup)} className="text-amber-500 hover:text-amber-700 cursor-pointer shrink-0" title={warning}>
                               <AlertTriangle className="size-3" />
                             </button>
                           )}
@@ -198,7 +237,7 @@ export function TableView({ items, attrGroup, onAttrGroupChange, selected, onTog
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={group.columns.length + 3} className="px-2 py-12 text-center text-muted-foreground">暂无数据</td></tr>
+              <tr><td colSpan={attrColumns.length + 5} className="px-2 py-12 text-center text-muted-foreground">暂无数据</td></tr>
             )}
           </tbody>
         </table>
