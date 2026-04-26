@@ -58,12 +58,19 @@ export interface LibraryListResponse {
 
 export async function listLibraryEquipment(params: {
   search?: string;
-  ata_chapter?: string;
+  ata_chapters?: string;
   library_status?: string;
   offset?: number;
   limit?: number;
 }): Promise<LibraryListResponse> {
   const { data } = await client.get('/equipment-library', { params });
+  return data;
+}
+
+export interface ATAOption { ata: string; count: number; }
+
+export async function getATAOptions(): Promise<ATAOption[]> {
+  const { data } = await client.get('/equipment-library/ata-options');
   return data;
 }
 

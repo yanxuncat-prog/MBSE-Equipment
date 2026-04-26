@@ -14,7 +14,7 @@ router = APIRouter(prefix="/equipment-library", tags=["equipment-library"])
 @router.get("")
 async def list_equipment_library(
     search: str | None = Query(None),
-    ata_chapter: str | None = Query(None),
+    ata_chapters: str | None = Query(None, description="Comma-separated ATA chapters for multi-select"),
     library_status: str | None = Query(None, description="draft or valid"),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=2000),
@@ -33,9 +33,11 @@ async def list_equipment_library(
         query = query.where(search_filter)
         count_query = count_query.where(search_filter)
 
-    if ata_chapter:
-        query = query.where(Equipment.ata_chapter.startswith(ata_chapter))
-        count_query = count_query.where(Equipment.ata_chapter.startswith(ata_chapter))
+    if ata_chapters:
+        ata_list = [a.strip() for a in ata_chapters.split(",") if a.strip()]
+        if ata_list:
+            query = query.where(Equipment.ata_chapter.in_(ata_list))
+            count_query = count_query.where(Equipment.ata_chapter.in_(ata_list))
 
     if library_status:
         query = query.where(Equipment.library_status == library_status)
@@ -99,6 +101,20 @@ async def list_equipment_library(
         })
 
     return {"items": items, "total": total, "offset": offset, "limit": limit}
+
+
+@router.get("/ata-options")
+async def get_ata_options(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Return distinct ATA chapters that have equipment in the library."""
+    result = await db.execute(
+        select(Equipment.ata_chapter, func.count(Equipment.id).label("count"))
+        .group_by(Equipment.ata_chapter)
+        .order_by(Equipment.ata_chapter)
+    )
+    return [{"ata": row.ata_chapter, "count": row.count} for row in result.all()]
 
 
 @router.post("/{equipment_id}/validate")
