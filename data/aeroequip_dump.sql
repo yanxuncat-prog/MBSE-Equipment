@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zlM09XajF5owQK3u7eLIoVKp3eEpyNUvN7Y0WrAKQZJ2s4YJpMEzLkgcbi2Pgag
+\restrict bWN2PGys3QAV8Zluj0dWjfUKBYTmlWcsmEBi1z3cHxj5F2BMP3y2DEFKeyBa82V
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -76,23 +76,21 @@ DROP TYPE IF EXISTS public.config_status_enum;
 DROP TYPE IF EXISTS public.bus_type_enum;
 -- *not* dropping schema, since initdb creates it
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: aeroequip
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
 -- *not* creating schema, since initdb creates it
 
 
-ALTER SCHEMA public OWNER TO aeroequip;
-
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: aeroequip
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS '';
 
 
 --
--- Name: bus_type_enum; Type: TYPE; Schema: public; Owner: aeroequip
+-- Name: bus_type_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.bus_type_enum AS ENUM (
@@ -101,10 +99,8 @@ CREATE TYPE public.bus_type_enum AS ENUM (
 );
 
 
-ALTER TYPE public.bus_type_enum OWNER TO aeroequip;
-
 --
--- Name: config_status_enum; Type: TYPE; Schema: public; Owner: aeroequip
+-- Name: config_status_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.config_status_enum AS ENUM (
@@ -115,10 +111,8 @@ CREATE TYPE public.config_status_enum AS ENUM (
 );
 
 
-ALTER TYPE public.config_status_enum OWNER TO aeroequip;
-
 --
--- Name: cr_status_enum; Type: TYPE; Schema: public; Owner: aeroequip
+-- Name: cr_status_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.cr_status_enum AS ENUM (
@@ -131,10 +125,8 @@ CREATE TYPE public.cr_status_enum AS ENUM (
 );
 
 
-ALTER TYPE public.cr_status_enum OWNER TO aeroequip;
-
 --
--- Name: equipment_status_enum; Type: TYPE; Schema: public; Owner: aeroequip
+-- Name: equipment_status_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.equipment_status_enum AS ENUM (
@@ -145,10 +137,8 @@ CREATE TYPE public.equipment_status_enum AS ENUM (
 );
 
 
-ALTER TYPE public.equipment_status_enum OWNER TO aeroequip;
-
 --
--- Name: equipment_type_enum; Type: TYPE; Schema: public; Owner: aeroequip
+-- Name: equipment_type_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.equipment_type_enum AS ENUM (
@@ -159,10 +149,8 @@ CREATE TYPE public.equipment_type_enum AS ENUM (
 );
 
 
-ALTER TYPE public.equipment_type_enum OWNER TO aeroequip;
-
 --
--- Name: user_role; Type: TYPE; Schema: public; Owner: aeroequip
+-- Name: user_role; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.user_role AS ENUM (
@@ -173,14 +161,12 @@ CREATE TYPE public.user_role AS ENUM (
 );
 
 
-ALTER TYPE public.user_role OWNER TO aeroequip;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: audit_logs; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.audit_logs (
@@ -196,10 +182,8 @@ CREATE TABLE public.audit_logs (
 );
 
 
-ALTER TABLE public.audit_logs OWNER TO aeroequip;
-
 --
--- Name: bus_definitions; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: bus_definitions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.bus_definitions (
@@ -212,10 +196,8 @@ CREATE TABLE public.bus_definitions (
 );
 
 
-ALTER TABLE public.bus_definitions OWNER TO aeroequip;
-
 --
--- Name: change_requests; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: change_requests; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.change_requests (
@@ -234,10 +216,8 @@ CREATE TABLE public.change_requests (
 );
 
 
-ALTER TABLE public.change_requests OWNER TO aeroequip;
-
 --
--- Name: config_equipment; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: config_equipment; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.config_equipment (
@@ -266,122 +246,120 @@ CREATE TABLE public.config_equipment (
 );
 
 
-ALTER TABLE public.config_equipment OWNER TO aeroequip;
-
 --
--- Name: COLUMN config_equipment.sta; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.sta; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.sta IS 'Fuselage Station';
 
 
 --
--- Name: COLUMN config_equipment.wl; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.wl; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.wl IS 'Waterline';
 
 
 --
--- Name: COLUMN config_equipment.bl; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.bl; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.bl IS 'Buttline';
 
 
 --
--- Name: COLUMN config_equipment.install_method; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.install_method; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.install_method IS '安装方式';
 
 
 --
--- Name: COLUMN config_equipment.bonding_method; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.bonding_method; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.bonding_method IS '电搭接方式';
 
 
 --
--- Name: COLUMN config_equipment.bonding_type; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.bonding_type; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.bonding_type IS '电搭接类型';
 
 
 --
--- Name: COLUMN config_equipment.bonding_resistance; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.bonding_resistance; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.bonding_resistance IS '电搭接阻值要求(mΩ)';
 
 
 --
--- Name: COLUMN config_equipment.bonding_position; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.bonding_position; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.bonding_position IS '搭接位置(结构零件号)';
 
 
 --
--- Name: COLUMN config_equipment.in_pace_drawing; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.in_pace_drawing; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.in_pace_drawing IS '是否已在PACE图纸中体现';
 
 
 --
--- Name: COLUMN config_equipment.layout_adjustment; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.layout_adjustment; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.layout_adjustment IS '总体布置调整需求';
 
 
 --
--- Name: COLUMN config_equipment.use_batch0_device; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.use_batch0_device; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.use_batch0_device IS '是否使用0号机设备';
 
 
 --
--- Name: COLUMN config_equipment.procurement_status; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.procurement_status; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.procurement_status IS '采购状态: inquiry/contracted/producing/inspecting/shipping/delivered';
 
 
 --
--- Name: COLUMN config_equipment.procurement_location; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.procurement_location; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.procurement_location IS '设备当前位置城市';
 
 
 --
--- Name: COLUMN config_equipment.planned_delivery_date; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.planned_delivery_date; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.planned_delivery_date IS '计划交付日期';
 
 
 --
--- Name: COLUMN config_equipment.estimated_delivery_date; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.estimated_delivery_date; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.estimated_delivery_date IS '预计/实际交付日期';
 
 
 --
--- Name: COLUMN config_equipment.procurement_notes; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN config_equipment.procurement_notes; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.config_equipment.procurement_notes IS '采购备注';
 
 
 --
--- Name: configurations; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: configurations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.configurations (
@@ -396,10 +374,8 @@ CREATE TABLE public.configurations (
 );
 
 
-ALTER TABLE public.configurations OWNER TO aeroequip;
-
 --
--- Name: electrical_loads; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: electrical_loads; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.electrical_loads (
@@ -411,31 +387,29 @@ CREATE TABLE public.electrical_loads (
 );
 
 
-ALTER TABLE public.electrical_loads OWNER TO aeroequip;
-
 --
--- Name: COLUMN electrical_loads.power_kva_normal; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN electrical_loads.power_kva_normal; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.electrical_loads.power_kva_normal IS 'Normal mode power draw (kVA)';
 
 
 --
--- Name: COLUMN electrical_loads.power_kva_emergency; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN electrical_loads.power_kva_emergency; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.electrical_loads.power_kva_emergency IS 'Emergency mode (kVA)';
 
 
 --
--- Name: COLUMN electrical_loads.power_kva_max; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN electrical_loads.power_kva_max; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.electrical_loads.power_kva_max IS 'Max/transient (kVA)';
 
 
 --
--- Name: equipment; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: equipment; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.equipment (
@@ -492,290 +466,288 @@ CREATE TABLE public.equipment (
 );
 
 
-ALTER TABLE public.equipment OWNER TO aeroequip;
-
 --
--- Name: COLUMN equipment.name_en; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.name_en; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.name_en IS '英文名称';
 
 
 --
--- Name: COLUMN equipment.abbreviation_en; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.abbreviation_en; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.abbreviation_en IS '英文缩写';
 
 
 --
--- Name: COLUMN equipment.internal_number; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.internal_number; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.internal_number IS '内部设备编号';
 
 
 --
--- Name: COLUMN equipment.lin_number; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.lin_number; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.lin_number IS 'LIN号';
 
 
 --
--- Name: COLUMN equipment.supplier_part_number; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.supplier_part_number; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.supplier_part_number IS '供应商件号';
 
 
 --
--- Name: COLUMN equipment.dal; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.dal; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.dal IS '设计保证等级 A/B/C/D';
 
 
 --
--- Name: COLUMN equipment.equipment_level; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.equipment_level; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.equipment_level IS '设备等级';
 
 
 --
--- Name: COLUMN equipment.is_optional; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.is_optional; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.is_optional IS '是否选装设备';
 
 
 --
--- Name: COLUMN equipment.is_electrical; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.is_electrical; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.is_electrical IS '是否是电设备';
 
 
 --
--- Name: COLUMN equipment.is_primary_electrical; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.is_primary_electrical; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.is_primary_electrical IS '是否一级用电设备';
 
 
 --
--- Name: COLUMN equipment.has_eicd; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.has_eicd; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.has_eicd IS '是否有EICD';
 
 
 --
--- Name: COLUMN equipment.has_special_wiring; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.has_special_wiring; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.has_special_wiring IS '是否有特殊布线需求';
 
 
 --
--- Name: COLUMN equipment.dimensions_mm; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.dimensions_mm; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.dimensions_mm IS '长×高×宽(mm)';
 
 
 --
--- Name: COLUMN equipment.is_metal_shell; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.is_metal_shell; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.is_metal_shell IS '壳体是否金属';
 
 
 --
--- Name: COLUMN equipment.metal_shell_non_conductive; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.metal_shell_non_conductive; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.metal_shell_non_conductive IS '金属壳体是否经特殊处理不易导电';
 
 
 --
--- Name: COLUMN equipment.internal_grounding; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.internal_grounding; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.internal_grounding IS '设备内共地情况';
 
 
 --
--- Name: COLUMN equipment.physical_characteristics; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.physical_characteristics; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.physical_characteristics IS '设备物理特性';
 
 
 --
--- Name: COLUMN equipment.connector_count; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.connector_count; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.connector_count IS '连接器或接线柱数量';
 
 
 --
--- Name: COLUMN equipment.voltage_range; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.voltage_range; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.voltage_range IS '正常工作电压范围(V)';
 
 
 --
--- Name: COLUMN equipment.power_redundancy; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.power_redundancy; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.power_redundancy IS '供电余度';
 
 
 --
--- Name: COLUMN equipment.power_voltage; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.power_voltage; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.power_voltage IS '供电电压';
 
 
 --
--- Name: COLUMN equipment.power_watts; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.power_watts; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.power_watts IS '用电功率';
 
 
 --
--- Name: COLUMN equipment.shell_grounding_method; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.shell_grounding_method; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.shell_grounding_method IS '壳体接地方式';
 
 
 --
--- Name: COLUMN equipment.shell_grounding_fault_path; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.shell_grounding_fault_path; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.shell_grounding_fault_path IS '壳体接地是否故障电流路径';
 
 
 --
--- Name: COLUMN equipment.grounding_special_requirements; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.grounding_special_requirements; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.grounding_special_requirements IS '其他接地特殊要求';
 
 
 --
--- Name: COLUMN equipment.responsible_person; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.responsible_person; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.responsible_person IS '设备负责人';
 
 
 --
--- Name: COLUMN equipment.aircraft_batch; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.aircraft_batch; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.aircraft_batch IS '装机架次';
 
 
 --
--- Name: COLUMN equipment.config_category; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.config_category; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.config_category IS '构型分类';
 
 
 --
--- Name: COLUMN equipment.do160_temp_design_level; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.do160_temp_design_level; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.do160_temp_design_level IS '设计要求等级';
 
 
 --
--- Name: COLUMN equipment.do160_temp_qual_level; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.do160_temp_qual_level; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.do160_temp_qual_level IS 'DO-160第4章温度鉴定等级';
 
 
 --
--- Name: COLUMN equipment.do160_temp_qual_range; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.do160_temp_qual_range; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.do160_temp_qual_range IS '鉴定工作温度范围';
 
 
 --
--- Name: COLUMN equipment.do160_temp_compliance; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.do160_temp_compliance; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.do160_temp_compliance IS '鉴定符合情况';
 
 
 --
--- Name: COLUMN equipment.normal_operating_temp; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.normal_operating_temp; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.normal_operating_temp IS '正常工作温度(℃)';
 
 
 --
--- Name: COLUMN equipment.short_term_temp; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.short_term_temp; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.short_term_temp IS '短时工作温度(℃)';
 
 
 --
--- Name: COLUMN equipment.ground_storage_temp; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.ground_storage_temp; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.ground_storage_temp IS '地面停放温度(℃)';
 
 
 --
--- Name: COLUMN equipment.operating_altitude; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.operating_altitude; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.operating_altitude IS '高度(m)';
 
 
 --
--- Name: COLUMN equipment.qual_report_number; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.qual_report_number; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.qual_report_number IS '鉴定报告编号';
 
 
 --
--- Name: COLUMN equipment.first_flight_onboard; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.first_flight_onboard; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.first_flight_onboard IS '首飞是否上机';
 
 
 --
--- Name: COLUMN equipment.phase2_onboard; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.phase2_onboard; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.phase2_onboard IS '二阶段是否上机';
 
 
 --
--- Name: COLUMN equipment.notes; Type: COMMENT; Schema: public; Owner: aeroequip
+-- Name: COLUMN equipment.notes; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.equipment.notes IS '备注';
 
 
 --
--- Name: programs; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: programs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.programs (
@@ -787,10 +759,8 @@ CREATE TABLE public.programs (
 );
 
 
-ALTER TABLE public.programs OWNER TO aeroequip;
-
 --
--- Name: series; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: series; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.series (
@@ -802,10 +772,8 @@ CREATE TABLE public.series (
 );
 
 
-ALTER TABLE public.series OWNER TO aeroequip;
-
 --
--- Name: suppliers; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: suppliers; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.suppliers (
@@ -817,10 +785,8 @@ CREATE TABLE public.suppliers (
 );
 
 
-ALTER TABLE public.suppliers OWNER TO aeroequip;
-
 --
--- Name: users; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -834,10 +800,8 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO aeroequip;
-
 --
--- Name: weight_balances; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: weight_balances; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.weight_balances (
@@ -847,10 +811,8 @@ CREATE TABLE public.weight_balances (
 );
 
 
-ALTER TABLE public.weight_balances OWNER TO aeroequip;
-
 --
--- Name: zones; Type: TABLE; Schema: public; Owner: aeroequip
+-- Name: zones; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.zones (
@@ -868,10 +830,8 @@ CREATE TABLE public.zones (
 );
 
 
-ALTER TABLE public.zones OWNER TO aeroequip;
-
 --
--- Data for Name: audit_logs; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: audit_logs; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.audit_logs (id, entity_type, entity_id, action, old_value, new_value, user_id, reason, "timestamp") FROM stdin;
@@ -879,7 +839,7 @@ COPY public.audit_logs (id, entity_type, entity_id, action, old_value, new_value
 
 
 --
--- Data for Name: bus_definitions; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: bus_definitions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.bus_definitions (id, series_id, bus_name, bus_type, rated_capacity_kva, redundancy_group) FROM stdin;
@@ -893,7 +853,7 @@ e4276060-dc3f-4260-8ff3-3deaaea6bfcc	2486ebd6-62b6-437f-8dfc-4e9eb9f2749e	HOT BA
 
 
 --
--- Data for Name: change_requests; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: change_requests; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.change_requests (id, config_id, title, description, equipment_adds, equipment_dels, equipment_mods, impact_summary, status, submitted_by, approved_at, created_at) FROM stdin;
@@ -901,7 +861,7 @@ COPY public.change_requests (id, config_id, title, description, equipment_adds, 
 
 
 --
--- Data for Name: config_equipment; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: config_equipment; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.config_equipment (config_id, equipment_id, zone_id, sta, wl, bl, rack_position, bus_id, notes, install_method, bonding_method, bonding_type, bonding_resistance, bonding_position, in_pace_drawing, layout_adjustment, use_batch0_device, procurement_status, procurement_location, planned_delivery_date, estimated_delivery_date, procurement_notes) FROM stdin;
@@ -2007,7 +1967,7 @@ COPY public.config_equipment (config_id, equipment_id, zone_id, sta, wl, bl, rac
 
 
 --
--- Data for Name: configurations; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: configurations; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.configurations (id, series_id, version, status, description, created_by, locked_at, created_at) FROM stdin;
@@ -2018,7 +1978,7 @@ COPY public.configurations (id, series_id, version, status, description, created
 
 
 --
--- Data for Name: electrical_loads; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: electrical_loads; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.electrical_loads (id, equipment_id, power_kva_normal, power_kva_emergency, power_kva_max) FROM stdin;
@@ -2026,7 +1986,7 @@ COPY public.electrical_loads (id, equipment_id, power_kva_normal, power_kva_emer
 
 
 --
--- Data for Name: equipment; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: equipment; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.equipment (id, part_number, name, ata_chapter, equipment_type, supplier_id, status, description, created_at, updated_at, name_en, abbreviation_en, internal_number, lin_number, supplier_part_number, dal, equipment_level, is_optional, is_electrical, is_primary_electrical, has_eicd, has_special_wiring, dimensions_mm, is_metal_shell, metal_shell_non_conductive, internal_grounding, physical_characteristics, connector_count, voltage_range, power_redundancy, power_voltage, power_watts, shell_grounding_method, shell_grounding_fault_path, grounding_special_requirements, responsible_person, aircraft_batch, config_category, do160_temp_design_level, do160_temp_qual_level, do160_temp_qual_range, do160_temp_compliance, normal_operating_temp, short_term_temp, ground_storage_temp, operating_altitude, qual_report_number, first_flight_onboard, phase2_onboard, notes) FROM stdin;
@@ -2400,7 +2360,7 @@ fd7671f0-2299-43ec-9aa1-77e4c7bbca5b	5231E07000G900	登机门飞行锁上锁传�
 
 
 --
--- Data for Name: programs; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: programs; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.programs (id, name, aircraft_type, description, created_at) FROM stdin;
@@ -2409,7 +2369,7 @@ e3b86aee-dc36-4be5-bb88-976748de714c	CE-25A	大型宽体客机	CE-25A电动飞�
 
 
 --
--- Data for Name: series; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: series; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.series (id, program_id, variant_name, description, created_at) FROM stdin;
@@ -2418,7 +2378,7 @@ COPY public.series (id, program_id, variant_name, description, created_at) FROM 
 
 
 --
--- Data for Name: suppliers; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: suppliers; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.suppliers (id, name, country, contact_email, created_at) FROM stdin;
@@ -2471,7 +2431,7 @@ dcca152a-9a8b-4970-a67f-182d69bc6679	114	\N	\N	2026-04-22 03:35:09.418072+00
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.users (id, username, hashed_password, display_name, role, is_active, created_at) FROM stdin;
@@ -2481,7 +2441,7 @@ f5856ffe-f35d-43f0-96fe-7c0f8f352db3	admin	$2b$12$Dmgj9O8MaMNWQ1E.vgK9L.g8SPXQ1W
 
 
 --
--- Data for Name: weight_balances; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: weight_balances; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.weight_balances (id, equipment_id, mass_kg) FROM stdin;
@@ -2569,7 +2529,7 @@ ea4cc693-1c97-4d2d-96d7-e4cd907dc7ee	394f583b-a892-4241-a46e-f6defc48a3bd	1
 
 
 --
--- Data for Name: zones; Type: TABLE DATA; Schema: public; Owner: aeroequip
+-- Data for Name: zones; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.zones (id, series_id, zone_code, name, sta_from, sta_to, wl_from, wl_to, bl_from, bl_to, env_category) FROM stdin;
@@ -2587,7 +2547,7 @@ dacf6d7d-1e58-46f8-ad30-da511844cfba	2486ebd6-62b6-437f-8dfc-4e9eb9f2749e	999	�
 
 
 --
--- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs
@@ -2595,7 +2555,7 @@ ALTER TABLE ONLY public.audit_logs
 
 
 --
--- Name: bus_definitions bus_definitions_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: bus_definitions bus_definitions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bus_definitions
@@ -2603,7 +2563,7 @@ ALTER TABLE ONLY public.bus_definitions
 
 
 --
--- Name: change_requests change_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: change_requests change_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.change_requests
@@ -2611,7 +2571,7 @@ ALTER TABLE ONLY public.change_requests
 
 
 --
--- Name: config_equipment config_equipment_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: config_equipment config_equipment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.config_equipment
@@ -2619,7 +2579,7 @@ ALTER TABLE ONLY public.config_equipment
 
 
 --
--- Name: configurations configurations_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: configurations configurations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.configurations
@@ -2627,7 +2587,7 @@ ALTER TABLE ONLY public.configurations
 
 
 --
--- Name: electrical_loads electrical_loads_equipment_id_key; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: electrical_loads electrical_loads_equipment_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.electrical_loads
@@ -2635,7 +2595,7 @@ ALTER TABLE ONLY public.electrical_loads
 
 
 --
--- Name: electrical_loads electrical_loads_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: electrical_loads electrical_loads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.electrical_loads
@@ -2643,7 +2603,7 @@ ALTER TABLE ONLY public.electrical_loads
 
 
 --
--- Name: equipment equipment_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: equipment equipment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.equipment
@@ -2651,7 +2611,7 @@ ALTER TABLE ONLY public.equipment
 
 
 --
--- Name: programs programs_name_key; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: programs programs_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.programs
@@ -2659,7 +2619,7 @@ ALTER TABLE ONLY public.programs
 
 
 --
--- Name: programs programs_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: programs programs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.programs
@@ -2667,7 +2627,7 @@ ALTER TABLE ONLY public.programs
 
 
 --
--- Name: series series_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: series series_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.series
@@ -2675,7 +2635,7 @@ ALTER TABLE ONLY public.series
 
 
 --
--- Name: suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.suppliers
@@ -2683,7 +2643,7 @@ ALTER TABLE ONLY public.suppliers
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -2691,7 +2651,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: weight_balances weight_balances_equipment_id_key; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: weight_balances weight_balances_equipment_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.weight_balances
@@ -2699,7 +2659,7 @@ ALTER TABLE ONLY public.weight_balances
 
 
 --
--- Name: weight_balances weight_balances_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: weight_balances weight_balances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.weight_balances
@@ -2707,7 +2667,7 @@ ALTER TABLE ONLY public.weight_balances
 
 
 --
--- Name: zones zones_pkey; Type: CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: zones zones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.zones
@@ -2715,49 +2675,49 @@ ALTER TABLE ONLY public.zones
 
 
 --
--- Name: ix_audit_logs_entity_id; Type: INDEX; Schema: public; Owner: aeroequip
+-- Name: ix_audit_logs_entity_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_audit_logs_entity_id ON public.audit_logs USING btree (entity_id);
 
 
 --
--- Name: ix_audit_logs_entity_type; Type: INDEX; Schema: public; Owner: aeroequip
+-- Name: ix_audit_logs_entity_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_audit_logs_entity_type ON public.audit_logs USING btree (entity_type);
 
 
 --
--- Name: ix_equipment_ata_chapter; Type: INDEX; Schema: public; Owner: aeroequip
+-- Name: ix_equipment_ata_chapter; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_equipment_ata_chapter ON public.equipment USING btree (ata_chapter);
 
 
 --
--- Name: ix_equipment_part_number; Type: INDEX; Schema: public; Owner: aeroequip
+-- Name: ix_equipment_part_number; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ix_equipment_part_number ON public.equipment USING btree (part_number);
 
 
 --
--- Name: ix_users_username; Type: INDEX; Schema: public; Owner: aeroequip
+-- Name: ix_users_username; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ix_users_username ON public.users USING btree (username);
 
 
 --
--- Name: ix_zones_zone_code; Type: INDEX; Schema: public; Owner: aeroequip
+-- Name: ix_zones_zone_code; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_zones_zone_code ON public.zones USING btree (zone_code);
 
 
 --
--- Name: audit_logs audit_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: audit_logs audit_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs
@@ -2765,7 +2725,7 @@ ALTER TABLE ONLY public.audit_logs
 
 
 --
--- Name: bus_definitions bus_definitions_series_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: bus_definitions bus_definitions_series_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bus_definitions
@@ -2773,7 +2733,7 @@ ALTER TABLE ONLY public.bus_definitions
 
 
 --
--- Name: change_requests change_requests_config_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: change_requests change_requests_config_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.change_requests
@@ -2781,7 +2741,7 @@ ALTER TABLE ONLY public.change_requests
 
 
 --
--- Name: change_requests change_requests_submitted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: change_requests change_requests_submitted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.change_requests
@@ -2789,7 +2749,7 @@ ALTER TABLE ONLY public.change_requests
 
 
 --
--- Name: config_equipment config_equipment_bus_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: config_equipment config_equipment_bus_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.config_equipment
@@ -2797,7 +2757,7 @@ ALTER TABLE ONLY public.config_equipment
 
 
 --
--- Name: config_equipment config_equipment_config_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: config_equipment config_equipment_config_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.config_equipment
@@ -2805,7 +2765,7 @@ ALTER TABLE ONLY public.config_equipment
 
 
 --
--- Name: config_equipment config_equipment_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: config_equipment config_equipment_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.config_equipment
@@ -2813,7 +2773,7 @@ ALTER TABLE ONLY public.config_equipment
 
 
 --
--- Name: config_equipment config_equipment_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: config_equipment config_equipment_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.config_equipment
@@ -2821,7 +2781,7 @@ ALTER TABLE ONLY public.config_equipment
 
 
 --
--- Name: configurations configurations_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: configurations configurations_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.configurations
@@ -2829,7 +2789,7 @@ ALTER TABLE ONLY public.configurations
 
 
 --
--- Name: configurations configurations_series_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: configurations configurations_series_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.configurations
@@ -2837,7 +2797,7 @@ ALTER TABLE ONLY public.configurations
 
 
 --
--- Name: electrical_loads electrical_loads_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: electrical_loads electrical_loads_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.electrical_loads
@@ -2845,7 +2805,7 @@ ALTER TABLE ONLY public.electrical_loads
 
 
 --
--- Name: equipment equipment_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: equipment equipment_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.equipment
@@ -2853,7 +2813,7 @@ ALTER TABLE ONLY public.equipment
 
 
 --
--- Name: series series_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: series series_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.series
@@ -2861,7 +2821,7 @@ ALTER TABLE ONLY public.series
 
 
 --
--- Name: weight_balances weight_balances_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: weight_balances weight_balances_equipment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.weight_balances
@@ -2869,7 +2829,7 @@ ALTER TABLE ONLY public.weight_balances
 
 
 --
--- Name: zones zones_series_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aeroequip
+-- Name: zones zones_series_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.zones
@@ -2877,15 +2837,8 @@ ALTER TABLE ONLY public.zones
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: aeroequip
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zlM09XajF5owQK3u7eLIoVKp3eEpyNUvN7Y0WrAKQZJ2s4YJpMEzLkgcbi2Pgag
+\unrestrict bWN2PGys3QAV8Zluj0dWjfUKBYTmlWcsmEBi1z3cHxj5F2BMP3y2DEFKeyBa82V
 
